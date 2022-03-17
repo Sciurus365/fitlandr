@@ -1,0 +1,21 @@
+Package: fitlandr
+Type: Package
+Title: Fit a Potential Landscape from Data
+Version: 0.0.0.9000
+Authors@R: person(given = "Jingmeng", family = "Cui", email = "jingmeng.cui@outlook.com",
+		role = c("aut", "cre"), comment = c(ORCID = "0000-0003-3421-8457"))
+Description: Fit a potential function from data.
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    dplyr,
+    grid,
+    magrittr,
+    pdist,
+    purrr,
+    rlang,
+    simlandr,
+    waydown
+RoxygenNote: 7.1.2
+Roxygen: list(markdown = TRUE)
