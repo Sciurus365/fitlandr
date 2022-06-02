@@ -1,7 +1,28 @@
 #' Sparse Vector Field Consensus
 #'
-#' Translated from codes in https://github.com/jiayi-ma/VFC
-#' Jiayi Ma, Ji Zhao, Jinwen Tian, Xiang Bai, and Zhuowen Tu. "Regularized Vector Field Learning with Sparse Approximation for Mismatch Removal", Pattern Recognition, 46(12), pp. 3519-3532, 2013.
+#' The main function for the SparseVFC algorithm.
+#' See `References` for more information.
+#'
+#' @param X The position of the vectors.
+#' @param Y The value of the vectors.
+#' @param MaxIter Maximum iteration times. Default value is 500.
+#' @param gamma Percentage of inliers in the samples. This is an initial value
+#' for EM iteration, and it is not important. Default value is 0.9.
+#' @param beta Parameter of Gaussian Kernel, \eqn{k(x, y) = exp(-beta*||x-y||^2)}. Default value is 0.1.
+#' @param lambda Represents the trade-off between the goodness of data fit and smoothness of the field. Default value is 3.
+#' @param theta If the posterior probability of a sample being an inlier is
+#' larger than theta, then it will be regarded as an inlier.
+#' Default value is 0.75.
+#' @param a Parameter of the uniform distribution. We assume that the outliers
+#' obey a uniform distribution \eqn{1/a}. Default Value is 10.
+#' @param ecr The minimum limitation of the energy change rate in the iteration process. Default value is 1e-5.
+#' @param minP The posterior probability Matrix P may be singular for matrix
+#' inversion. We set the minimum value of P as `minP`. Default value is 1e-5.
+#' @param silent Should the messages be suppressed? Default value is `TRUE`.
+#'
+#' @references The algorithm is described in Ma et al. (2013) \doi{10.1016/j.patcog.2013.05.017}.
+#' This function is translated with permission from Jiayi Ma's Matlab function at \url{https://github.com/jiayi-ma/VFC}.
+#'
 #' @export
 SparseVFC <- function(X, Y, MaxIter = 500, gamma = 0.9, beta = 0.1,
 											lambda = 3, theta = 0.75, a = 10, ecr = 1e-5,
@@ -79,7 +100,11 @@ SparseVFC <- function(X, Y, MaxIter = 500, gamma = 0.9, beta = 0.1,
 
 #' Construct the kernel K
 #'
-#' K[i, j] = k(x[i,], y[j,]) = exp(-beta*||x[i,]-y[j,]||^2)
+#' \deqn{K[i, j] = k(x[i,], y[j,]) = exp(-beta*||x[i,]-y[j,]||^2)}
+#'
+#' @param x,y,beta The variable and parameter values for the funcion
+#' described above.
+#' @seealso [SparseVFC()]
 con_K <- function(x, y, beta){
 	n <- nrow(x)
 	m <- nrow(y)
@@ -107,7 +132,10 @@ get_P <- function(Y, V, sigma2, gamma, a){
 	return(list(P = P,E = E))
 }
 
-
+#' Normalize two matrices separately
+#'
+#' @param x,y The two matrices.
+#' @seealso [SparseVFC()]
 norm2 <- function(x, y){
 	n <- nrow(x)
 	m <- nrow(y)

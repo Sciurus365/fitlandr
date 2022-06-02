@@ -6,6 +6,9 @@
 \usage{
 VFCf(VFCresult)
 }
+\arguments{
+\item{VFCresult}{A VFC result estimated from \code{\link[=SparseVFC]{SparseVFC()}}.}
+}
 \description{
 This will generate a helper function to estimate the vector field
 for any position, based on the VFC estimation.

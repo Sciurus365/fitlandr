@@ -18,7 +18,39 @@ SparseVFC(
   silent = TRUE
 )
 }
+\arguments{
+\item{X}{The position of the vectors.}
+
+\item{Y}{The value of the vectors.}
+
+\item{MaxIter}{Maximum iteration times. Default value is 500.}
+
+\item{gamma}{Percentage of inliers in the samples. This is an initial value
+for EM iteration, and it is not important. Default value is 0.9.}
+
+\item{beta}{Parameter of Gaussian Kernel, \eqn{k(x, y) = exp(-beta*||x-y||^2)}. Default value is 0.1.}
+
+\item{lambda}{Represents the trade-off between the goodness of data fit and smoothness of the field. Default value is 3.}
+
+\item{theta}{If the posterior probability of a sample being an inlier is
+larger than theta, then it will be regarded as an inlier.
+Default value is 0.75.}
+
+\item{a}{Parameter of the uniform distribution. We assume that the outliers
+obey a uniform distribution \eqn{1/a}. Default Value is 10.}
+
+\item{ecr}{The minimum limitation of the energy change rate in the iteration process. Default value is 1e-5.}
+
+\item{minP}{The posterior probability Matrix P may be singular for matrix
+inversion. We set the minimum value of P as \code{minP}. Default value is 1e-5.}
+
+\item{silent}{Should the messages be suppressed? Default value is \code{TRUE}.}
+}
 \description{
-Translated from codes in https://github.com/jiayi-ma/VFC
-Jiayi Ma, Ji Zhao, Jinwen Tian, Xiang Bai, and Zhuowen Tu. "Regularized Vector Field Learning with Sparse Approximation for Mismatch Removal", Pattern Recognition, 46(12), pp. 3519-3532, 2013.
+The main function for the SparseVFC algorithm.
+See \code{References} for more information.
+}
+\references{
+The algorithm is described in Ma et al. (2013) \doi{10.1016/j.patcog.2013.05.017}.
+This function is translated with permission from Jiayi Ma's Matlab function at \url{https://github.com/jiayi-ma/VFC}.
 }

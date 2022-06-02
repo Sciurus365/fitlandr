@@ -6,6 +6,13 @@
 \usage{
 con_K(x, y, beta)
 }
+\arguments{
+\item{x, y, beta}{The variable and parameter values for the funcion
+described above.}
+}
 \description{
-K\link{i, j} = k(x\link{i,}, y\link{j,}) = exp(-beta*||x\link{i,}-y\link{j,}||^2)
+\deqn{K[i, j] = k(x[i,], y[j,]) = exp(-beta*||x[i,]-y[j,]||^2)}
+}
+\seealso{
+\code{\link[=SparseVFC]{SparseVFC()}}
 }

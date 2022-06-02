@@ -8,13 +8,14 @@ fit_vf_2d(
   d,
   x,
   y,
-  vector_position = "middle",
   x_start,
   x_end,
   x_by,
   y_start,
   y_end,
   y_by,
+  vector_position = "middle",
+  na_action = "omit_data_points",
   ...
 )
 }
@@ -24,9 +25,11 @@ Should be a data frame or a matrix.}
 
 \item{x, y}{Characters to indicate the name of the two variables.}
 
-\item{vector_position}{One of "start", "middle", or "end".}
+\item{vector_position}{One of \code{"start"}, \code{"middle"}, or \code{"end"}.}
 
-\item{...}{Other parameters to be passed to \link{SparseVFC}.}
+\item{na_action}{One of \code{"omit_data_points"} or \code{"omit_vectors"}. If using \code{"omit_data_points"}, then the vectors will be retained even if there are \code{NA} points between them. If using \code{"omit_vectors"}, then the vectors will be omitted if either of its points is \code{NA}.}
+
+\item{...}{Other parameters to be passed to \code{\link[=SparseVFC]{SparseVFC()}}.}
 }
 \value{
 A \code{vectorfield} object.
