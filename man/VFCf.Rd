@@ -7,7 +7,7 @@
 VFCf(VFCresult)
 }
 \arguments{
-\item{VFCresult}{A VFC result estimated from \code{\link[=SparseVFC]{SparseVFC()}}.}
+\item{VFCresult}{A VFC result estimated from \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}.}
 }
 \description{
 This will generate a helper function to estimate the vector field

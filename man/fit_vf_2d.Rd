@@ -29,7 +29,7 @@ Should be a data frame or a matrix.}
 
 \item{na_action}{One of \code{"omit_data_points"} or \code{"omit_vectors"}. If using \code{"omit_data_points"}, then the vectors will be retained even if there are \code{NA} points between them. If using \code{"omit_vectors"}, then the vectors will be omitted if either of its points is \code{NA}.}
 
-\item{...}{Other parameters to be passed to \code{\link[=SparseVFC]{SparseVFC()}}.}
+\item{...}{Other parameters to be passed to \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}.}
 }
 \value{
 A \code{vectorfield} object.

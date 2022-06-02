@@ -5,7 +5,7 @@
 #' @param x,y Characters to indicate the name of the two variables.
 #' @param vector_position One of `"start"`, `"middle"`, or `"end"`.
 #' @param na_action One of `"omit_data_points"` or `"omit_vectors"`. If using `"omit_data_points"`, then the vectors will be retained even if there are `NA` points between them. If using `"omit_vectors"`, then the vectors will be omitted if either of its points is `NA`.
-#' @param ... Other parameters to be passed to [SparseVFC()].
+#' @param ... Other parameters to be passed to [SparseVFC::SparseVFC()].
 #'
 #' @return A `vectorfield` object.
 #' @export
@@ -59,24 +59,15 @@ fit_vf_2d <- function(d, x, y,
   	}
   }
 
-  VFCresult <- SparseVFC(original_vectors[,1:2], original_vectors[,3:4], ...)
+  VFCresult <- SparseVFC::SparseVFC(original_vectors[,1:2], original_vectors[,3:4], ...)
 
   vec <- expand.grid(x = seq(x_start, x_end, x_by), y = seq(y_start, y_end, y_by))
-  vec <- vec %>%
-  	dplyr::mutate(v = purrr::map2(x, y, function(x, y){
-  		output <- c(0,0)
-  		for(i in 1:nrow(VFCresult$X)){
-  			output <- output + con_K(c(x, y) %>% matrix(nrow = 1), VFCresult$X[i,] %>% matrix(nrow = 1), VFCresult$beta) %>%
-  				as.numeric() * VFCresult$C[i,]
-  		}
-  		return(list(output))
-  	}))
-
-  vec <- vec %>%
-  	dplyr::rowwise() %>%
-  	dplyr::mutate(vx = v[1],
-  				 vy = vx[2],
-  				 vx = vx[1]) %>%
+  vec <- vec %>% dplyr::rowwise() %>%
+  	dplyr::mutate(v = list(predict(VFCresult, c(x, y)))) %>%
+  	dplyr::mutate(
+  		vx = v[1],
+  		vy = v[2]
+  	) %>%
   	dplyr::select(-v) %>%
   	dplyr::ungroup()
 
@@ -140,15 +131,10 @@ fit_vfld_2d.vectorfield <- function(vf,
 #' This will generate a helper function to estimate the vector field
 #' for any position, based on the VFC estimation.
 #'
-#' @param VFCresult A VFC result estimated from [SparseVFC()].
+#' @param VFCresult A VFC result estimated from [SparseVFC::SparseVFC()].
 VFCf <- function(VFCresult){
 	if(!inherits(VFCresult, "VFC")) rlang::abort("`VFCresult` must be a VFC object.")
 	return(function(x){
-		output <- c(0,0)
-		for(i in 1:nrow(VFCresult$X)){
-			output <- output + con_K(c(x[1], x[2]) %>% matrix(nrow = 1), VFCresult$X[i,] %>% matrix(nrow = 1), VFCresult$beta) %>%
-				as.numeric() * VFCresult$C[i,]
-		}
-		return(output)
+		predict(VFCresult, x)
 	})
 }

@@ -17,6 +17,7 @@ Imports:
     purrr,
     rlang,
     simlandr,
+    SparseVFC,
     waydown
 RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE)
