@@ -2,9 +2,11 @@
 
 S3method(fit_vfld_2d,data.frame)
 S3method(fit_vfld_2d,vectorfield)
+S3method(plot,"2d_vf_landscape")
 S3method(plot,vectorfield)
 export("%>%")
 export(fit_vf_2d)
 export(fit_vfld_2d)
+export(mvke)
 importFrom(magrittr,"%>%")
 importFrom(simlandr,get_dist)

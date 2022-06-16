@@ -16,6 +16,7 @@ fit_vf_2d(
   y_by,
   vector_position = "middle",
   na_action = "omit_data_points",
+  method = "VFC",
   ...
 )
 }

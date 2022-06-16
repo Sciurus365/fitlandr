@@ -82,6 +82,26 @@ plot.vectorfield <- function(x, arrow = grid::arrow(length = grid::unit(0.1, "cm
   return(p)
 }
 
-plot.2d_vf_landscape <- function(x, ...){
+#' @export
+plot.2d_vf_landscape <- function(x, vectorfield = FALSE, ...){
+	if(vectorfield) p <- plot(x$vf, ...)
+	else p <- ggplot2::ggplot()
+	p <- p -
+		ggplot2::geom_raster(ggplot2::aes(x = x, y = y, fill = z), data = x$dist) +
+		ggplot2::scale_fill_viridis_c() +
+		ggplot2::labs(fill = "U") +
+		ggplot2::theme_bw()
+	p
+}
 
+#' @references krassowski's answer at https://stackoverflow.com/questions/20249653/insert-layer-underneath-existing-layers-in-ggplot2-object
+`-.gg` <- function(plot, layer) {
+	if (missing(layer)) {
+		stop("Cannot use `-.gg()` with a single argument. Did you accidentally put - on a new line?")
+	}
+	if (!is.ggplot(plot)) {
+		stop('Need a plot on the left side')
+	}
+	plot$layers = c(layer, plot$layers)
+	plot
 }

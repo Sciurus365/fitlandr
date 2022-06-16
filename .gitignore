@@ -6,3 +6,4 @@
 *.temp.R
 *.temp.csv
 Rplot*
+*.RDS
