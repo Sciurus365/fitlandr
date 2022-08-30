@@ -99,7 +99,7 @@ plot.2d_vf_landscape <- function(x, vectorfield = FALSE, ...){
 	if (missing(layer)) {
 		stop("Cannot use `-.gg()` with a single argument. Did you accidentally put - on a new line?")
 	}
-	if (!is.ggplot(plot)) {
+	if (!ggplot2::is.ggplot(plot)) {
 		stop('Need a plot on the left side')
 	}
 	plot$layers = c(layer, plot$layers)
