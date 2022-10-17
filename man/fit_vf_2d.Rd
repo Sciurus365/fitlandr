@@ -26,15 +26,22 @@ Should be a data frame or a matrix.}
 
 \item{x, y}{Characters to indicate the name of the two variables.}
 
-\item{vector_position}{One of \code{"start"}, \code{"middle"}, or \code{"end"}.}
+\item{x_start, x_end, x_by, y_start, y_end, y_by}{Specify the sample grid for the output: the starting, ending, and increment of the sequences for both axes.}
 
-\item{na_action}{One of \code{"omit_data_points"} or \code{"omit_vectors"}. If using \code{"omit_data_points"}, then the vectors will be retained even if there are \code{NA} points between them. If using \code{"omit_vectors"}, then the vectors will be omitted if either of its points is \code{NA}.}
+\item{vector_position}{One of "start", "middle", or "end". If "start",}
 
-\item{...}{Other parameters to be passed to \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}.}
+\item{na_action}{One of "omit_data_points" or "omit_vectors". If using "omit_data_points", then the vectors will be retained even if there are \code{NA} points between them. If using "omit_vectors", then the vectors will be omitted if either of its points is \code{NA}.}
+
+\item{method}{One of "VFC" or "MVKE".}
+
+\item{...}{Other parameters to be passed to \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}} or \code{\link[=MVKE]{MVKE()}}.}
 }
 \value{
 A \code{vectorfield} object.
 }
 \description{
-Estimate a 2D vector field
+Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}), or Multivariate Vector Field Kernel Estimator (MVKE, using \code{\link[=MVKE]{MVKE()}}).
+}
+\seealso{
+\code{\link[=plot.vectorfield]{plot.vectorfield()}}
 }
