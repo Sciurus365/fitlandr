@@ -10,11 +10,14 @@
 #' @param x0 Reference position (center of the Taylor expansion)
 #' @param f Flow equations (right hand side of differential equation)
 #' @param normType (default: 'f') Matrix norm used to compute the error
+#' @param jacobianMethod Passed to `method` of [numDeriv::jacobian()].
+#' @param ... Other parameters passed to [numDeriv::jacobian()].
 #'
 #' @return A list containing the approximate potential difference between x and x0 and the estimated error
 #' @export
+#' @keywords internal
 #'
-#' @author Pablo Rodríguez-Sánchez (\url{https://pabrod.github.io})
+#' @author Pablo Rodríguez-Sánchez (\url{https://pabrod.github.io}); modified by Jingmeng Cui.
 #' @references \url{https://doi.org/10.1371/journal.pcbi.1007788}
 #'
 #'
@@ -22,7 +25,9 @@
 #'
 #' @examples
 #' # One dimensional flow
-#' f <- function(x) { cos(x) }
+#' f <- function(x) {
+#'   cos(x)
+#' }
 #'
 #' # Evaluation points
 #' x0 <- 1
@@ -30,21 +35,22 @@
 #'
 #' dV <- deltaV(f, x1, x0)
 #'
-#'  # Two dimensional flow
-#' f <- function(x) { c(
-#'  -2*x[1]*x[2],
-#'  -x[1]^2 - 1
-#' )}
+#' # Two dimensional flow
+#' f <- function(x) {
+#'   c(
+#'     -2 * x[1] * x[2],
+#'     -x[1]^2 - 1
+#'   )
+#' }
 #'
 #' # Evaluation points
-#' x0 <- matrix(c(1,2), ncol = 1)
-#' x1 <- matrix(c(0.98,2.01), ncol = 1)
+#' x0 <- matrix(c(1, 2), ncol = 1)
+#' x1 <- matrix(c(0.98, 2.01), ncol = 1)
 #'
 #' dV <- deltaV(f, x1, x0)
-deltaV <- function(f, x, x0, normType='f') {
-
+deltaV <- function(f, x, x0, normType = "f", jacobianMethod = "Richardson", ...) {
   # Calculate the local Jacobian
-  J0 <- numDeriv::jacobian(f, x0)
+  J0 <- numDeriv::jacobian(f, x0, method = jacobianMethod, ...)
 
   # Perform the skew/symmetric decomposition
   J_symm <- Matrix::symmpart(J0)
@@ -54,20 +60,19 @@ deltaV <- function(f, x, x0, normType='f') {
   #
   # Detailed information available at https://doi.org/10.1371/journal.pcbi.1007788
   dV <- as.numeric(
-        -f(x0) %*% (x - x0) +  # Linear term
-        -0.5 * t(x-x0) %*% J_symm %*% (x - x0) # Quadratic term
+    -f(x0) %*% (x - x0) + # Linear term
+      -0.5 * t(x - x0) %*% J_symm %*% (x - x0) # Quadratic term
   )
 
   # Use J_skew to estimate the relative error
   #
   # Detailed information available at https://doi.org/10.1371/journal.pcbi.1007788
-  rel_err <- norm(J_skew, type = normType)/(norm(J_skew, type = normType) + norm(J_symm, type = normType))
+  rel_err <- norm(J_skew, type = normType) / (norm(J_skew, type = normType) + norm(J_symm, type = normType))
 
   # Return
-  ls <- list(dV = dV, err = rel_err)
+  ls <- list(dV = dV, err = rel_err, J_skew_12 = J_skew[1, 2])
   return(ls)
 }
-
 
 #' Approximate potential in two dimensions
 #'
@@ -76,11 +81,13 @@ deltaV <- function(f, x, x0, normType='f') {
 #' @param ys Vector of ys positions to evaluate
 #' @param V0 (Optional) Value of V at first element of (xs,ys). When default, the global minimum is assigned 0
 #' @param mode (Optional) Integration mode. Options are horizontal (default), vertical and mixed
+#' @inheritParams deltaV
 #'
 #' @return The potential estimated at each point (xs, ys)
 #' @export
+#' @keywords internal
 #'
-#' @author Pablo Rodríguez-Sánchez (\url{https://pabrod.github.io})
+#' @author Pablo Rodríguez-Sánchez (\url{https://pabrod.github.io}); modified by Jingmeng Cui.
 #' @references \url{https://doi.org/10.1371/journal.pcbi.1007788}
 #'
 #'
@@ -88,82 +95,106 @@ deltaV <- function(f, x, x0, normType='f') {
 #'
 #' @examples
 #' # Flow
-#' f = function(x) {c(-x[1]*(x[1]^2 - 1.1), -x[2]*(x[2]^2 - 1))}
+#' f <- function(x) {
+#'   c(-x[1] * (x[1]^2 - 1.1), -x[2] * (x[2]^2 - 1))
+#' }
 #'
 #' # Sampling points
 #' xs <- seq(-1.5, 1.5, length.out = 10)
 #' ys <- seq(-1.5, 1.5, length.out = 15)
 #'
 #' # Approximated potential
-#' Vs <- approxPot2D(f, xs, ys, mode = 'horizontal')
-approxPot2D <- function(f, xs, ys, V0 = 'auto', mode = 'mixed') {
+#' Vs <- approxPot2D(f, xs, ys, mode = "horizontal")
+approxPot2D <- function(f, xs, ys, V0 = "auto", mode = "mixed", jacobianMethod = "Richardson", ...) {
   # Initialize
   V <- matrix(0, nrow = length(xs), ncol = length(ys))
   err <- matrix(0, nrow = length(xs), ncol = length(ys))
+  J_skew_12 <- matrix(0, nrow = length(xs), ncol = length(ys))
 
   # Assign initial value
   # The algorithm is a recursion relationship. It needs an initial potential at the first integration point
-  if (V0 == 'auto') {
-    V[1,1] <- 0 # Assign any, it will be overriden later
+  if (V0 == "auto") {
+    V[1, 1] <- 0 # Assign any, it will be overriden later
   } else {
-    V[1,1] <- V0 # Assign the desired reference potential
+    V[1, 1] <- V0 # Assign the desired reference potential
   }
 
   # Compute
   # We first compute along the first column...
-  for(i in 2:length(xs)) {
-    temp <- deltaV(f, c(xs[i], ys[1]), c(xs[i-1], ys[1]))
-    V[i,1] <- V[i-1,1] + temp$dV
-    err[i,1] <- temp$err
+  for (i in 2:length(xs)) {
+    temp <- deltaV(f, c(xs[i], ys[1]), c(xs[i - 1], ys[1]), jacobianMethod = jacobianMethod, ...)
+    V[i, 1] <- V[i - 1, 1] + temp$dV
+    err[i, 1] <- temp$err
+    J_skew_12[i - 1, 1] <- temp$J_skew_12
   }
 
   # ... and then along the first row...
-  for(j in 2:length(ys)) {
-    temp <- deltaV(f, c(xs[1], ys[j]), c(xs[1], ys[j-1]))
-    V[1,j] <- V[1,j-1] + temp$dV
-    err[1,j] <- temp$err
+  for (j in 2:length(ys)) {
+    temp <- deltaV(f, c(xs[1], ys[j]), c(xs[1], ys[j - 1]), jacobianMethod = jacobianMethod, ...)
+    V[1, j] <- V[1, j - 1] + temp$dV
+    err[1, j] <- temp$err
+    J_skew_12[1, j - 1] <- temp$J_skew_12
   }
 
   # ... and last but not least, we fill the inside gaps
-  for(i in 2:length(xs)) {
-    for(j in 2:length(ys)) {
+  for (i in 2:length(xs)) {
+    for (j in 2:length(ys)) {
+      if (mode == "horizontal") {
+        # Sweep horizontally
 
-      if(mode == 'horizontal') { # Sweep horizontally
+        temp <- deltaV(f, c(xs[i], ys[j]), c(xs[i - 1], ys[j]), jacobianMethod = jacobianMethod, ...)
+        V[i, j] <- V[i - 1, j] + temp$dV
+        err[i, j] <- temp$err
+        J_skew_12[i - 1, j] <- temp$J_skew_12
+      } else if (mode == "vertical") {
+        # Sweep vertically
 
-        temp <- deltaV(f, c(xs[i], ys[j]), c(xs[i-1], ys[j]))
-        V[i,j] <- V[i-1,j] + temp$dV
-        err[i,j] <- temp$err
+        temp <- deltaV(f, c(xs[i], ys[j]), c(xs[i], ys[j - 1]), jacobianMethod = jacobianMethod, ...)
+        V[i, j] <- V[i, j - 1] + temp$dV
+        err[i, j] <- temp$err
+        J_skew_12[i, j - 1] <- temp$J_skew_12
+      } else if (mode == "mixed") {
+        # Sweep in both directions, then take the mean
 
-      } else if(mode == 'vertical') { # Sweep vertically
-
-        temp <- deltaV(f, c(xs[i], ys[j]), c(xs[i], ys[j-1]))
-        V[i,j] <- V[i,j-1] + temp$dV
-        err[i,j] <- temp$err
-
-      } else if(mode == 'mixed') { # Sweep in both directions, then take the mean
-
-        temp_hor <- deltaV(f, c(xs[i], ys[j]), c(xs[i-1], ys[j]))
-        V_hor <- V[i-1,j] + temp_hor$dV
-        temp_ver <- deltaV(f, c(xs[i], ys[j]), c(xs[i], ys[j-1]))
-        V_ver <- V[i,j-1] + temp_ver$dV
-        V[i,j] <- mean(c(V_hor, V_ver))
-        err[i,j] <- mean(c(temp_hor$err, temp_ver$err))
-
+        temp_hor <- deltaV(f, c(xs[i], ys[j]), c(xs[i - 1], ys[j]), jacobianMethod = jacobianMethod, ...)
+        V_hor <- V[i - 1, j] + temp_hor$dV
+        J_skew_12[i - 1, j] <- temp_hor$J_skew_12
+        temp_ver <- deltaV(f, c(xs[i], ys[j]), c(xs[i], ys[j - 1]), jacobianMethod = jacobianMethod, ...)
+        V_ver <- V[i, j - 1] + temp_ver$dV
+        J_skew_12[i, j - 1] <- temp_ver$J_skew_12
+        V[i, j] <- mean(c(V_hor, V_ver))
+        err[i, j] <- mean(c(temp_hor$err, temp_ver$err))
       } else {
-
-        stop('Error: supported modes are horizontal (default), vertical and mixed')
-
+        stop("Error: supported modes are horizontal (default), vertical and mixed")
       }
     }
   }
 
-  if(V0 == 'auto') {
+  if (V0 == "auto") {
     V <- V - min(c(V)) # Make V_min = 0
   }
 
-  return(list(V = V, err = err))
+  for (i in 1:length(xs)) {
+    for (j in 1:length(ys)) {
+      if (is.na(J_skew_12[i, j])) {
+        J_skew_12[i, j] <- numDeriv::jacobian(f, c(xs[i], ys[j]), method = jacobianMethod, ...) |> Matrix::skewpart()
+      }
+    }
+  }
+
+  return(list(V = V, err = err, J_skew_12 = J_skew_12))
 }
 
+#' Calculate the nongradient part of the vector field.
+#'
+#' @inheritParams approxPot2D
+#' @export
+#' @keywords internal
+vectorfield_nongradient_2D <- function(f, xs, ys, mode = "mixed", jacobianMethod = "Richardson", ...) {
+
+
+
+}
 
 # The following is the license of the waydown package:
 #
