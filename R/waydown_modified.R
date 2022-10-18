@@ -21,20 +21,8 @@
 #' @references \url{https://doi.org/10.1371/journal.pcbi.1007788}
 #'
 #'
-#' @seealso \code{\link{approxPot1D}, \link{approxPot2D}, \link{norm}}
 #'
 #' @examples
-#' # One dimensional flow
-#' f <- function(x) {
-#'   cos(x)
-#' }
-#'
-#' # Evaluation points
-#' x0 <- 1
-#' x1 <- 1.02
-#'
-#' dV <- deltaV(f, x1, x0)
-#'
 #' # Two dimensional flow
 #' f <- function(x) {
 #'   c(
@@ -91,7 +79,6 @@ deltaV <- function(f, x, x0, normType = "f", jacobianMethod = "Richardson", ...)
 #' @references \url{https://doi.org/10.1371/journal.pcbi.1007788}
 #'
 #'
-#' @seealso \code{\link{approxPot1D}, \link{deltaV}}
 #'
 #' @examples
 #' # Flow
@@ -182,18 +169,89 @@ approxPot2D <- function(f, xs, ys, V0 = "auto", mode = "mixed", jacobianMethod =
     }
   }
 
-  return(list(V = V, err = err, J_skew_12 = J_skew_12))
+  return(list(xs = xs, ys = ys, V = V, err = err, J_skew_12 = J_skew_12))
 }
 
 #' Calculate the nongradient part of the vector field.
 #'
-#' @inheritParams approxPot2D
+#' @param wdresult Output from `approxPot2D()`.
+#' @param x_sparse,y_sparse Should the sample points for calculating the non-gradient part of the field be sparser than the sample points for calculating the landscape? Integer numbers larger than 1.
 #' @export
 #' @keywords internal
-vectorfield_nongradient_2D <- function(f, xs, ys, mode = "mixed", jacobianMethod = "Richardson", ...) {
+#' @author Jingmeng Cui
+vectorfield_nongradient_2D <- function(wdresult, x_sparse, y_sparse, ...) {
+	if(x_sparse < 1 | y_sparse < 1) {
+		warning("`x_sparse` and `y_sparse` should be larger than 1. Using 1 in this calculation.")
+	} else if(x_sparse - floor(x_sparse) > 1e-10 | y_sparse - floor(y_sparse)) {
+		warning("`x_sparse` and `y_sparse` should be integers. Rounding them up in this calculation.")
+	}
 
+	unit_x <- wdresult$xs[2] - wdresult$xs[1]
+	unit_y <- wdresult$ys[2] - wdresult$ys[1]
 
+	x_sparse <- max(as.integer(x_sparse), 1L)
+	y_sparse <- max(as.integer(y_sparse), 1L)
+	xs_index <- seq(1, length(wdresult$xs), x_sparse)
+	ys_index <- seq(1, length(wdresult$ys), y_sparse)
+	xs <- wdresult$xs[xs_index]
+	ys <- wdresult$ys[ys_index]
 
+	ng_vf <- expand.grid(x = xs, y = ys)
+	ng_vf$vx <- ng_vf$vy <- NA
+	row_index <- 1
+
+	for (j in ys_index) {
+		for (i in xs_index) {
+			eval_points_h <- list()
+			eval_points_v <- list()
+			if(i > 1) {
+				eval_points_h <- append(eval_points_h, list(c(x_eval_index = i - 1,
+																						 y_eval_index = j,
+																						 delta_x = unit_x,
+																						 delta_y = 0)))
+			}
+			if(i < length(xs_index)) {
+				eval_points_h <- append(eval_points_h, list(c(x_eval_index = i + 1,
+																						 y_eval_index = j,
+																						 delta_x = -unit_x,
+																						 delta_y = 0)))
+			}
+			if(j > 1) {
+				eval_points_v <- append(eval_points_v, list(c(x_eval_index = i,
+																						 y_eval_index = j - 1,
+																						 delta_x = 0,
+																						 delta_y = unit_y)))
+			}
+			if(j < length(ys_index)) {
+				eval_points_v <- append(eval_points_v, list(c(x_eval_index = i,
+																						 y_eval_index = j + 1,
+																						 delta_x = 0,
+																						 delta_y = -unit_y)))
+			}
+			eval_FUN <- function(x) {
+				J_skew_12 <- wdresult$J_skew_12[x["x_eval_index"], x["y_eval_index"]]
+				J_skew <- matrix(c(0, J_skew_12, -J_skew_12, 0), ncol = 2, nrow = 2, byrow = TRUE)
+				delta_vector <- c(x["delta_x"], x["delta_y"])
+				return(as.vector(J_skew %*% delta_vector))
+			}
+			eval_values_h <- lapply(eval_points_h, FUN = eval_FUN)
+			eval_values_v <- lapply(eval_points_v, FUN = eval_FUN)
+
+			if(length(eval_values_h) == 1) eval_values_h <- eval_values_h[[1]]
+			else if(length(eval_values_h) == 2) eval_values_h <- rowMeans(cbind(eval_values_h[[1]], eval_values_h[[2]]))
+			else stop("Wrong length `eval_values_h`")
+
+			if(length(eval_values_v) == 1) eval_values_v <- eval_values_v[[1]]
+			else if(length(eval_values_v) == 2) eval_values_v <- rowMeans(cbind(eval_values_v[[1]], eval_values_v[[2]]))
+			else stop("Wrong length `eval_values_v`")
+
+			result <- rowMeans(cbind(eval_values_h, eval_values_v))
+			ng_vf[row_index, c("vx", "vy")] <- result
+			row_index <- row_index + 1
+		}
+	}
+
+	return(ng_vf)
 }
 
 # The following is the license of the waydown package:

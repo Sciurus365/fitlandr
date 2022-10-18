@@ -4,7 +4,15 @@
 \alias{approxPot2D}
 \title{Approximate potential in two dimensions}
 \usage{
-approxPot2D(f, xs, ys, V0 = "auto", mode = "mixed")
+approxPot2D(
+  f,
+  xs,
+  ys,
+  V0 = "auto",
+  mode = "mixed",
+  jacobianMethod = "Richardson",
+  ...
+)
 }
 \arguments{
 \item{f}{Two-dimensional representing the flow (right hand side of differential equation)}
@@ -16,6 +24,10 @@ approxPot2D(f, xs, ys, V0 = "auto", mode = "mixed")
 \item{V0}{(Optional) Value of V at first element of (xs,ys). When default, the global minimum is assigned 0}
 
 \item{mode}{(Optional) Integration mode. Options are horizontal (default), vertical and mixed}
+
+\item{jacobianMethod}{Passed to \code{method} of \code{\link[numDeriv:jacobian]{numDeriv::jacobian()}}.}
+
+\item{...}{Other parameters passed to \code{\link[numDeriv:jacobian]{numDeriv::jacobian()}}.}
 }
 \value{
 The potential estimated at each point (xs, ys)
@@ -25,21 +37,21 @@ Approximate potential in two dimensions
 }
 \examples{
 # Flow
-f = function(x) {c(-x[1]*(x[1]^2 - 1.1), -x[2]*(x[2]^2 - 1))}
+f <- function(x) {
+  c(-x[1] * (x[1]^2 - 1.1), -x[2] * (x[2]^2 - 1))
+}
 
 # Sampling points
 xs <- seq(-1.5, 1.5, length.out = 10)
 ys <- seq(-1.5, 1.5, length.out = 15)
 
 # Approximated potential
-Vs <- approxPot2D(f, xs, ys, mode = 'horizontal')
+Vs <- approxPot2D(f, xs, ys, mode = "horizontal")
 }
 \references{
 \url{https://doi.org/10.1371/journal.pcbi.1007788}
 }
-\seealso{
-\code{\link{approxPot1D}, \link{deltaV}}
-}
 \author{
-Pablo Rodríguez-Sánchez (\url{https://pabrod.github.io})
+Pablo Rodríguez-Sánchez (\url{https://pabrod.github.io}); modified by Jingmeng Cui.
 }
+\keyword{internal}

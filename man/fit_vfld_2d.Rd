@@ -12,6 +12,8 @@ fit_vfld_2d(
   y_start = vf$y_start,
   y_end = vf$y_end,
   y_by = vf$y_by,
+  x_sparse = 1,
+  y_sparse = 1,
   ...
 )
 }
@@ -19,6 +21,8 @@ fit_vfld_2d(
 \item{vf}{A \code{vectorfield} object estimated by \code{\link[=fit_vf_2d]{fit_vf_2d()}}. The other parameters will be inherited from the \code{vectorfield} object if not otherwise specified.}
 
 \item{x_start, x_end, x_by, y_start, y_end, y_by}{Specify the sample grid for the output: the starting, ending, and increment of the sequences for both axes.}
+
+\item{x_sparse, y_sparse}{Should the sample points for calculating the non-gradient part of the field be sparser than the sample points for calculating the landscape? Integer numbers larger than 1.}
 
 \item{...}{Other parameters passed to \code{\link[=approxPot2D]{approxPot2D()}}.}
 }

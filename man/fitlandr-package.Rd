@@ -4,9 +4,9 @@
 \name{fitlandr-package}
 \alias{fitlandr}
 \alias{fitlandr-package}
-\title{fitlandr: Fit a Potential Landscape from Data}
+\title{fitlandr: Fit Vector Fields and Potential Landscapes from Intensive Longitudinal Data}
 \description{
-Fit a potential function from data.
+A toolbox for estimating vector fields from intensive longitudinal data, and construct potential landscapes thereafter. The vector fields can be estimated with two nonparametric methods: the Sparse Vector Field Consensus (SparseVFC) algorithm by Ma et al. (2013) \doi{10.1016/j.patcog.2013.05.017} and the Multivariate Vector Field Kernel Estimator (MVKE) by Bandi & Moloche (2018) \doi{10.1017/S0266466617000305}. The potential landscapes are constructed with the Jacobian matrix decomposition method proposed by Rodríguez-Sánchez et al. (2020).
 }
 \author{
 \strong{Maintainer}: Jingmeng Cui \email{jingmeng.cui@outlook.com} (\href{https://orcid.org/0000-0003-3421-8457}{ORCID})

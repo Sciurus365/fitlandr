@@ -1,10 +1,17 @@
 Package: fitlandr
 Type: Package
-Title: Fit a Potential Landscape from Data
+Title: Fit Vector Fields and Potential Landscapes from Intensive Longitudinal Data
 Version: 0.0.0.9000
 Authors@R: person(given = "Jingmeng", family = "Cui", email = "jingmeng.cui@outlook.com",
 		role = c("aut", "cre"), comment = c(ORCID = "0000-0003-3421-8457"))
-Description: Fit a potential function from data.
+Description: A toolbox for estimating vector fields from intensive longitudinal
+    data, and construct potential landscapes thereafter. The vector fields can be 
+    estimated with two nonparametric methods: the Sparse Vector Field Consensus 
+    (SparseVFC) algorithm by Ma et al. (2013) <doi:10.1016/j.patcog.2013.05.017> and the 
+    Multivariate Vector Field Kernel Estimator (MVKE) by Bandi & Moloche (2018)
+    <doi:10.1017/S0266466617000305>. The potential landscapes are constructed with
+    the Jacobian matrix decomposition method proposed by Rodríguez-Sánchez et al. 
+    (2020).
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
@@ -13,12 +20,11 @@ Imports:
     ggplot2,
     grid,
     magrittr,
-    pdist,
-    purrr,
+    Matrix,
+    numDeriv,
     rlang,
     simlandr,
-    SparseVFC,
-    waydown
+    SparseVFC
 RoxygenNote: 7.2.1
 Roxygen: list(markdown = TRUE)
 Suggests: 

@@ -4,7 +4,7 @@
 \alias{deltaV}
 \title{Approximate potential difference between two points}
 \usage{
-deltaV(f, x, x0, normType = "f")
+deltaV(f, x, x0, normType = "f", jacobianMethod = "Richardson", ...)
 }
 \arguments{
 \item{f}{Flow equations (right hand side of differential equation)}
@@ -14,6 +14,10 @@ deltaV(f, x, x0, normType = "f")
 \item{x0}{Reference position (center of the Taylor expansion)}
 
 \item{normType}{(default: 'f') Matrix norm used to compute the error}
+
+\item{jacobianMethod}{Passed to \code{method} of \code{\link[numDeriv:jacobian]{numDeriv::jacobian()}}.}
+
+\item{...}{Other parameters passed to \code{\link[numDeriv:jacobian]{numDeriv::jacobian()}}.}
 }
 \value{
 A list containing the approximate potential difference between x and x0 and the estimated error
@@ -22,33 +26,24 @@ A list containing the approximate potential difference between x and x0 and the 
 Approximate potential difference between two points
 }
 \examples{
-# One dimensional flow
-f <- function(x) { cos(x) }
+# Two dimensional flow
+f <- function(x) {
+  c(
+    -2 * x[1] * x[2],
+    -x[1]^2 - 1
+  )
+}
 
 # Evaluation points
-x0 <- 1
-x1 <- 1.02
-
-dV <- deltaV(f, x1, x0)
-
- # Two dimensional flow
-f <- function(x) { c(
- -2*x[1]*x[2],
- -x[1]^2 - 1
-)}
-
-# Evaluation points
-x0 <- matrix(c(1,2), ncol = 1)
-x1 <- matrix(c(0.98,2.01), ncol = 1)
+x0 <- matrix(c(1, 2), ncol = 1)
+x1 <- matrix(c(0.98, 2.01), ncol = 1)
 
 dV <- deltaV(f, x1, x0)
 }
 \references{
 \url{https://doi.org/10.1371/journal.pcbi.1007788}
 }
-\seealso{
-\code{\link{approxPot1D}, \link{approxPot2D}, \link{norm}}
-}
 \author{
-Pablo Rodríguez-Sánchez (\url{https://pabrod.github.io})
+Pablo Rodríguez-Sánchez (\url{https://pabrod.github.io}); modified by Jingmeng Cui.
 }
+\keyword{internal}

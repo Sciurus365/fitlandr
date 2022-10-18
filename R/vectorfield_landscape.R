@@ -1,6 +1,6 @@
 #' Estimate a 2D vector field
 #'
-#' Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using [SparseVFC::SparseVFC()]), or Multivariate Vector Field Kernel Estimator (MVKE, using [MVKE()]).
+#' Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using [SparseVFC::SparseVFC()]), or Multivariate Vector Field Kernel Estimator (MVKE, using [MVKE()]). To make sure the default parameter settings are close to the optimal, it is ***highly recommended to normalize the input data with [norm_vecs()]*** before putting them into this function.
 #'
 #' @param d The data set used for estimating the vector field.
 #' Should be a data frame or a matrix.
@@ -34,7 +34,7 @@ fit_vf_2d <- function(d, x, y,
 	if(any(is.na(dv))){
 		{
 			if(na_action == "omit_data_points") {
-				dv <- na.omit(dv)
+				dv <- stats::na.omit(dv)
 				rlang::inform("NA(s) found in the data. Those data points were omitted.")
 			}
 		}
@@ -58,7 +58,7 @@ fit_vf_2d <- function(d, x, y,
   if(any(is.na(original_vectors))){
   	{
   		if(na_action == "omit_vectors") {
-  			original_vectors <- na.omit(original_vectors)
+  			original_vectors <- stats::na.omit(original_vectors)
   			rlang::inform("NA(s) found in the data. Those vectors were omitted.")
   		}
   	}
@@ -76,7 +76,7 @@ fit_vf_2d <- function(d, x, y,
   vec <- vec %>% dplyr::rowwise()
 
   if(method == "VFC") {
-  	vec <- vec %>% dplyr::mutate(v = list(predict(VFCresult, c(x, y))))
+  	vec <- vec %>% dplyr::mutate(v = list(stats::predict(VFCresult, c(x, y))))
   } else if(method == "MVKE") {
   	vec <- vec %>% dplyr::mutate(v = list(MVKEresult(c(x, y))$mu))
   }
@@ -120,17 +120,18 @@ fit_vf_2d <- function(d, x, y,
 #'
 #' @export
 #' @inheritParams fit_vf_2d
+#' @inheritParams vectorfield_nongradient_2D
 #' @references Rodríguez-Sánchez, P., Nes, E. H. van, & Scheffer, M. (2020). Climbing Escher’s stairs: A way to approximate stability landscapes in multidimensional systems. PLOS Computational Biology, 16(4), e1007788. https://doi.org/10.1371/journal.pcbi.1007788
 #' @export
 #' @seealso [plot.2d_vf_landscape()]
 fit_vfld_2d <- function(vf,
 												x_start = vf$x_start, x_end = vf$x_end, x_by = vf$x_by,
-												y_start = vf$y_start, y_end = vf$y_end, y_by = vf$y_by, ...){
+												y_start = vf$y_start, y_end = vf$y_end, y_by = vf$y_by, x_sparse = 1, y_sparse = 1, ...){
 	if(!inherits(vf, "vectorfield")) rlang::abort("`vf` must be a `vectorfield` object.")
 	xs <- seq(x_start, x_end, x_by)
 	ys <- seq(y_start, y_end, y_by)
 
-	if(vf$method == "VFC") f <- function(x) predict(vf$VFCresult, x)
+	if(vf$method == "VFC") f <- function(x) stats::predict(vf$VFCresult, x)
 	else if(vf$method == "MVKE") f <- function(x) vf$MVKEresult(x)$mu
 	wdresult <- approxPot2D(f, xs = xs, ys = ys, ...)
 	wdresult$xs <- xs
@@ -138,10 +139,13 @@ fit_vfld_2d <- function(vf,
 	dist <- simlandr::make_2d_tidy_dist(list(x = xs, y = ys, z = wdresult$V))
 	dist_error <- simlandr::make_2d_tidy_dist(list(x = xs, y = ys, z = wdresult$err))
 
+	dist_nongrad <- vectorfield_nongradient_2D(wdresult, x_sparse, y_sparse)
+
 	result <- list(
 		dist = dist,
 		dist_error = dist_error,
 		dist_raw = wdresult,
+		dist_nongrad = dist_nongrad,
 		vf = vf
 	)
 

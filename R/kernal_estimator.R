@@ -8,11 +8,11 @@
 #' @return A function(x), which then returns the \eqn{\mu} and \eqn{a} estimators at the position \eqn{x}.
 #' @references Bandi, F. M., & Moloche, G. (2018). On the functional estimation of multivariate diffusion processes. Econometric Theory, 34(4), 896-946. https://doi.org/10.1017/S0266466617000305
 #' @export
-MVKE <- function(d, h = 1) {
+MVKE <- function(d, h = 0.2) {
   if (is.data.frame(d)) d <- as.matrix(d)
   if (!is.matrix(d)) stop("`d` should be a data.frame or a matrix.")
 
-  d <- na.omit(d)
+  d <- stats::na.omit(d)
   dim <- ncol(d)
 
   temp_d <- d[1:(nrow(d) - 1), ]
@@ -42,5 +42,5 @@ MVKE <- function(d, h = 1) {
 
 K_gaussian <- function(x, h) {
   dim <- length(x)
-  1 / (h^dim) * prod(dnorm(x / h))
+  1 / (h^dim) * prod(stats::dnorm(x / h))
 }
