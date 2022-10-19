@@ -8,15 +8,19 @@ fit_vf_2d(
   d,
   x,
   y,
-  x_start,
-  x_end,
-  x_by,
-  y_start,
-  y_end,
-  y_by,
-  vector_position = "middle",
+  x_start = min(d[, x], na.rm = TRUE) - 0.1 * (max(d[, x], na.rm = TRUE) - min(d[, x],
+    na.rm = TRUE)),
+  x_end = max(d[, x], na.rm = TRUE) + 0.1 * (max(d[, x], na.rm = TRUE) - min(d[, x],
+    na.rm = TRUE)),
+  x_by = 0.05 * (max(d[, x], na.rm = TRUE) - min(d[, x], na.rm = TRUE)),
+  y_start = min(d[, y], na.rm = TRUE) - 0.1 * (max(d[, y], na.rm = TRUE) - min(d[, y],
+    na.rm = TRUE)),
+  y_end = max(d[, y], na.rm = TRUE) + 0.1 * (max(d[, y], na.rm = TRUE) - min(d[, y],
+    na.rm = TRUE)),
+  y_by = 0.05 * (max(d[, x], na.rm = TRUE) - min(d[, x], na.rm = TRUE)),
+  vector_position = "start",
   na_action = "omit_data_points",
-  method = "VFC",
+  method = c("VFC", "MVKE"),
   ...
 )
 }
@@ -28,9 +32,9 @@ Should be a data frame or a matrix.}
 
 \item{x_start, x_end, x_by, y_start, y_end, y_by}{Specify the sample grid for the output: the starting, ending, and increment of the sequences for both axes.}
 
-\item{vector_position}{One of "start", "middle", or "end". If "start",}
+\item{vector_position}{Only useful if \code{method == "VFC"}. One of "start", "middle", or "end", representing the position of the vectors. If "start", for example, the starting point of a vector is regarded as the position of the vector.}
 
-\item{na_action}{One of "omit_data_points" or "omit_vectors". If using "omit_data_points", then the vectors will be retained even if there are \code{NA} points between them. If using "omit_vectors", then the vectors will be omitted if either of its points is \code{NA}.}
+\item{na_action}{One of "omit_data_points" or "omit_vectors". If using "omit_data_points", then only the \code{NA} points are omitted, and the points before and after an \code{NA} will form a vector. If using "omit_vectors", then the vectors will be omitted if either of its points is \code{NA}.}
 
 \item{method}{One of "VFC" or "MVKE".}
 
@@ -40,7 +44,7 @@ Should be a data frame or a matrix.}
 A \code{vectorfield} object.
 }
 \description{
-Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}), or Multivariate Vector Field Kernel Estimator (MVKE, using \code{\link[=MVKE]{MVKE()}}).
+Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}), or Multivariate Vector Field Kernel Estimator (MVKE, using \code{\link[=MVKE]{MVKE()}}). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}} or \code{\link[=MVKE]{MVKE()}}.
 }
 \seealso{
 \code{\link[=plot.vectorfield]{plot.vectorfield()}}

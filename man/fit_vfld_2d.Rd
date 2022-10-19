@@ -8,12 +8,12 @@ fit_vfld_2d(
   vf,
   x_start = vf$x_start,
   x_end = vf$x_end,
-  x_by = vf$x_by,
+  x_by = vf$x_by/5,
   y_start = vf$y_start,
   y_end = vf$y_end,
-  y_by = vf$y_by,
-  x_sparse = 1,
-  y_sparse = 1,
+  y_by = vf$y_by/5,
+  x_sparse = 5,
+  y_sparse = 5,
   ...
 )
 }
@@ -22,7 +22,7 @@ fit_vfld_2d(
 
 \item{x_start, x_end, x_by, y_start, y_end, y_by}{Specify the sample grid for the output: the starting, ending, and increment of the sequences for both axes.}
 
-\item{x_sparse, y_sparse}{Should the sample points for calculating the non-gradient part of the field be sparser than the sample points for calculating the landscape? Integer numbers larger than 1.}
+\item{x_sparse, y_sparse}{A number. For calculating the non-gradient part of the vector field, how much should the sample points be sparser than the sample points for the potential landscape?}
 
 \item{...}{Other parameters passed to \code{\link[=approxPot2D]{approxPot2D()}}.}
 }

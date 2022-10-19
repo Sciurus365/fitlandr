@@ -4,7 +4,7 @@
 \alias{MVKE}
 \title{Multivariate vector field kernel estimator}
 \usage{
-MVKE(d, h = 1)
+MVKE(d, h = 0.2)
 }
 \arguments{
 \item{d}{The dataset. Should be a matrix or a data frame, with each row representing a random vector.}
