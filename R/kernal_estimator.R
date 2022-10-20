@@ -18,29 +18,34 @@ MVKE <- function(d, h = 0.2) {
   temp_d <- d[1:(nrow(d) - 1), ]
   temp_diff <- diff(d)
   temp_norm <- apply(temp_diff, MARGIN = 1, FUN = function(x) norm(x, "2"))
+  temp_diff_tcrossprod <- apply(temp_diff,
+  															 MARGIN = 1,
+  															 FUN = function(x) {
+  															 	tcrossprod(x, x)
+  															 }, simplify = FALSE
+  )
 
   force(h)
   function(x) {
   	if(length(x) != dim) stop("Input of wrong dimension.")
-    temp_kernel_term_upper <- apply(temp_d, MARGIN = 1, FUN = function(y) {
-      K_gaussian(y - x, h = h)
-    })
-    temp_kernel_term_lower <- apply(d, MARGIN = 1, FUN = function(y) {
-      K_gaussian(y - x, h = h)
-    })
+    temp_kernel_term_upper <- K_gaussian_mat(temp_d, x, h = h)
+    temp_kernel_term_lower <- K_gaussian_mat(d, x, h = h)
     return(list(
       mu = colSums(temp_kernel_term_upper * temp_diff) / sum(temp_kernel_term_lower),
-      a = mapply(`*`, temp_kernel_term_upper, apply(temp_diff,
-        MARGIN = 1,
-        FUN = function(x) {
-          x %*% t(x)
-        }, simplify = FALSE
-      ), SIMPLIFY = FALSE) %>% Reduce(`+`, .) / sum(temp_kernel_term_lower)
+      a = mapply(`*`, temp_kernel_term_upper, temp_diff_tcrossprod, SIMPLIFY = FALSE) %>% Reduce(`+`, .) / sum(temp_kernel_term_lower)
     ))
   }
 }
 
-K_gaussian <- function(x, h) {
-  dim <- length(x)
-  1 / (h^dim) * prod(stats::dnorm(x / h))
+# K_gaussian <- function(x, h) {
+#   dim <- length(x)
+#   1 / (h^dim) * prod(stats::dnorm(x / h))
+# }
+
+K_gaussian_mat <- function(mat, x, h) {
+	dim <- length(x)
+	mat <- mat - matrix(rep(x, nrow(mat)), ncol = dim, byrow = TRUE)
+	mat <- stats::dnorm(mat / h)
+	values <- 1 / (h^dim) * Rfast::rowprods(mat)
+	return(values)
 }

@@ -142,8 +142,8 @@ fit_vf_2d <- function(d, x, y,
 #' @export
 #' @seealso [plot.2d_vf_landscape()]
 fit_vfld_2d <- function(vf,
-												x_start = vf$x_start, x_end = vf$x_end, x_by = vf$x_by/5,
-												y_start = vf$y_start, y_end = vf$y_end, y_by = vf$y_by/5, x_sparse = 5, y_sparse = 5, ...){
+												x_start = vf$x_start, x_end = vf$x_end, x_by = vf$x_by/2,
+												y_start = vf$y_start, y_end = vf$y_end, y_by = vf$y_by/2, x_sparse = 2, y_sparse = 2, ...){
 	if(!inherits(vf, "vectorfield")) rlang::abort("`vf` must be a `vectorfield` object.")
 	xs <- seq(x_start, x_end, x_by)
 	ys <- seq(y_start, y_end, y_by)
