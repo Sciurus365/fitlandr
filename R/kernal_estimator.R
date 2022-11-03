@@ -4,11 +4,12 @@
 #'
 #' @param d The dataset. Should be a matrix or a data frame, with each row representing a random vector.
 #' @param h The bandwidth for the kernel estimator.
+#' @param kernel The type of kernel estimator used. "exp" by default ([exp()]), and if "Gaussian" then [stats::dnorm()] will be used.
 #'
 #' @return A function(x), which then returns the \eqn{\mu} and \eqn{a} estimators at the position \eqn{x}.
 #' @references Bandi, F. M., & Moloche, G. (2018). On the functional estimation of multivariate diffusion processes. Econometric Theory, 34(4), 896-946. https://doi.org/10.1017/S0266466617000305
 #' @export
-MVKE <- function(d, h = 0.2) {
+MVKE <- function(d, h = 0.2, kernel = c("exp", "Gaussian")) {
   if (is.data.frame(d)) d <- as.matrix(d)
   if (!is.matrix(d)) stop("`d` should be a data.frame or a matrix.")
 
@@ -24,6 +25,10 @@ MVKE <- function(d, h = 0.2) {
   															 	tcrossprod(x, x)
   															 }, simplify = FALSE
   )
+	kernel <- kernel[1]
+	if(kernel == "Gaussian") K <- K_gaussian_mat
+	else if(kernel == "exp") K <- K_exp_mat
+	else stop('`kernel` must be one of "Gaussian" or "exp".')
 
   force(h)
   function(x) {
@@ -46,6 +51,14 @@ K_gaussian_mat <- function(mat, x, h) {
 	dim <- length(x)
 	mat <- mat - matrix(rep(x, nrow(mat)), ncol = dim, byrow = TRUE)
 	mat <- stats::dnorm(mat / h)
+	values <- 1 / (h^dim) * Rfast::rowprods(mat)
+	return(values)
+}
+
+K_exp_mat <- function(mat, x, h) {
+	dim <- length(x)
+	mat <- mat - matrix(rep(x, nrow(mat)), ncol = dim, byrow = TRUE)
+	mat <- exp(mat / h)
 	values <- 1 / (h^dim) * Rfast::rowprods(mat)
 	return(values)
 }
