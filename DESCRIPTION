@@ -17,9 +17,11 @@ Encoding: UTF-8
 LazyData: true
 Imports: 
     dplyr,
+    future.apply,
     ggplot2,
     grid,
     magrittr,
+    MASS,
     Matrix,
     numDeriv,
     Rfast,

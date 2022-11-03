@@ -48,6 +48,10 @@ scale_up <- function(v, ref) {
 	v*attr(ref, "scale")
 }
 
+scale_up2 <- function(v, ref) {
+	v*attr(ref, "scale")^2
+}
+
 denormalize_x <- function(x, ref) {
 	x*attr(ref, "scale")+attr(ref, "mean")[1]
 }
