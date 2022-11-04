@@ -14,7 +14,7 @@
 #' @return A `vectorfield` object.
 #' @seealso [plot.vectorfield()]
 #' @export
-fit_vf_2d <- function(d, x, y,
+fit_2d_vf <- function(d, x, y,
 											x_start = min(d[,x], na.rm = TRUE) - 0.1*(max(d[,x], na.rm = TRUE)-min(d[,x], na.rm = TRUE)),
 											x_end = max(d[,x], na.rm = TRUE) + 0.1*(max(d[,x], na.rm = TRUE)-min(d[,x], na.rm = TRUE)),
 											x_by = 0.05*(max(d[,x], na.rm = TRUE)-min(d[,x], na.rm = TRUE)),
@@ -126,47 +126,3 @@ fit_vf_2d <- function(d, x, y,
 
 	return(result)
 }
-
-#' Estimate a 2D potential landscape from a vector field
-#'
-#' This is done by a decomposition method described in the reference, using a modified version of [waydown::approxPot2D()].
-#'
-#' @param vf A `vectorfield` object estimated by [fit_vf_2d()]. The other parameters will be inherited from the `vectorfield` object if not otherwise specified.
-#' @param x_sparse,y_sparse A number. For calculating the non-gradient part of the vector field, how much should the sample points be sparser than the sample points for the potential landscape?
-#' @param ... Other parameters passed to [approxPot2D()].
-#'
-#' @export
-#' @inheritParams fit_vf_2d
-#' @inheritParams vectorfield_nongradient_2D
-#' @references Rodríguez-Sánchez, P., Nes, E. H. van, & Scheffer, M. (2020). Climbing Escher’s stairs: A way to approximate stability landscapes in multidimensional systems. PLOS Computational Biology, 16(4), e1007788. https://doi.org/10.1371/journal.pcbi.1007788
-#' @export
-#' @seealso [plot.2d_vf_landscape()]
-# fit_vfld_2d <- function(vf,
-# 												x_start = vf$x_start, x_end = vf$x_end, x_by = vf$x_by/2,
-# 												y_start = vf$y_start, y_end = vf$y_end, y_by = vf$y_by/2, x_sparse = 2, y_sparse = 2, ...){
-# 	if(!inherits(vf, "vectorfield")) rlang::abort("`vf` must be a `vectorfield` object.")
-# 	xs <- seq(x_start, x_end, x_by)
-# 	ys <- seq(y_start, y_end, y_by)
-#
-# 	if(vf$method == "VFC") f <- function(x) stats::predict(vf$VFCresult, x %>% normalize_v(vf$data_normalized)) %>% scale_up(vf$data_normalized)
-# 	else if(vf$method == "MVKE") f <- function(x) vf$MVKEresult(x %>% normalize_v(vf$data_normalized))$mu %>% scale_up(vf$data_normalized)
-# 	wdresult <- approxPot2D(f, xs = xs, ys = ys, ...)
-# 	wdresult$xs <- xs
-# 	wdresult$ys <- ys
-# 	dist <- simlandr::make_2d_tidy_dist(list(x = xs, y = ys, z = wdresult$V))
-# 	dist_error <- simlandr::make_2d_tidy_dist(list(x = xs, y = ys, z = wdresult$err))
-#
-# 	dist_nongrad <- vectorfield_nongradient_2D(wdresult, x_sparse, y_sparse)
-#
-# 	result <- list(
-# 		dist = dist,
-# 		dist_error = dist_error,
-# 		dist_raw = wdresult,
-# 		dist_nongrad = dist_nongrad,
-# 		vf = vf
-# 	)
-#
-# 	class(result) <- c("2d_vf_landscape", "landscape")
-#
-# 	return(result)
-# }

@@ -9,11 +9,13 @@ sim_vf(
   chains = 10,
   length = 10000,
   discard = 0.3,
-  inits = matrix(c(runif(chains, min = vf$x_start, max = vf$x_end), runif(chains, min =
-    vf$y_start, max = vf$y_end)), ncol = 2)
+  inits = matrix(c(stats::runif(chains, min = vf$x_start, max = vf$x_end),
+    stats::runif(chains, min = vf$y_start, max = vf$y_end)), ncol = 2)
 )
 }
 \arguments{
+\item{vf}{A \code{vectorfield} object estimated by \code{\link[=fit_2d_vf]{fit_2d_vf()}}.]}
+
 \item{chains}{How many chains simulations should be performed?}
 
 \item{length}{The simulation length for each chain.}

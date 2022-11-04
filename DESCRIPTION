@@ -22,8 +22,6 @@ Imports:
     grid,
     magrittr,
     MASS,
-    Matrix,
-    numDeriv,
     Rfast,
     rlang,
     simlandr,

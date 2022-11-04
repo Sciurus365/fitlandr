@@ -6,17 +6,17 @@
 \usage{
 simlandr_options(
   vf,
-  x = vf$x,
-  y = vf$y,
+  x = rlang::expr(vf$x),
+  y = rlang::expr(vf$y),
   n = 200,
-  lims = c(vf$x_start, vf$x_end, vf$y_start, vf$y_end),
+  lims = rlang::expr(c(vf$x_start, vf$x_end, vf$y_start, vf$y_end)),
   Umax = 8,
   h = 0.1,
   kde_fun = "ks"
 )
 }
 \arguments{
-\item{vf}{A \code{vectorfield} object estimated by \code{\link[=fit_vf_2d]{fit_vf_2d()}}.]}
+\item{vf}{A \code{vectorfield} object estimated by \code{\link[=fit_2d_vf]{fit_2d_vf()}}.]}
 
 \item{x, y}{The name of the target variable.}
 
