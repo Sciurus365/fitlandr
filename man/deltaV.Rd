@@ -4,7 +4,15 @@
 \alias{deltaV}
 \title{Approximate potential difference between two points}
 \usage{
-deltaV(f, x, x0, normType = "f", jacobianMethod = "Richardson", ...)
+deltaV(
+  f,
+  x,
+  x0,
+  normType = "f",
+  jacobianMethod = "Richardson",
+  reg_tanh = FALSE,
+  ...
+)
 }
 \arguments{
 \item{f}{Flow equations (right hand side of differential equation)}

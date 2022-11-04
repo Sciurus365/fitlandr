@@ -11,23 +11,24 @@ approxPot2D(
   V0 = "auto",
   mode = "mixed",
   jacobianMethod = "Richardson",
+  reg_tanh = FALSE,
   ...
 )
 }
 \arguments{
-\item{f}{Two-dimensional representing the flow (right hand side of differential equation)}
+\item{f}{Two-dimensional representing the flow (right hand side of differential equation).}
 
-\item{xs}{Vector xs positions to evaluate}
+\item{xs}{Vector xs positions to evaluate.}
 
-\item{ys}{Vector of ys positions to evaluate}
+\item{ys}{Vector of ys positions to evaluate.}
 
-\item{V0}{(Optional) Value of V at first element of (xs,ys). When default, the global minimum is assigned 0}
+\item{V0}{(Optional) Value of V at first element of (xs,ys). When default, the global minimum is assigned 0.}
 
-\item{mode}{(Optional) Integration mode. Options are horizontal (default), vertical and mixed}
+\item{mode}{(Optional) Integration mode. Options are horizontal (default), vertical and mixed.}
 
 \item{jacobianMethod}{Passed to \code{method} of \code{\link[numDeriv:jacobian]{numDeriv::jacobian()}}.}
 
-\item{...}{Other parameters passed to \code{\link[numDeriv:jacobian]{numDeriv::jacobian()}}.}
+\item{...}{Other parameters passed to \code{\link[=deltaV]{deltaV()}}.}
 }
 \value{
 The potential estimated at each point (xs, ys)
