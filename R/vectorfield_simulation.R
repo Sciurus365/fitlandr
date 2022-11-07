@@ -21,12 +21,13 @@ fit_2d_vfld <- function(vf, method = "simlandr", .sim_vf_options = sim_vf_option
 #' Parallel computing based on `future` is supported. Use `future::plan("multisession")` to enable this.
 #'
 #' @inheritParams fit_2d_vfld
+#' @param noise Relative noise of the simulation. Make this smaller when the simulation is unstable, and make this larger when the simulation converges too slowly.
 #' @param chains How many chains simulations should be performed?
 #' @param length The simulation length for each chain.
 #' @param discard How much of the starting part of each chain should be discarded? (Warming-up period.)
 #' @param inits The initial values of each chain.
 #' @export
-sim_vf <- function(vf, chains = 10, length = 1e4, discard = 0.3, inits = matrix(c(
+sim_vf <- function(vf, noise = 1, chains = 10, length = 1e4, discard = 0.3, inits = matrix(c(
 	stats::runif(chains, min = vf$x_start, max = vf$x_end),
 	stats::runif(chains, min = vf$y_start, max = vf$y_end)
 ), ncol = 2)) {
@@ -47,21 +48,21 @@ sim_vf <- function(vf, chains = 10, length = 1e4, discard = 0.3, inits = matrix(
 	}
 
 	force(inits)
-  result <- future.apply::future_apply(inits, MARGIN = 1, FUN = sim_vf_single, f = f, length = length, simplify = FALSE, future.seed = TRUE, future.packages = "SparseVFC")
+  result <- future.apply::future_apply(inits, MARGIN = 1, FUN = sim_vf_single, f = f, length = length, noise = noise, simplify = FALSE, future.seed = TRUE, future.packages = "SparseVFC")
   # result <- furrr::future_map(inits %>% asplit(MARGIN = 1), .f = sim_vf_single, f = f, length = length, .options = furrr::furrr_options(seed = TRUE))
   result <- lapply(result, function(x) x[1:(nrow(x)*(1-discard)),]) %>% do.call(rbind, .)
   colnames(result) <- colnames(vf$data)
   return(result)
 }
 
-sim_vf_single <- function(init, f, length) {
+sim_vf_single <- function(init, f, length, noise) {
   dim <- length(init)
   result <- matrix(NA_real_, nrow = length, ncol = dim)
   result[1, ] <- init
   for (i in 2:length) {
     prev <- result[i - 1, ]
     dyn <- f(prev)
-    next_point <- prev + dyn$v + MASS::mvrnorm(mu = rep(0, dim), Sigma = dyn$a)
+    next_point <- prev + dyn$v + MASS::mvrnorm(mu = rep(0, dim), Sigma = dyn$a * noise)
     result[i, ] <- next_point
   }
   return(result)
@@ -73,12 +74,12 @@ sim_vf_single <- function(init, f, length) {
 #' @inheritParams fit_2d_vfld
 #' @inheritParams sim_vf
 #' @export
-sim_vf_options <- function(vf, chains = 10, length = 1e4, discard = 0.3, inits = rlang::expr(matrix(c(
+sim_vf_options <- function(vf, noise = 1, chains = 10, length = 1e4, discard = 0.3, inits = rlang::expr(matrix(c(
 	stats::runif(chains, min = vf$x_start, max = vf$x_end),
 	stats::runif(chains, min = vf$y_start, max = vf$y_end)
 ), ncol = 2))) {
-	if(!missing(vf)) return(list(vf = vf, chains = chains, length = length, discard = discard, inits = eval(inits)))
-	else return(list(vf = rlang::expr(vf), chains = chains, length = length, discard = discard, inits = inits))
+	if(!missing(vf)) return(list(vf = vf, noise = noise, chains = chains, length = length, discard = discard, inits = eval(inits)))
+	else return(list(vf = rlang::expr(vf), noise = noise, chains = chains, length = length, discard = discard, inits = inits))
 }
 
 #' Options controlling the landscape construction

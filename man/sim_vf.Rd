@@ -6,6 +6,7 @@
 \usage{
 sim_vf(
   vf,
+  noise = 1,
   chains = 10,
   length = 10000,
   discard = 0.3,
@@ -15,6 +16,8 @@ sim_vf(
 }
 \arguments{
 \item{vf}{A \code{vectorfield} object estimated by \code{\link[=fit_2d_vf]{fit_2d_vf()}}.]}
+
+\item{noise}{Relative noise of the simulation. Make this smaller when the simulation is unstable, and make this larger when the simulation converges too slowly.}
 
 \item{chains}{How many chains simulations should be performed?}
 
