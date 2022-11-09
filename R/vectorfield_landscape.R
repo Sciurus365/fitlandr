@@ -98,7 +98,8 @@ fit_2d_vf <- function(d, x, y,
   vec <- vec %>%
   	dplyr::mutate(
   		vx = v[1],
-  		vy = v[2]
+  		vy = v[2],
+  		v_norm = (sum(v^2))^(1/2)
   	) %>%
   	dplyr::select(-v) %>%
   	dplyr::ungroup()
