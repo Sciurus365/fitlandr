@@ -13,8 +13,8 @@ Description: A toolbox for estimating vector fields from intensive
     (2013) <doi:10.1016/j.patcog.2013.05.017> and the Multivariate Vector
     Field Kernel Estimator (MVKE) by Bandi & Moloche (2018)
     <doi:10.1017/S0266466617000305>. The potential landscapes are
-    constructed with the Jacobian matrix decomposition method proposed by
-    Rodríguez-Sánchez et al.  (2020).
+    constructed with a simulation-based approach with the simlandr
+    package.
 License: GPL (>= 3)
 Imports: 
     dplyr,
