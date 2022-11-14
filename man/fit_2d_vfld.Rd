@@ -12,7 +12,7 @@ fit_2d_vfld(
 )
 }
 \arguments{
-\item{vf}{A \code{vectorfield} object estimated by \code{\link[=fit_2d_vf]{fit_2d_vf()}}.]}
+\item{vf}{A \code{vectorfield} object estimated by \code{\link[=fit_2d_vf]{fit_2d_vf()}}.}
 
 \item{method}{The method used for landscape construction. Currently "simlandr" is the only possible choice.}
 
