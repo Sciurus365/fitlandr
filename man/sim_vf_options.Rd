@@ -27,7 +27,7 @@ sim_vf_options(
 
 \item{discard}{How much of the starting part of each chain should be discarded? (Warming-up period.)}
 
-\item{forbid_overflow}{If \code{TRUE}, when the simulated system runs out of the margins specified in \code{vf}, the system will be moved back to a random position within the margins. This can help to stablize the simulation. \code{FALSE} by default.}
+\item{forbid_overflow}{If \code{TRUE}, when the simulated system runs out of the margins specified in \code{vf}, the system will be moved back to the previous value. This can help to stablize the simulation. \code{FALSE} by default.}
 
 \item{inits}{The initial values of each chain.}
 }

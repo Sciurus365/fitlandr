@@ -26,6 +26,7 @@ Imports:
     MASS,
     Rfast,
     rlang,
+    rootSolve,
     simlandr (>= 0.3.0),
     SparseVFC,
     tidyr
