@@ -8,7 +8,7 @@ simlandr_options(
   vf,
   x = rlang::expr(vf$x),
   y = rlang::expr(vf$y),
-  lims = rlang::expr(c(vf$x_start, vf$x_end, vf$y_start, vf$y_end)),
+  lims = rlang::expr(vf$lims),
   kde_fun = c("ks", "MASS"),
   n = 200,
   adjust = 1,

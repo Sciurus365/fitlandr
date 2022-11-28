@@ -74,7 +74,7 @@ Fit the potential landscape:
 ``` r
 future::plan("multisession")
 set.seed(1614)
-l1 <- fit_2d_vfld(v1, .sim_vf_options = sim_vf_options(chains = 16), .simlandr_options = simlandr_options(adjust = 5, Umax = 5))
+l1 <- fit_3d_vfld(v1, .sim_vf_options = sim_vf_options(chains = 16), .simlandr_options = simlandr_options(adjust = 5, Umax = 5))
 plot(l1, 2)
 ```
 
@@ -83,7 +83,7 @@ plot(l1, 2)
 ``` r
 # equivalent:
 # s1 <- sim_vf(v1, chains = 16)
-# l1 <- simlandr::make_3d_static(s1, x = "x", y = "y", lims = c(v1$x_start, v1$x_end, v1$y_start, v1$y_end), adjust = 5, Umax = 5)
+# l1 <- simlandr::make_3d_static(s1, x = "x", y = "y", lims = v1$lims, adjust = 5, Umax = 5)
 ```
 
 Fit the vector field with MVKE (see `?MVKE` for the explanations of
@@ -100,7 +100,7 @@ Fit the potential landscape:
 
 ``` r
 set.seed(1614)
-l2 <- fit_2d_vfld(v2, .sim_vf_options = sim_vf_options(noise = 0.2, chains = 16), .simlandr_options = simlandr_options(adjust = 5, Umax = 5))
+l2 <- fit_3d_vfld(v2, .sim_vf_options = sim_vf_options(noise = 0.2, chains = 16), .simlandr_options = simlandr_options(adjust = 5, Umax = 5))
 plot(l2, 2)
 ```
 
@@ -109,5 +109,5 @@ plot(l2, 2)
 ``` r
 # equivalent:
 # s2 <- sim_vf(v2, noise = 0.2, chains = 16)
-# l2 <- simlandr::make_3d_static(s2, x = "x", y = "y", lims = c(v2$x_start, v2$x_end, v2$y_start, v2$y_end), adjust = 5, Umax = 4)
+# l2 <- simlandr::make_3d_static(s2, x = "x", y = "y", lims = v2$lims, adjust = 5, Umax = 4)
 ```

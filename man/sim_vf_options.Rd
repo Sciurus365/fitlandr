@@ -11,8 +11,9 @@ sim_vf_options(
   chains = 10,
   length = 10000,
   discard = 0.3,
-  inits = rlang::expr(matrix(c(stats::runif(chains, min = vf$x_start, max = vf$x_end),
-    stats::runif(chains, min = vf$y_start, max = vf$y_end)), ncol = 2))
+  forbid_overflow = FALSE,
+  inits = rlang::expr(matrix(c(stats::runif(chains, min = vf$lims[1], max = vf$lims[2]),
+    stats::runif(chains, min = vf$lims[3], max = vf$lims[4])), ncol = 2))
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ sim_vf_options(
 \item{length}{The simulation length for each chain.}
 
 \item{discard}{How much of the starting part of each chain should be discarded? (Warming-up period.)}
+
+\item{forbid_overflow}{If \code{TRUE}, when the simulated system runs out of the margins specified in \code{vf}, the system will be moved back to a random position within the margins. This can help to stablize the simulation. \code{FALSE} by default.}
 
 \item{inits}{The initial values of each chain.}
 }
