@@ -5,7 +5,7 @@
 #' @param data The data set used for estimating the vector field.
 #' Should be a data frame or a matrix.
 #' @param x,y Characters to indicate the name of the two variables.
-#' @param lims The limits of the range for the vector field estimation as c(xl, xu, yl, yu) If missing, the range of the data extended by 10% for both sides will be used.
+#' @param lims The limits of the range for the vector field estimation as `c(<xl>, <xu>, <yl>, <yu>)`. If missing, the range of the data extended by 10% for both sides will be used.
 #' @param n The number of equally spaced points in each axis, at which the vectors are to be estimated.
 #' @param vector_position Only useful if `method == "VFC"`. One of "start", "middle", or "end", representing the position of the vectors. If "start", for example, the starting point of a vector is regarded as the position of the vector.
 #' @param na_action One of "omit_data_points" or "omit_vectors". If using "omit_data_points", then only the `NA` points are omitted, and the points before and after an `NA` will form a vector. If using "omit_vectors", then the vectors will be omitted if either of its points is `NA`.

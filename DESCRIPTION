@@ -17,6 +17,8 @@ Description: A toolbox for estimating vector fields from intensive
     package.
 License: GPL (>= 3)
 Imports: 
+    akima,
+    cli,
     dplyr,
     future.apply,
     ggplot2,

@@ -22,7 +22,7 @@ Should be a data frame or a matrix.}
 
 \item{x, y}{Characters to indicate the name of the two variables.}
 
-\item{lims}{The limits of the range for the vector field estimation as c(xl, xu, yl, yu) If missing, the range of the data extended by 10\% for both sides will be used.}
+\item{lims}{The limits of the range for the vector field estimation as \verb{c(<xl>, <xu>, <yl>, <yu>)}. If missing, the range of the data extended by 10\% for both sides will be used.}
 
 \item{n}{The number of equally spaced points in each axis, at which the vectors are to be estimated.}
 
