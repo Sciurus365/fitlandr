@@ -92,3 +92,4 @@ plot(l2, 2)
 # s2 <- sim_vf(v2, noise = 0.2, chains = 16)
 # l2 <- simlandr::make_3d_static(s2, x = "x", y = "y", lims = v2$lims, adjust = 5, Umax = 4)
 ```
+

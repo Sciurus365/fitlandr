@@ -75,6 +75,8 @@ Fit the potential landscape:
 future::plan("multisession")
 set.seed(1614)
 l1 <- fit_3d_vfld(v1, .sim_vf_options = sim_vf_options(chains = 16), .simlandr_options = simlandr_options(adjust = 5, Umax = 5))
+#> ℹ Simulating the model✔ Simulating the model [19.4s]
+#> ℹ Constructing the landscape✔ Constructing the landscape [1.7s]
 plot(l1, 2)
 ```
 
@@ -101,6 +103,8 @@ Fit the potential landscape:
 ``` r
 set.seed(1614)
 l2 <- fit_3d_vfld(v2, .sim_vf_options = sim_vf_options(noise = 0.2, chains = 16), .simlandr_options = simlandr_options(adjust = 5, Umax = 5))
+#> ℹ Simulating the model✔ Simulating the model [9.6s]
+#> ℹ Constructing the landscape✔ Constructing the landscape [967ms]
 plot(l2, 2)
 ```
 

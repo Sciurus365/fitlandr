@@ -30,4 +30,6 @@ Two methods are available: \code{method = "pathB"} and \code{method = "simlandr"
 For \code{method = "pathB"}, the landscape is constructed based on the deterministic path-integral quasi-potential defined by Bhattacharya et al. (2011).
 
 For \code{method = "simlandr"}, the landscape is constructed based on the generalized potential landscape by Wang et al. (2008), implemented by the \code{simlandr} package. This function is a wraper of \code{\link[=sim_vf]{sim_vf()}} and \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}}. Use those two functions seperately for more customization.
+
+Parallel computing based on \code{future} is supported for both methods. Use \code{future::plan("multisession")} to enable this and speed up computation.
 }

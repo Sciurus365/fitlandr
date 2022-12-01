@@ -16,7 +16,7 @@ find_eqs(vf, starts, jacobian_params = list(), ...)
 \item{...}{Parameters passed to \code{\link[rootSolve:multiroot]{rootSolve::multiroot()}}.}
 }
 \value{
-A list of equilibrium points and their details. Use \code{\link[=print.vectorfield_eqs]{print.vectorfield_eqs()}} to inspect it.
+A list of equilibrium points and their details. Use \code{print.vectorfield_eqs()} to inspect it.
 }
 \description{
 Find equilibrium points for a vector field

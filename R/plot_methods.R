@@ -20,7 +20,7 @@
 #'
 #' @export
 plot.vectorfield <- function(x, arrow = grid::arrow(length = grid::unit(0.1, "cm")),
-														 show_estimated_vector = TRUE,
+                             show_estimated_vector = TRUE,
                              estimated_vector_enlarge = 1,
                              estimated_vector_options = list(),
                              show_point = TRUE,
@@ -30,8 +30,8 @@ plot.vectorfield <- function(x, arrow = grid::arrow(length = grid::unit(0.1, "cm
                              original_vector_options = list(),
                              show_used_vector = FALSE,
                              used_vector_options = list(color = "red"),
-														 show_v_norm = FALSE,
-														 v_norm_options = list(),
+                             show_v_norm = FALSE,
+                             v_norm_options = list(),
                              ...) {
   p <-
     ggplot2::ggplot(x$vec_grid, ggplot2::aes(x = x, y = y)) +
@@ -39,20 +39,20 @@ plot.vectorfield <- function(x, arrow = grid::arrow(length = grid::unit(0.1, "cm
     ggplot2::labs(x = x$x, y = x$y)
 
   if (show_estimated_vector) {
-  	p <- p +
-  	do.call(
-  		ggplot2::geom_segment,
-  		c(
-  			list(
-  				mapping = ggplot2::aes(
-  					xend = x + vx * estimated_vector_enlarge,
-  					yend = y + vy * estimated_vector_enlarge
-  				),
-  				arrow = arrow
-  			),
-  			estimated_vector_options
-  		)
-  	)
+    p <- p +
+      do.call(
+        ggplot2::geom_segment,
+        c(
+          list(
+            mapping = ggplot2::aes(
+              xend = x + vx * estimated_vector_enlarge,
+              yend = y + vy * estimated_vector_enlarge
+            ),
+            arrow = arrow
+          ),
+          estimated_vector_options
+        )
+      )
   }
 
   if (show_point) {
@@ -110,18 +110,18 @@ plot.vectorfield <- function(x, arrow = grid::arrow(length = grid::unit(0.1, "cm
   }
 
   if (show_v_norm) {
-  	p <- p -
-  		do.call(
-  			ggplot2::geom_raster,
-  			c(
-  				list(
-  					mapping = ggplot2::aes(
-  						fill = v_norm
-  					)
-  				),
-  				v_norm_options
-  			)
-  		) + ggplot2::scale_fill_viridis_c()
+    p <- p -
+      do.call(
+        ggplot2::geom_raster,
+        c(
+          list(
+            mapping = ggplot2::aes(
+              fill = v_norm
+            )
+          ),
+          v_norm_options
+        )
+      ) + ggplot2::scale_fill_viridis_c()
   }
 
   return(p)
@@ -130,12 +130,12 @@ plot.vectorfield <- function(x, arrow = grid::arrow(length = grid::unit(0.1, "cm
 
 #' @references krassowski's answer at https://stackoverflow.com/questions/20249653/insert-layer-underneath-existing-layers-in-ggplot2-object
 `-.gg` <- function(plot, layer) {
-	if (missing(layer)) {
-		stop("Cannot use `-.gg()` with a single argument. Did you accidentally put - on a new line?")
-	}
-	if (!ggplot2::is.ggplot(plot)) {
-		stop("Need a plot on the left side")
-	}
-	plot$layers <- c(layer, plot$layers)
-	plot
+  if (missing(layer)) {
+    stop("Cannot use `-.gg()` with a single argument. Did you accidentally put - on a new line?")
+  }
+  if (!ggplot2::is.ggplot(plot)) {
+    stop("Need a plot on the left side")
+  }
+  plot$layers <- c(layer, plot$layers)
+  plot
 }
