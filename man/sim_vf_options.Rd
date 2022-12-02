@@ -8,9 +8,12 @@ See \code{\link[=sim_vf]{sim_vf()}} for details.}
 sim_vf_options(
   vf,
   noise = 1,
+  noise_warmup = noise,
   chains = 10,
   length = 10000,
   discard = 0.3,
+  stepsize = 0.01,
+  sparse = 1,
   forbid_overflow = FALSE,
   inits = rlang::expr(matrix(c(stats::runif(chains, min = vf$lims[1], max = vf$lims[2]),
     stats::runif(chains, min = vf$lims[3], max = vf$lims[4])), ncol = 2))
@@ -21,11 +24,17 @@ sim_vf_options(
 
 \item{noise}{Relative noise of the simulation. Set this smaller when the simulation is unstable (e.g., when the elements in the diffusion matrix are not finite), and set this larger when the simulation converges too slowly.}
 
+\item{noise_warmup}{The noise used for the warming-up period.}
+
 \item{chains}{How many chains simulations should be performed?}
 
 \item{length}{The simulation length for each chain.}
 
 \item{discard}{How much of the starting part of each chain should be discarded? (Warming-up period.)}
+
+\item{stepsize}{The stepsize for Euler–Maruyama simulation of the system.}
+
+\item{sparse}{A number. How much do you want to sparsify the output? When the noise is small, sparsify the output may make the density estimation more efficient.}
 
 \item{forbid_overflow}{If \code{TRUE}, when the simulated system runs out of the margins specified in \code{vf}, the system will be moved back to the previous value. This can help to stablize the simulation. \code{FALSE} by default.}
 

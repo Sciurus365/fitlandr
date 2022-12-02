@@ -7,7 +7,7 @@
 sim_vf(
   vf,
   noise = 1,
-  noise_warmup = 5,
+  noise_warmup = noise,
   chains = 10,
   length = 10000,
   discard = 0.3,

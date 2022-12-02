@@ -45,12 +45,12 @@ devtools::install_github("Sciurus365/fitlandr")
 We use the following bistable dynamic system to illustrate the use of `fitlandr`. The test data set is created as follows.
 
 ```{r message=FALSE}
-single_output_grad <- simlandr::sim_fun_grad(length = 100, seed = 1614)
+single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
 
 library(tidyverse)
 ggplot(data = single_output_grad %>% as_tibble()) +
-	geom_path(aes(x = 1:100, y = x), color = "blue") +
-	geom_path(aes(x = 1:100, y = y), color = "red") +
+	geom_path(aes(x = 1:200, y = x), color = "blue") +
+	geom_path(aes(x = 1:200, y = y), color = "red") +
 	theme_bw()
 ```
 
@@ -67,10 +67,10 @@ Fit the potential landscape:
 ```{r warning=FALSE}
 future::plan("multisession")
 set.seed(1614)
-l1 <- fit_3d_vfld(v1, .sim_vf_options = sim_vf_options(chains = 16), .simlandr_options = simlandr_options(adjust = 5, Umax = 5))
+l1 <- fit_3d_vfld(v1, .sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE), .simlandr_options = simlandr_options(adjust = 5, Umax = 5))
 plot(l1, 2)
 # equivalent:
-# s1 <- sim_vf(v1, chains = 16)
+# s1 <- sim_vf(v1, chains = 16, stepsize = 1, forbid_overflow = TRUE)
 # l1 <- simlandr::make_3d_static(s1, x = "x", y = "y", lims = v1$lims, adjust = 5, Umax = 5)
 ```
 
@@ -86,10 +86,10 @@ Fit the potential landscape:
 
 ```{r warning=FALSE}
 set.seed(1614)
-l2 <- fit_3d_vfld(v2, .sim_vf_options = sim_vf_options(noise = 0.2, chains = 16), .simlandr_options = simlandr_options(adjust = 5, Umax = 5))
+l2 <- fit_3d_vfld(v2, .sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE), .simlandr_options = simlandr_options(adjust = 5, Umax = 4))
 plot(l2, 2)
 # equivalent:
-# s2 <- sim_vf(v2, noise = 0.2, chains = 16)
+# s2 <- sim_vf(v2, chains = 16, stepsize = 1, forbid_overflow = TRUE)
 # l2 <- simlandr::make_3d_static(s2, x = "x", y = "y", lims = v2$lims, adjust = 5, Umax = 4)
 ```
 

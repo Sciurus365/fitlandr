@@ -88,14 +88,14 @@ sim_vf_single <- function(init, f, length, noise, noise_warmup, stepsize, discar
 #' @inheritParams fit_3d_vfld
 #' @inheritParams sim_vf
 #' @export
-sim_vf_options <- function(vf, noise = 1,noise_warmup = noise, chains = 10, length = 1e4, discard = 0.3, forbid_overflow = FALSE, inits = rlang::expr(matrix(c(
+sim_vf_options <- function(vf, noise = 1,noise_warmup = noise, chains = 10, length = 1e4, discard = 0.3, stepsize = 0.01, sparse = 1, forbid_overflow = FALSE, inits = rlang::expr(matrix(c(
                              stats::runif(chains, min = vf$lims[1], max = vf$lims[2]),
                              stats::runif(chains, min = vf$lims[3], max = vf$lims[4])
                            ), ncol = 2))) {
   if (!missing(vf)) {
-    return(list(vf = vf, noise = noise, chains = chains, length = length, discard = discard, forbid_overflow = forbid_overflow, inits = eval(inits)))
+    return(list(vf = vf, noise = noise, chains = chains, length = length, discard = discard, stepsize = stepsize, sparse = sparse, forbid_overflow = forbid_overflow, inits = eval(inits)))
   } else {
-    return(list(vf = rlang::expr(vf), noise = noise, chains = chains, length = length, discard = discard, forbid_overflow = forbid_overflow, inits = inits))
+    return(list(vf = rlang::expr(vf), noise = noise, chains = chains, length = length, discard = discard, stepsize = stepsize, sparse = sparse, forbid_overflow = forbid_overflow, inits = inits))
   }
 }
 
