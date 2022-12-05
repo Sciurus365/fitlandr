@@ -36,7 +36,7 @@ sim_vf_options(
 
 \item{sparse}{A number. How much do you want to sparsify the output? When the noise is small, sparsify the output may make the density estimation more efficient.}
 
-\item{forbid_overflow}{If \code{TRUE}, when the simulated system runs out of the margins specified in \code{vf}, the system will be moved back to the previous value. This can help to stablize the simulation. \code{FALSE} by default.}
+\item{forbid_overflow}{If \code{TRUE}, when the simulated system runs out of the margins specified in \code{vf}, the system will be moved back to the previous value. This can help to stabilize the simulation. \code{FALSE} by default.}
 
 \item{inits}{The initial values of each chain.}
 }
