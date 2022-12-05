@@ -19,9 +19,9 @@ fit_3d_vfld <- function(vf, method = c("simlandr", "pathB"), .pathB_options = pa
   if (method == "pathB") {
     all_pars <- .pathB_options %>% lapply(eval_pass_missing, list(vf = vf))
     if (all_pars$vf$method == "VFC") {
-      all_pars$f <- function(x) stats::predict(all_pars$vf$VFCresult, x)
+      all_pars$f <- function(x) stats::predict(all_pars$vf$VFCresult, x %>% normalize_v(vf$data_normalized)) %>% scale_up(vf$data_normalized)
     } else if (all_pars$vf$method == "MVKE") {
-      all_pars$f <- all_pars$vf$MVKEresult$mu
+      all_pars$f <- function(x) all_pars$vf$MVKEresult$mu(x %>% normalize_v(vf$data_normalized)) %>% scale_up(vf$data_normalized)
     }
     cli::cli_progress_step("Calculating path integrals")
     resultB <- do.call(path_integral_B, all_pars)
