@@ -149,16 +149,16 @@ predict.vectorfield <- function(object, pos, linear_interp = FALSE, calculate_a 
 		}
 		result <- list()
 		result$v <- with(object$interp_grid, c(
-			akima::bilinear(x = x, y = y, z = z_vector_1, x0 = pos[1], y0 = pos[2])$z,
-			akima::bilinear(x = x, y = y, z = z_vector_2, x0 = pos[1], y0 = pos[2])$z
+			fields_bilinear(x = x, y = y, z = z_vector_1, x0 = pos[1], y0 = pos[2])$z,
+			fields_bilinear(x = x, y = y, z = z_vector_2, x0 = pos[1], y0 = pos[2])$z
 			))
 		if (calculate_a) {
 			result$a <- with(object$interp_grid, matrix(
 				c(
-					akima::bilinear(x = x, y = y, z = z_diffusion_1, x0 = pos[1], y0 = pos[2])$z,
-					akima::bilinear(x = x, y = y, z = z_diffusion_2, x0 = pos[1], y0 = pos[2])$z,
-					akima::bilinear(x = x, y = y, z = z_diffusion_3, x0 = pos[1], y0 = pos[2])$z,
-					akima::bilinear(x = x, y = y, z = z_diffusion_4, x0 = pos[1], y0 = pos[2])$z
+					fields_bilinear(x = x, y = y, z = z_diffusion_1, x0 = pos[1], y0 = pos[2])$z,
+					fields_bilinear(x = x, y = y, z = z_diffusion_2, x0 = pos[1], y0 = pos[2])$z,
+					fields_bilinear(x = x, y = y, z = z_diffusion_3, x0 = pos[1], y0 = pos[2])$z,
+					fields_bilinear(x = x, y = y, z = z_diffusion_4, x0 = pos[1], y0 = pos[2])$z
 				), byrow = TRUE, nrow = 2, ncol = 2
 			))
 		}
@@ -215,4 +215,12 @@ normalize_predict_f <- function(vf) {
 		}
 	}
 	return(f)
+}
+
+#' To make fields::interp.surface accept the parameters of akima::bilinear and behave like it
+#' @inheritParams akima::bilinear
+fields_bilinear <- function(x, y, z, x0, y0) {
+	z <- fields::interp.surface(list(x = x, y = y, z = z), cbind(x0, y0))
+	if(is.na(z)) z <- 0
+	return(list(z = z))
 }

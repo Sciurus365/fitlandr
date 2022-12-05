@@ -20,6 +20,7 @@ Imports:
     akima,
     cli,
     dplyr,
+    fields,
     furrr,
     future.apply,
     ggplot2,

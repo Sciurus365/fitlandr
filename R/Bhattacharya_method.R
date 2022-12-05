@@ -81,7 +81,11 @@ path_integral_B <- function(f, lims, n_path_int = 20, stepsize = 1e-2, tol = 1e-
           }
 
           # check for convergence
-          if (abs(Pot - Pot_old) > tol) {
+          if (is.na(Pot - Pot_old)) {
+          	message(glue::glue("Warning: Missing potential value.
+      										 \t Start point: {i}, {j}.
+      										 \t End point: {x_p}, {y_p}. \n"))
+          } else if (abs(Pot - Pot_old) > tol) {
             message(glue::glue("Warning: Not converged.
       										 \t Start point: {i}, {j}.
       										 \t End point: {x_p}, {y_p}. \n"))

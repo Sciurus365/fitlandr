@@ -10,7 +10,7 @@ fit_3d_vfld(
   .pathB_options = pathB_options(vf),
   .sim_vf_options = sim_vf_options(vf),
   .simlandr_options = simlandr_options(vf),
-  linear_interp
+  linear_interp = FALSE
 )
 }
 \arguments{
