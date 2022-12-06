@@ -4,7 +4,9 @@
 ## usethis namespace: start
 #' @importFrom grid arrow
 #' @importFrom grid unit
+#' @importFrom Rcpp sourceCpp
 #' @importFrom simlandr get_dist
+#' @useDynLib fitlandr, .registration = TRUE
 ## usethis namespace: end
 NULL
 
