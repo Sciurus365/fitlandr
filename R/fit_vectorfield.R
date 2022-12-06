@@ -148,19 +148,20 @@ predict.vectorfield <- function(object, pos, linear_interp = FALSE, calculate_a 
 			stop("The grid for interpolation does not exist. Either use `<vf> <- add_interp_grid(<vf>)` to generate it, or use `linear_vec = TRUE`.")
 		}
 		result <- list()
-		result$v <- with(object$interp_grid, c(
-			fields_bilinear(x = x, y = y, z = z_vector_1, x0 = pos[1], y0 = pos[2])$z,
-			fields_bilinear(x = x, y = y, z = z_vector_2, x0 = pos[1], y0 = pos[2])$z
-			))
+		temp <- object$interp_grid
+		result$v <- c(
+			fast_bilinear(x = temp$x, y = temp$y, z = temp$z_vector_1, x0 = pos[1], y0 = pos[2])$z,
+			fast_bilinear(x = temp$x, y = temp$y, z = temp$z_vector_2, x0 = pos[1], y0 = pos[2])$z
+			)
 		if (calculate_a) {
-			result$a <- with(object$interp_grid, matrix(
+			result$a <- matrix(
 				c(
-					fields_bilinear(x = x, y = y, z = z_diffusion_1, x0 = pos[1], y0 = pos[2])$z,
-					fields_bilinear(x = x, y = y, z = z_diffusion_2, x0 = pos[1], y0 = pos[2])$z,
-					fields_bilinear(x = x, y = y, z = z_diffusion_3, x0 = pos[1], y0 = pos[2])$z,
-					fields_bilinear(x = x, y = y, z = z_diffusion_4, x0 = pos[1], y0 = pos[2])$z
+					fast_bilinear(x = temp$x, y = temp$y, z = temp$z_diffusion_1, x0 = pos[1], y0 = pos[2])$z,
+					fast_bilinear(x = temp$x, y = temp$y, z = temp$z_diffusion_2, x0 = pos[1], y0 = pos[2])$z,
+					fast_bilinear(x = temp$x, y = temp$y, z = temp$z_diffusion_3, x0 = pos[1], y0 = pos[2])$z,
+					fast_bilinear(x = temp$x, y = temp$y, z = temp$z_diffusion_4, x0 = pos[1], y0 = pos[2])$z
 				), byrow = TRUE, nrow = 2, ncol = 2
-			))
+			)
 		}
 		return(result)
 	}
@@ -217,10 +218,39 @@ normalize_predict_f <- function(vf) {
 	return(f)
 }
 
-#' To make fields::interp.surface accept the parameters of akima::bilinear and behave like it
+#' A fast bilinear interpolation function
+#'
+#' It assumes equal grid intervals, thus can find the correct position in \eqn{O(1)} time.
+#'
+#' The following is from the documentation of [akima::bilinear()].
+#'
+#' This is an implementation of a bilinear interpolating function.
+#' For a point (x0,y0) contained in a rectangle (x1,y1),(x2,y1), (x2,y2),(x1,y2) and x1<x2, y1<y2, the first step is to get z() at locations (x0,y1) and (x0,y2) as convex linear combinations z(x0,y*)=a*z(x1,y*)+(1-a)*z(x2,y*) where a=(x2-x1)/(x0-x1) for y*=y1,y2. In a second step z(x0,y0) is calculated as convex linear combination between z(x0,y1) and z(x0,y2) as z(x0,y1)=b*z(x0,y1)+(1-b)*z(x0,y2) where b=(y2-y1)/(y0-y1).
+#'
+#' Finally, z(x0,y0) is a convex linear combination of the z values at the corners of the containing rectangle with weights according to the distance from (x0,y0) to these corners.
+#'
 #' @inheritParams akima::bilinear
-fields_bilinear <- function(x, y, z, x0, y0) {
-	z <- fields::interp.surface(list(x = x, y = y, z = z), cbind(x0, y0))
-	if(is.na(z)) z <- 0
-	return(list(z = z))
+#' @param x0 `x` value used to interpolate at.
+#' @param y0 `y` value used to interpolate at.
+#'
+#' @return A list which contains only one element, `z`.
+#' @export
+#' @keywords internal
+#'
+fast_bilinear <- function(x, y, z, x0, y0) {
+  x_ind <- floor((x0 - x[1]) / (x[2] - x[1])) + 1
+  y_ind <- floor((y0 - y[1]) / (y[2] - y[1])) + 1
+  if (x_ind < 1 | x_ind > length(x) - 1 | y_ind < 1 | y_ind > length(y) - 1) {
+    return(list(z = 0))
+  }
+
+  z11 <- z[x_ind, y_ind]
+  z12 <- z[x_ind, y_ind + 1]
+  z21 <- z[x_ind + 1, y_ind]
+  z22 <- z[x_ind + 1, y_ind + 1]
+  ex <- (x0 - x[x_ind]) / (x[x_ind + 1] - x[x_ind])
+  ey <- (y0 - y[y_ind]) / (y[y_ind + 1] - y[y_ind])
+  result <- (1 - ex) * (1 - ey) * z11 + (1 - ex) * (ey) * z12 + (ex) * (1 - ey) * z21 + (ex) * (ey) * z22
+
+  return(list(z = result))
 }
