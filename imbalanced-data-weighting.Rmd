@@ -1,0 +1,312 @@
+---
+title: "Untitled"
+author: "Jingmeng Cui"
+date: "2022-12-07"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(devtools)
+load_all()
+```
+
+```{r}
+test_data_full <- simlandr::sim_fun_grad(parameter = list(a = -4, b = 0, c = 0, sigmasq = 1), length = 100, seed = 1614)
+library(tidyverse)
+ggplot(data = test_data_full %>% as_tibble()) +
+	geom_path(aes(x = 1:100, y = x), color = "blue") +
+	geom_path(aes(x = 1:100, y = y), color = "red") +
+	theme_bw()
+```
+
+```{r}
+set.seed(1614)
+test_data_imb <- test_data_full
+for(i in 1:nrow(test_data_imb)) {
+	if(all(test_data_imb[i,] < 0)) {
+		if(runif(1) < 0.5) {
+			test_data_imb[i,] <- NA
+		}
+	}
+}
+
+ggplot(data = test_data_imb %>% as_tibble()) +
+	geom_path(aes(x = 1:100, y = x), color = "blue") +
+	geom_path(aes(x = 1:100, y = y), color = "red") +
+	theme_bw()
+ggplot(data = test_data_full %>% as_tibble()) +
+	geom_path(aes(x = 1:100, y = x), color = "blue") +
+	geom_path(aes(x = 1:100, y = y), color = "red") +
+	theme_bw()
+
+v2_full <- fit_2d_vf(test_data_full, x = "x", y = "y", method = "MVKE", h = 0.4)
+v2_imb <- fit_2d_vf(test_data_imb, x = "x", y = "y", method = "MVKE", h = 0.4)
+
+v2_w_full_1 <- fit_2d_vf_w(test_data_full, x = "x", y = "y", method = "MVKE", h = 0.4, CONST = 1)
+v2_w_full_2 <- fit_2d_vf_w(test_data_full, x = "x", y = "y", method = "MVKE", h = 0.4, CONST = 0.001)
+plot(v2_w_full)
+v2_w_imb <- fit_2d_vf_w(test_data_imb, x = "x", y = "y", method = "MVKE", h = 0.4)
+plot(v2_w_imb)
+
+l2_imb <- fit_3d_vfld(v2_imb, method = "pathB")
+plot(l2_imb, 2)
+
+l2_w_imb <- fit_3d_vfld(v2_w_imb, method = "pathB")
+plot(l2_w_imb, 2)
+
+
+v2_imb <- fit_2d_vf(test_data_imb, x = "x", y = "y", method = "MVKE", h = 0.4)
+plot(v2_imb)
+
+## 用小数据试一下 数据量大的话没啥影响
+
+future::plan("multisession")
+set.seed(1614)
+s2_imb <- sim_vf(vf = v2_imb, chains = 16, stepsize = 1, forbid_overflow = TRUE)
+l2_imb <- simlandr::make_3d_static(s2_imb , x = "x", y = "y", lims = v2_imb$lims, adjust = 5, Umax = 5)
+plot(l2_imb, 2)
+```
+
+```{r}
+MVKE_w <- function(d, h = 0.2, kernel = c("exp", "Gaussian"), CONST) {
+	if (is.data.frame(d)) d <- as.matrix(d)
+	if (!is.matrix(d)) stop("`d` should be a data.frame or a matrix.")
+
+	d <- stats::na.omit(d)
+	dim <- ncol(d)
+	
+	kde_result <- ks::kde(x = d)
+	w <- 1/apply(d, 1, function(x) predict(kde_result, x = x))
+	# w <- apply(d, 1, function(x) predict(kde_result, x = x))
+	w <- exp(w*CONST)/sum(exp(w*CONST))
+	temp_d <- d[1:(nrow(d) - 1), ]
+	temp_diff <- diff(d)
+	temp_norm <- apply(temp_diff, MARGIN = 1, FUN = function(x) norm(x, "2"))
+	temp_diff_tcrossprod <- apply(temp_diff,
+																MARGIN = 1,
+																FUN = function(x) {
+																	tcrossprod(x, x)
+																}, simplify = FALSE
+	)
+	kernel <- kernel[1]
+	if (kernel == "Gaussian") {
+		K <- K_gaussian_mat
+	} else if (kernel == "exp") {
+		K <- K_exp_mat
+	} else {
+		stop('`kernel` must be one of "Gaussian" or "exp".')
+	}
+
+	force(h)
+	function(x) {
+		if (length(x) != dim) stop("Input of wrong dimension.")
+		temp_kernel_term_upper <- w[1:length(w)-1] * K_gaussian_mat(temp_d, x, h = h)
+		temp_kernel_term_lower <- w * K_gaussian_mat(d, x, h = h)
+		return(list(
+			mu = colSums(temp_kernel_term_upper * temp_diff) / sum(temp_kernel_term_lower),
+			a = mapply(`*`, temp_kernel_term_upper, temp_diff_tcrossprod, SIMPLIFY = FALSE) %>% Reduce(`+`, .) / sum(temp_kernel_term_lower)
+		))
+	}
+}
+
+
+fit_2d_vf_w <- function(data, x, y,
+                      lims,
+                      n = 20,
+                      vector_position = "start",
+                      na_action = "omit_data_points",
+                      method = c("VFC", "MVKE"),
+											CONST = 1, ...) {
+  d <- data
+  # extract useful data for construction
+  if (is.data.frame(d)) {
+    d_raw <- d[, c(x, y)] %>% as.matrix()
+  } else if (is.matrix(d)) {
+    d_raw <- d[, c(x, y)]
+  } else {
+    rlang::abort("`d` must be a data frame or a matrix.")
+  }
+
+  if (na_action != "omit_data_points" & na_action != "omit_vectors") {
+    rlang::abort('`na_action` must be either "omit_data_points" or "omit_vectors".')
+  }
+
+  dv <- normalize_vecs(d_raw)
+
+  if (any(is.na(dv))) {{ if (na_action == "omit_data_points") {
+    dv <- attr(dv, "x_noNA")
+    rlang::inform("NA(s) found in the data. Those data points were omitted.")
+  } }}
+
+  v_mat <- diff(dv)
+
+  if (vector_position == "start") {
+    x_mat <- dv[1:(nrow(dv) - 1), ]
+  } else if (vector_position == "middle") {
+    x_mat <- dv[1:(nrow(dv) - 1), ] + 0.5 * v_mat
+  } else if (vector_position == "end") {
+    x_mat <- dv[2:nrow(dv), ]
+  } else {
+    rlang::abort('`vector_position` must be one of "start", "middle", or "end".')
+  }
+
+  original_vectors_normalized <- cbind(x_mat, v_mat) %>%
+    `colnames<-`(c("x", "y", "vx", "vy"))
+
+  if (any(is.na(original_vectors_normalized))) {{ if (na_action == "omit_vectors") {
+    original_vectors_normalized <- stats::na.omit(original_vectors_normalized)
+    rlang::inform("NA(s) found in the data. Those vectors were omitted.")
+  } }}
+
+  original_vectors <- original_vectors_normalized
+  original_vectors[, "x"] <- original_vectors[, "x"] %>% denormalize_x(dv)
+  original_vectors[, "y"] <- original_vectors[, "y"] %>% denormalize_y(dv)
+  original_vectors[, "vx"] <- original_vectors[, "vx"] %>% scale_up(dv)
+  original_vectors[, "vy"] <- original_vectors[, "vy"] %>% scale_up(dv)
+
+  VFCresult <- MVKEresult <- NULL
+  method <- toupper(method[1])
+  if (method == "VFC") {
+    VFCresult <- SparseVFC_w(original_vectors_normalized[, 1:2], original_vectors_normalized[, 3:4], CONST = CONST, ...)
+  } else if (method == "MVKE") {
+    MVKEresult <- MVKE_w(original_vectors_normalized[, 1:2], CONST = CONST, ...)
+  }
+
+  lims <- determine_lims(d_raw, c(x, y), lims)
+
+  vec <- tidyr::expand_grid(x = seq(lims[1], lims[2], length.out = n), y = seq(lims[3], lims[4], length.out = n))
+  vec <- vec %>% dplyr::rowwise()
+
+  if (method == "VFC") {
+    vec <- vec %>% dplyr::mutate(v = list(stats::predict(VFCresult, c(x, y) %>% normalize_v(dv)) %>% scale_up(dv)))
+  } else if (method == "MVKE") {
+    vec <- vec %>% dplyr::mutate(v = list(MVKEresult(c(x, y) %>% normalize_v(dv))$mu %>% scale_up(dv)))
+  }
+
+  vec <- vec %>%
+    dplyr::mutate(
+      vx = v[1],
+      vy = v[2],
+      v_norm = (sum(v^2))^(1 / 2)
+    ) %>%
+    dplyr::select(-v) %>%
+    dplyr::ungroup()
+
+  result <- list(
+    vec_grid = vec,
+    VFCresult = VFCresult,
+    MVKEresult = MVKEresult,
+    data = d_raw,
+    data_normalized = dv,
+    original_vectors = original_vectors,
+    original_vectors_normalized = original_vectors_normalized,
+    x = x,
+    y = y,
+    lims = lims,
+    n = n,
+    method = method
+  )
+
+  class(result) <- "vectorfield"
+
+  return(result)
+}
+
+
+```
+
+
+```{r}
+SparseVFC_w <- function (X, Y, M = 16, MaxIter = 500, gamma = 0.9, beta = 0.1, 
+	lambda = 3, theta = 0.75, a = 10, ecr = 1e-05, minP = 1e-05, 
+	silent = TRUE, CONST = 1) 
+{
+	if (!silent) 
+		message("Start mismatch removal...\n")
+	N <- nrow(Y)
+	D <- ncol(Y)
+	tmp_X <- unique(X)
+	idx <- sample.int(nrow(tmp_X))
+	idx <- idx[1:min(M, nrow(tmp_X))]
+	ctrl_pts <- tmp_X[idx, ]
+	K <- con_K(ctrl_pts, ctrl_pts, beta)
+	U <- con_K(X, ctrl_pts, beta)
+	M <- nrow(ctrl_pts)
+	V <- matrix(0, nrow = N, ncol = D)
+	iter <- 1
+	tecr <- 1
+	C <- matrix(0, nrow = M, ncol = D)
+	E <- 1
+	sigma2 <- sum((Y - V)^2)/(N * D)
+	
+	kde_result <- ks::kde(x = X)
+	w <- 1/apply(X, 1, function(x) predict(kde_result, x = x))
+	# w <- apply(d, 1, function(x) predict(kde_result, x = x))
+	w <- CONST * (w - min(w))/ (max(w) - min(w))
+	
+	while (iter < MaxIter & tecr > ecr) {
+		E_old <- E
+		temp_PE <- get_P(Y, V, sigma2, gamma, a)
+		P <- temp_PE$P
+		E <- temp_PE$E
+		tecr <- abs((E - E_old)/E)
+		if (!silent) {
+			message(sprintf("iterate: %dth, gamma: %f, the energy change rate: %f, sigma2=%f\n", 
+				iter, gamma, tecr, sigma2))
+		}
+		P <- pmax(P, minP)
+		C <- solve((t(U) * matrix(rep(P * w, M), nrow = M, byrow = TRUE)) %*% 
+			U + lambda * sigma2 * K) %*% ((t(U) * matrix(rep(P * w, 
+			M), nrow = M, byrow = TRUE)) %*% Y)
+		V <- U %*% C
+		Sp <- sum(P)
+		sigma2 <- sum(P * rowSums((Y - V)^2))/(Sp * D)
+		numcorr <- sum(P > theta)
+		gamma <- numcorr/nrow(X)
+		if (gamma > 0.95) 
+			gamma <- 0.95
+		if (gamma < 0.05) 
+			gamma <- 0.05
+		iter <- iter + 1
+	}
+	if (!silent) 
+		message("Removing outliers succesfully completed.")
+	result <- list(X = ctrl_pts, Y = Y, beta = beta, V = V, 
+		C = C, P = P, VFCIndex = which(P > theta), sigma2 = sigma2)
+	class(result) <- c("VFC")
+	return(result)
+}
+```
+
+```{r}
+kdew <- ks::kde(x = test_data_full)
+```
+
+```{r}
+load("D:/Sync/PhD RUG/2021-2025/Research/Projects/2022_fitlandr/ESMdata_5/test2.RData")
+vf2_m <- fit_2d_vf(data_s2,
+  x = "physical self-worth", y = "perceived fitness",
+  lims = c(3, 9, 3, 9),
+  method = "MVKE",
+  h = 0.4
+)
+
+plot(vf2_m)
+
+l2_m <- fit_3d_vfld(vf2_m, method = "pathB", .pathB_options = pathB_options(stepsize = 0.1, numTimeSteps = 1e4))
+
+
+vf2_v_w <- exec(fit_2d_vf_w, data_s2, !!!(default_VFC %>% {.$M = 64; .$beta = 1.5; .}), CONST = 1)
+plot(vf2_v_w)
+vf2_v <- exec(fit_2d_vf, data_s2, !!!(default_VFC %>% {.$M = 64; .$beta = 1.5; .}))
+
+l2_v_w <- fit_3d_vfld(vf2_v_w, method = "pathB", .pathB_options = pathB_options(stepsize = 0.1, numTimeSteps = 1e4))
+plot(l2_v_w, 2)
+```
+
