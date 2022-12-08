@@ -54,7 +54,7 @@ ggplot(data = single_output_grad %>% as_tibble()) +
 	theme_bw()
 ```
 
-Fit the vector field of the system with VFC (see `?SparseVFC::SparseVFC` for the explanations of parameters):
+Fit the vector field of the system with VFC (see `?SparseVFC` for the explanations of parameters):
 
 ```{r}
 library(fitlandr)

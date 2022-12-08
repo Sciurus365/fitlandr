@@ -20,7 +20,6 @@ Imports:
     akima,
     cli,
     dplyr,
-    fields,
     furrr,
     future.apply,
     ggplot2,
@@ -30,13 +29,14 @@ Imports:
     magrittr,
     MASS,
     numDeriv,
+    pdist,
     plotly,
+    purrr,
     R.utils,
     Rfast,
     rlang,
     rootSolve,
     simlandr (>= 0.3.0),
-    SparseVFC,
     tidyr
 Suggests: 
     colorRamps

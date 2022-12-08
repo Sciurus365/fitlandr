@@ -32,13 +32,13 @@ Should be a data frame or a matrix.}
 
 \item{method}{One of "VFC" or "MVKE".}
 
-\item{...}{Other parameters to be passed to \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}} or \code{\link[=MVKE]{MVKE()}}.}
+\item{...}{Other parameters to be passed to \code{\link[=SparseVFC]{SparseVFC()}} or \code{\link[=MVKE]{MVKE()}}.}
 }
 \value{
 A \code{vectorfield} object.
 }
 \description{
-Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}), or Multivariate Vector Field Kernel Estimator (MVKE, using \code{\link[=MVKE]{MVKE()}}). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}} or \code{\link[=MVKE]{MVKE()}}.
+Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using \code{\link[=SparseVFC]{SparseVFC()}}), or Multivariate Vector Field Kernel Estimator (MVKE, using \code{\link[=MVKE]{MVKE()}}). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of \code{\link[=SparseVFC]{SparseVFC()}} or \code{\link[=MVKE]{MVKE()}}.
 }
 \seealso{
 \code{\link[=plot.vectorfield]{plot.vectorfield()}}

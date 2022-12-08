@@ -47,7 +47,7 @@ ggplot(data = single_output_grad %>% as_tibble()) +
 
 <img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
 
-Fit the vector field of the system with VFC (see `?SparseVFC::SparseVFC`
+Fit the vector field of the system with VFC (see `?SparseVFC`
 for the explanations of parameters):
 
 ``` r

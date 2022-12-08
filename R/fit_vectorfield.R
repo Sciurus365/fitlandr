@@ -1,6 +1,6 @@
 #' Estimate a 2D vector field
 #'
-#' Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using [SparseVFC::SparseVFC()]), or Multivariate Vector Field Kernel Estimator (MVKE, using [MVKE()]). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of [SparseVFC::SparseVFC()] or [MVKE()].
+#' Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using [SparseVFC()]), or Multivariate Vector Field Kernel Estimator (MVKE, using [MVKE()]). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of [SparseVFC()] or [MVKE()].
 #'
 #' @param data The data set used for estimating the vector field.
 #' Should be a data frame or a matrix.
@@ -10,7 +10,7 @@
 #' @param vector_position Only useful if `method == "VFC"`. One of "start", "middle", or "end", representing the position of the vectors. If "start", for example, the starting point of a vector is regarded as the position of the vector.
 #' @param na_action One of "omit_data_points" or "omit_vectors". If using "omit_data_points", then only the `NA` points are omitted, and the points before and after an `NA` will form a vector. If using "omit_vectors", then the vectors will be omitted if either of its points is `NA`.
 #' @param method One of "VFC" or "MVKE".
-#' @param ... Other parameters to be passed to [SparseVFC::SparseVFC()] or [MVKE()].
+#' @param ... Other parameters to be passed to [SparseVFC()] or [MVKE()].
 #'
 #' @return A `vectorfield` object.
 #' @seealso [plot.vectorfield()]
@@ -71,7 +71,7 @@ fit_2d_vf <- function(data, x, y,
   VFCresult <- MVKEresult <- NULL
   method <- toupper(method[1])
   if (method == "VFC") {
-    VFCresult <- SparseVFC::SparseVFC(original_vectors_normalized[, 1:2], original_vectors_normalized[, 3:4], ...)
+    VFCresult <- SparseVFC(original_vectors_normalized[, 1:2], original_vectors_normalized[, 3:4], ...)
   } else if (method == "MVKE") {
     MVKEresult <- MVKE(original_vectors_normalized[, 1:2], ...)
   }
