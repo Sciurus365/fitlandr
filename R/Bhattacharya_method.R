@@ -1,5 +1,7 @@
 #' Bhattacharya method for path integration
 #'
+#' A method to construct potential landscapes using path integration. See references for details.
+#'
 #' @param f The vector field function. It should return `c(<dx/dt>, <dy/dt>)`
 #' @param lims The limits of the range for the estimation as `c(<xl>, <xu>, <yl>, <yu>)`.
 #' @param n_path_int The number of equally spaced points in each axis, at which the path integrals is to be calculated.
@@ -244,7 +246,7 @@ path_integral_B <- function(f, lims, n_path_int = 20, stepsize = 1e-2, tol = 1e-
 
 #' Align potential values
 #'
-#' So all path-potentials end up at same global min and then generate potential surface with interpolation on a grid.
+#' So that all path-potentials end up at same global min and then generate potential surface with interpolation on a grid.
 #'
 #' @param resultB Result from [path_integral_B()].
 #' @param n The number of equally spaced points in each axis, at which the landscape is to be estimated.

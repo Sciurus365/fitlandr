@@ -41,7 +41,7 @@ A list with the following elements:
 }
 }
 \description{
-Bhattacharya method for path integration
+A method to construct potential landscapes using path integration. See references for details.
 }
 \references{
 Bhattacharya, S., Zhang, Q., & Andersen, M. E. (2011). A deterministic map of Waddington’s epigenetic landscape for cell fate specification. BMC Systems Biology, 5(1), 85. https://doi.org/10.1186/1752-0509-5-85.

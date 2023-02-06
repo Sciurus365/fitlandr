@@ -26,13 +26,18 @@ fit_3d_vfld(
 
 \item{linear_interp}{Use linear interpolation method to estimate the drift vector (and the diffusion matrix). This can speed up the calculation. If \code{TRUE}, be sure that a linear grid was calculated for the vector field using \verb{<vf> <- add_interp_grid(<vf>)}.}
 }
+\value{
+A \code{landscape} object as described in \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}}, or a \verb{3d_static_landscape_B} object, which inherits from the \code{landscape} class and contains the following elements: \code{dist}, the distribution estimation for landscapes; \code{plot}, a 3D plot using \code{plotly}; plot_2, a 2D plot using \code{ggplot2}; x, y, from \code{vf}.
+}
 \description{
 Two methods are available: \code{method = "pathB"} and \code{method = "simlandr"}. See \emph{Details} section.
 }
 \details{
+For \code{method = "simlandr"}, the landscape is constructed based on the generalized potential landscape by Wang et al. (2008), implemented by the \code{simlandr} package. This function is a wraper of \code{\link[=sim_vf]{sim_vf()}} and \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}}. Use those two functions seperately for more customization.
+
 For \code{method = "pathB"}, the landscape is constructed based on the deterministic path-integral quasi-potential defined by Bhattacharya et al. (2011).
 
-For \code{method = "simlandr"}, the landscape is constructed based on the generalized potential landscape by Wang et al. (2008), implemented by the \code{simlandr} package. This function is a wraper of \code{\link[=sim_vf]{sim_vf()}} and \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}}. Use those two functions seperately for more customization.
+We recommend the \code{simlandr} method for psychological data because it is more stable.
 
 Parallel computing based on \code{future} is supported for both methods. Use \code{future::plan("multisession")} to enable this and speed up computation.
 }

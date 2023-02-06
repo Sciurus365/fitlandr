@@ -17,6 +17,9 @@
 
 \item{...}{Not in use.}
 }
+\value{
+A list of \code{v}, the drift part that is used for vector fields, and \code{a} (when \code{calculate_a == TRUE}), the diffusion part at a given position.
+}
 \description{
 Calculate the vector value at a given position
 }

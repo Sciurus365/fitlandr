@@ -6,3 +6,5 @@
 ^.*\.temp\.R$
 
 ^.*\.ai$
+^\.github$
+^cran-comments\.md$

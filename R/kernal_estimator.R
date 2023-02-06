@@ -1,6 +1,6 @@
 #' Multivariate vector field kernel estimator
 #'
-#' Gaussian product kernel is used.
+#' See references for details.
 #'
 #' @param d The dataset. Should be a matrix or a data frame, with each row representing a random vector.
 #' @param h The bandwidth for the kernel estimator.

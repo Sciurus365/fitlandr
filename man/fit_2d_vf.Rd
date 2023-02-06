@@ -12,7 +12,7 @@ fit_2d_vf(
   n = 20,
   vector_position = "start",
   na_action = "omit_data_points",
-  method = c("VFC", "MVKE"),
+  method = c("MVKE", "MVKE"),
   ...
 )
 }
@@ -30,15 +30,15 @@ Should be a data frame or a matrix.}
 
 \item{na_action}{One of "omit_data_points" or "omit_vectors". If using "omit_data_points", then only the \code{NA} points are omitted, and the points before and after an \code{NA} will form a vector. If using "omit_vectors", then the vectors will be omitted if either of its points is \code{NA}.}
 
-\item{method}{One of "VFC" or "MVKE".}
+\item{method}{One of "MVKE" or "VFC".}
 
-\item{...}{Other parameters to be passed to \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}} or \code{\link[=MVKE]{MVKE()}}.}
+\item{...}{Other parameters to be passed to \code{\link[=MVKE]{MVKE()}} or \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}.}
 }
 \value{
 A \code{vectorfield} object.
 }
 \description{
-Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}), or Multivariate Vector Field Kernel Estimator (MVKE, using \code{\link[=MVKE]{MVKE()}}). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}} or \code{\link[=MVKE]{MVKE()}}.
+Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Multivariate Vector Field Kernel Estimator (MVKE, using \code{\link[=MVKE]{MVKE()}}), or Sparse Vector Field Consensus (SparseVFC, using \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of \code{\link[=MVKE]{MVKE()}} or \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}. We suggest the MVKE method to be used for psychological data because it has more realistic assumptions and produces more reasonable output.
 }
 \seealso{
 \code{\link[=plot.vectorfield]{plot.vectorfield()}}

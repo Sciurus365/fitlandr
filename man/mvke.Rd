@@ -17,7 +17,7 @@ MVKE(d, h = 0.2, kernel = c("exp", "Gaussian"))
 A function(x), which then returns the \eqn{\mu} and \eqn{a} estimators at the position \eqn{x}.
 }
 \description{
-Gaussian product kernel is used.
+See references for details.
 }
 \references{
 Bandi, F. M., & Moloche, G. (2018). On the functional estimation of multivariate diffusion processes. Econometric Theory, 34(4), 896-946. https://doi.org/10.1017/S0266466617000305

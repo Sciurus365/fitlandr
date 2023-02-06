@@ -34,6 +34,6 @@ list with 3 components:
   \code{SpatialPixelssDataFrame} is returned.
 }
 \description{
-So all path-potentials end up at same global min and then generate potential surface with interpolation on a grid.
+So that all path-potentials end up at same global min and then generate potential surface with interpolation on a grid.
 }
 \keyword{internal}

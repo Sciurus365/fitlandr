@@ -1,6 +1,6 @@
 #' Estimate a 2D vector field
 #'
-#' Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Sparse Vector Field Consensus (SparseVFC, using [SparseVFC::SparseVFC()]), or Multivariate Vector Field Kernel Estimator (MVKE, using [MVKE()]). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of [SparseVFC::SparseVFC()] or [MVKE()].
+#' Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Multivariate Vector Field Kernel Estimator (MVKE, using [MVKE()]), or Sparse Vector Field Consensus (SparseVFC, using [SparseVFC::SparseVFC()]). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of [MVKE()] or [SparseVFC::SparseVFC()]. We suggest the MVKE method to be used for psychological data because it has more realistic assumptions and produces more reasonable output.
 #'
 #' @param data The data set used for estimating the vector field.
 #' Should be a data frame or a matrix.
@@ -9,8 +9,8 @@
 #' @param n The number of equally spaced points in each axis, at which the vectors are to be estimated.
 #' @param vector_position Only useful if `method == "VFC"`. One of "start", "middle", or "end", representing the position of the vectors. If "start", for example, the starting point of a vector is regarded as the position of the vector.
 #' @param na_action One of "omit_data_points" or "omit_vectors". If using "omit_data_points", then only the `NA` points are omitted, and the points before and after an `NA` will form a vector. If using "omit_vectors", then the vectors will be omitted if either of its points is `NA`.
-#' @param method One of "VFC" or "MVKE".
-#' @param ... Other parameters to be passed to [SparseVFC::SparseVFC()] or [MVKE()].
+#' @param method One of "MVKE" or "VFC".
+#' @param ... Other parameters to be passed to [MVKE()] or [SparseVFC::SparseVFC()].
 #'
 #' @return A `vectorfield` object.
 #' @seealso [plot.vectorfield()]
@@ -20,7 +20,7 @@ fit_2d_vf <- function(data, x, y,
                       n = 20,
                       vector_position = "start",
                       na_action = "omit_data_points",
-                      method = c("VFC", "MVKE"), ...) {
+                      method = c("MVKE", "MVKE"), ...) {
   d <- data
   # extract useful data for construction
   if (is.data.frame(d)) {
@@ -135,6 +135,8 @@ determine_lims <- function(output, var_names, lims) {
 #' @param linear_interp Use linear interpolation method to estimate the drift vector (and the diffusion matrix). This can speed up the calculation. If `TRUE`, be sure that a linear grid was calculated for the vector field using `<vf> <- add_interp_grid(<vf>)`.
 #' @param calculate_a Effective when `linear_interp == TRUE`. Do you want to calculate the diffusion matrix? Use `FALSE` can save some time.
 #' @param ... Not in use.
+#'
+#' @return A list of `v`, the drift part that is used for vector fields, and `a` (when `calculate_a == TRUE`), the diffusion part at a given position.
 #'
 #' @seealso [add_interp_grid()]
 #' @export
