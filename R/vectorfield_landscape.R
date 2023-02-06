@@ -2,7 +2,7 @@
 #'
 #' Two methods are available: `method = "pathB"` and `method = "simlandr"`. See *Details* section.
 #'
-#' For `method = "simlandr"`, the landscape is constructed based on the generalized potential landscape by Wang et al. (2008), implemented by the `simlandr` package. This function is a wraper of [sim_vf()] and [simlandr::make_3d_static()]. Use those two functions seperately for more customization.
+#' For `method = "simlandr"`, the landscape is constructed based on the generalized potential landscape by Wang et al. (2008), implemented by the `simlandr` package. This function is a wrapper of [sim_vf()] and [simlandr::make_3d_static()]. Use those two functions separately for more customization.
 #'
 #' For `method = "pathB"`, the landscape is constructed based on the deterministic path-integral quasi-potential defined by Bhattacharya et al. (2011).
 #'
@@ -18,7 +18,20 @@
 #' @inheritParams predict.vectorfield
 #'
 #' @return A `landscape` object as described in [simlandr::make_3d_static()], or a `3d_static_landscape_B` object, which inherits from the `landscape` class and contains the following elements: `dist`, the distribution estimation for landscapes; `plot`, a 3D plot using `plotly`; plot_2, a 2D plot using `ggplot2`; x, y, from `vf`.
-
+#' @examplesIf interactive()
+#' # generate data
+#' single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
+#' # fit the vector field
+#' v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
+#' plot(v2)
+#' # fit the landscape
+#' future::plan("multisession")
+#' set.seed(1614)
+#' l2 <- fit_3d_vfld(v2,
+#' .sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE),
+#' .simlandr_options = simlandr_options(adjust = 5, Umax = 4))
+#' plot(l2, 2)
+#' future::plan("sequential")
 #' @export
 fit_3d_vfld <- function(vf, method = c("simlandr", "pathB"), .pathB_options = pathB_options(vf), .sim_vf_options = sim_vf_options(vf), .simlandr_options = simlandr_options(vf), linear_interp = FALSE) {
   method <- match.arg(method[1], c("pathB", "simlandr"))

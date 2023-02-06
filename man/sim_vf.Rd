@@ -34,7 +34,7 @@ sim_vf(
 
 \item{stepsize}{The stepsize for Euler–Maruyama simulation of the system.}
 
-\item{sparse}{A number. How much do you want to sparsify the output? When the noise is small, sparsify the output may make the density estimation more efficient.}
+\item{sparse}{A number. How much do you want to sparse the output? When the noise is small, sparse the output may make the density estimation more efficient.}
 
 \item{forbid_overflow}{If \code{TRUE}, when the simulated system runs out of the margins specified in \code{vf}, the system will be moved back to the previous value. This can help to stabilize the simulation. \code{FALSE} by default.}
 

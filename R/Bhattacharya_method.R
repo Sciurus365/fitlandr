@@ -15,7 +15,7 @@
 #' - `numPaths` Integer. Total Number of paths for defined grid spacing.
 #' - `pot_path` Matrix. Potential along the paths.
 #' - `path_tag` Vector. Tag for given paths.
-#' - `attractors_pot` Vector. Potential value of each identified attractors by the path integral approach.
+#' - `attractors_pot` Vector. Potential value of each identified attractor by the path integral approach.
 #' - `x_path` Vector. x-coord. along path.
 #' - `y_path` Vector. y-coord. along path.
 #'
@@ -251,7 +251,7 @@ path_integral_B <- function(f, lims, n_path_int = 20, stepsize = 1e-2, tol = 1e-
 #' @param resultB Result from [path_integral_B()].
 #' @param n The number of equally spaced points in each axis, at which the landscape is to be estimated.
 #' @param digits Currently, the raw sample points in some regions are too dense that may crashes interpolation. To avoid this problem, only one point of all with the  same first several digits. is kept. Use this parameter to indicate how many digits are considered. Note that this is a temporary solution and might be changed in the near future.
-#' @inheritParams akima::interp
+#' @param linear logical – indicating whether linear or spline interpolation should be used.
 #' @param ... Other parameters passed to [akima::interp()]
 #'
 #' @keywords internal

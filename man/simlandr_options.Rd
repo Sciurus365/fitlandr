@@ -34,5 +34,5 @@ simlandr_options(
 \item{Umax}{The maximum displayed value of potential.}
 }
 \description{
-To control the behavior of \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}}, but with default values accomodated for \code{fitlandr}. See \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}} for details.
+To control the behavior of \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}}, but with default values accommodated for \code{fitlandr}. See \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}} for details.
 }

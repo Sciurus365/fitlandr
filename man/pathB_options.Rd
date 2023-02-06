@@ -35,8 +35,7 @@ pathB_options(
 
 \item{digits}{Currently, the raw sample points in some regions are too dense that may crashes interpolation. To avoid this problem, only one point of all with the  same first several digits. is kept. Use this parameter to indicate how many digits are considered. Note that this is a temporary solution and might be changed in the near future.}
 
-\item{linear}{logical -- indicating wether linear or spline
-    interpolation should be used.}
+\item{linear}{logical – indicating whether linear or spline interpolation should be used.}
 
 \item{...}{Not in use.}
 }

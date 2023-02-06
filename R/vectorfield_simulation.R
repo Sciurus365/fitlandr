@@ -14,7 +14,7 @@ eval_pass_missing <- function(expr, ...) {
 #' @param noise Relative noise of the simulation. Set this smaller when the simulation is unstable (e.g., when the elements in the diffusion matrix are not finite), and set this larger when the simulation converges too slowly.
 #' @param noise_warmup The noise used for the warming-up period.
 #' @param stepsize The stepsize for Euler–Maruyama simulation of the system.
-#' @param sparse A number. How much do you want to sparsify the output? When the noise is small, sparsify the output may make the density estimation more efficient.
+#' @param sparse A number. How much do you want to sparse the output? When the noise is small, sparse the output may make the density estimation more efficient.
 #' @param chains How many chains simulations should be performed?
 #' @param length The simulation length for each chain.
 #' @param discard How much of the starting part of each chain should be discarded? (Warming-up period.)
@@ -90,7 +90,7 @@ sim_vf_options <- function(vf, noise = 1,noise_warmup = noise, chains = 10, leng
 
 #' Options controlling the landscape construction
 #'
-#' To control the behavior of [simlandr::make_3d_static()], but with default values accomodated for `fitlandr`. See [simlandr::make_3d_static()] for details.
+#' To control the behavior of [simlandr::make_3d_static()], but with default values accommodated for `fitlandr`. See [simlandr::make_3d_static()] for details.
 #' @inheritParams fit_3d_vfld
 #' @inheritParams simlandr::make_3d_static
 #' @export

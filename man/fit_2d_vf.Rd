@@ -40,6 +40,13 @@ A \code{vectorfield} object.
 \description{
 Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Multivariate Vector Field Kernel Estimator (MVKE, using \code{\link[=MVKE]{MVKE()}}), or Sparse Vector Field Consensus (SparseVFC, using \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of \code{\link[=MVKE]{MVKE()}} or \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}. We suggest the MVKE method to be used for psychological data because it has more realistic assumptions and produces more reasonable output.
 }
+\examples{
+# generate data
+single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
+# fit the vector field
+v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
+plot(v2)
+}
 \seealso{
 \code{\link[=plot.vectorfield]{plot.vectorfield()}}
 }

@@ -35,7 +35,7 @@ A list with the following elements:
 \item \code{numPaths} Integer. Total Number of paths for defined grid spacing.
 \item \code{pot_path} Matrix. Potential along the paths.
 \item \code{path_tag} Vector. Tag for given paths.
-\item \code{attractors_pot} Vector. Potential value of each identified attractors by the path integral approach.
+\item \code{attractors_pot} Vector. Potential value of each identified attractor by the path integral approach.
 \item \code{x_path} Vector. x-coord. along path.
 \item \code{y_path} Vector. y-coord. along path.
 }

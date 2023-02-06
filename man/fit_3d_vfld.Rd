@@ -33,11 +33,28 @@ A \code{landscape} object as described in \code{\link[simlandr:make_3d_static]{s
 Two methods are available: \code{method = "pathB"} and \code{method = "simlandr"}. See \emph{Details} section.
 }
 \details{
-For \code{method = "simlandr"}, the landscape is constructed based on the generalized potential landscape by Wang et al. (2008), implemented by the \code{simlandr} package. This function is a wraper of \code{\link[=sim_vf]{sim_vf()}} and \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}}. Use those two functions seperately for more customization.
+For \code{method = "simlandr"}, the landscape is constructed based on the generalized potential landscape by Wang et al. (2008), implemented by the \code{simlandr} package. This function is a wrapper of \code{\link[=sim_vf]{sim_vf()}} and \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}}. Use those two functions separately for more customization.
 
 For \code{method = "pathB"}, the landscape is constructed based on the deterministic path-integral quasi-potential defined by Bhattacharya et al. (2011).
 
 We recommend the \code{simlandr} method for psychological data because it is more stable.
 
 Parallel computing based on \code{future} is supported for both methods. Use \code{future::plan("multisession")} to enable this and speed up computation.
+}
+\examples{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+# generate data
+single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
+# fit the vector field
+v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
+plot(v2)
+# fit the landscape
+future::plan("multisession")
+set.seed(1614)
+l2 <- fit_3d_vfld(v2,
+.sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE),
+.simlandr_options = simlandr_options(adjust = 5, Umax = 4))
+plot(l2, 2)
+future::plan("sequential")
+\dontshow{\}) # examplesIf}
 }

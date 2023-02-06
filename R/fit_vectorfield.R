@@ -14,6 +14,13 @@
 #'
 #' @return A `vectorfield` object.
 #' @seealso [plot.vectorfield()]
+#'
+#' @examples
+#' # generate data
+#' single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
+#' # fit the vector field
+#' v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
+#' plot(v2)
 #' @export
 fit_2d_vf <- function(data, x, y,
                       lims,
