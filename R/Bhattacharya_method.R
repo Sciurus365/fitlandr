@@ -263,6 +263,8 @@ align_pot_B <- function(resultB,
                         digits = 2,
                         linear = TRUE,
                         ...) {
+	rlang::check_installed("akima", reason = "for using the Bhattacharya method. Note that the `akima` package is NOT a free and open software.")
+
   list2env(resultB, envir = environment())
 
   list_size <- numPaths * numTimeSteps
