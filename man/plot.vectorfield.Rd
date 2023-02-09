@@ -53,6 +53,9 @@
 
 \item{...}{Not in use.}
 }
+\value{
+A \code{ggplot2} plot.
+}
 \description{
 Plot a 2D vector field estimated by \code{\link[=fit_2d_vf]{fit_2d_vf()}}. Powered by \code{\link[ggplot2:ggplot]{ggplot2::ggplot()}}.
 }

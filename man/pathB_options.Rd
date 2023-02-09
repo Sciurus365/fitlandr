@@ -2,8 +2,7 @@
 % Please edit documentation in R/Bhattacharya_method.R
 \name{pathB_options}
 \alias{pathB_options}
-\title{Options controlling the path-integral algorithm
-See \code{\link[=path_integral_B]{path_integral_B()}}, \code{\link[=align_pot_B]{align_pot_B()}} for details.}
+\title{Options controlling the path-integral algorithm}
 \usage{
 pathB_options(
   vf,
@@ -39,7 +38,9 @@ pathB_options(
 
 \item{...}{Not in use.}
 }
+\value{
+A list containing the parameters of the corresponding function. Only intended to be used within \code{\link[=fit_3d_vfld]{fit_3d_vfld()}}
+}
 \description{
-Options controlling the path-integral algorithm
 See \code{\link[=path_integral_B]{path_integral_B()}}, \code{\link[=align_pot_B]{align_pot_B()}} for details.
 }

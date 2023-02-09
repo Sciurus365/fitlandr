@@ -18,7 +18,7 @@ Kernel Estimator (MVKE) by Bandi & Moloche (2018)
 <https://doi.org/10.1017/S0266466617000305> and the Sparse Vector Field
 Consensus (SparseVFC) algorithm by Ma et al. (2013)
 <https://doi.org/10.1016/j.patcog.2013.05.017>. The potential landscapes
-can be constructed with a simulation-based approach with the simlandr
+can be constructed with a simulation-based approach with the `simlandr`
 package (Cui et al., 2021) <https://doi.org/10.31234/osf.io/pzva3>, or
 the Bhattacharya et al. (2011) method for path integration
 <https://doi.org/10.1186/1752-0509-5-85>.
@@ -67,8 +67,8 @@ Fit the potential landscape:
 future::plan("multisession")
 set.seed(1614)
 l2 <- fit_3d_vfld(v2, .sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE), .simlandr_options = simlandr_options(adjust = 5, Umax = 4))
-#> ℹ Simulating the model✔ Simulating the model [23.9s]
-#> ℹ Constructing the landscape✔ Constructing the landscape [2.2s]
+#> ℹ Simulating the model✔ Simulating the model [26.7s]
+#> ℹ Constructing the landscape✔ Constructing the landscape [3.1s]
 plot(l2, 2)
 ```
 

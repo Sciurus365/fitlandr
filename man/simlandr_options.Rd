@@ -33,6 +33,9 @@ simlandr_options(
 
 \item{Umax}{The maximum displayed value of potential.}
 }
+\value{
+A list containing the parameters of the corresponding function. Only intended to be used within \code{\link[=fit_3d_vfld]{fit_3d_vfld()}}
+}
 \description{
 To control the behavior of \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}}, but with default values accommodated for \code{fitlandr}. See \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}} for details.
 }

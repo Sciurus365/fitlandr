@@ -21,6 +21,7 @@ eval_pass_missing <- function(expr, ...) {
 #' @param forbid_overflow If `TRUE`, when the simulated system runs out of the margins specified in `vf`, the system will be moved back to the previous value. This can help to stabilize the simulation. `FALSE` by default.
 #' @param inits The initial values of each chain.
 #' @inheritParams predict.vectorfield
+#' @return A matrix of the simulated data.
 #' @export
 sim_vf <- function(vf, noise = 1, noise_warmup = noise, chains = 10, length = 1e4, discard = 0.3, stepsize = 0.01, sparse = 1, forbid_overflow = FALSE, linear_interp = FALSE, inits = matrix(c(
                      stats::runif(chains, min = vf$lims[1], max = vf$lims[2]),
@@ -73,9 +74,12 @@ sim_vf_single <- function(init, f, length, noise, noise_warmup, stepsize, discar
 
 
 #' Options controlling the vector field simulation
+#'
 #' See [sim_vf()] for details.
 #' @inheritParams fit_3d_vfld
 #' @inheritParams sim_vf
+#'
+#' @return A list containing the parameters of the corresponding function. Only intended to be used within [fit_3d_vfld()]
 #' @export
 sim_vf_options <- function(vf, noise = 1,noise_warmup = noise, chains = 10, length = 1e4, discard = 0.3, stepsize = 0.01, sparse = 1, forbid_overflow = FALSE, inits = rlang::expr(matrix(c(
                              stats::runif(chains, min = vf$lims[1], max = vf$lims[2]),
@@ -93,6 +97,8 @@ sim_vf_options <- function(vf, noise = 1,noise_warmup = noise, chains = 10, leng
 #' To control the behavior of [simlandr::make_3d_static()], but with default values accommodated for `fitlandr`. See [simlandr::make_3d_static()] for details.
 #' @inheritParams fit_3d_vfld
 #' @inheritParams simlandr::make_3d_static
+#'
+#' @inherit sim_vf_options return
 #' @export
 simlandr_options <- function(vf, x = rlang::expr(vf$x), y = rlang::expr(vf$y), lims = rlang::expr(vf$lims), kde_fun = c("ks", "MASS"), n = 200, adjust = 1, h, Umax = 5) {
   if (!missing(vf)) {

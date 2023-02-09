@@ -42,6 +42,9 @@ sim_vf(
 
 \item{inits}{The initial values of each chain.}
 }
+\value{
+A matrix of the simulated data.
+}
 \description{
 Parallel computing based on \code{future} is supported. Use \code{future::plan("multisession")} to enable this.
 }

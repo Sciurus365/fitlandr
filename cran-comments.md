@@ -1,6 +1,6 @@
-- This is a re-submission, in which the following issues were fixed:
-	- The `akima` package was moved to "Suggests" field to ensure license compatibility. (`akima` is not required for the core functions of the package, yet I did not find an alternative that works.)
-	- The invalid URLs were fixed. 
+- This is a re-submission, in which the following issues were solved:
+	- Wrote package names in single quotes in description. 
+	- Added \value field to some functions.
 
 ## Test environments
 

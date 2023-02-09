@@ -18,6 +18,8 @@
 #' @param v_norm_options A list passing other customized parameters to [ggplot2::geom_raster()] to control the layer representing the norm of the estimated vectors.
 #' @param ... Not in use.
 #'
+#' @return A `ggplot2` plot.
+#'
 #' @export
 plot.vectorfield <- function(x, arrow = grid::arrow(length = grid::unit(0.1, "cm")),
                              show_estimated_vector = TRUE,

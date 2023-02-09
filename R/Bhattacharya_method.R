@@ -310,10 +310,12 @@ align_pot_B <- function(resultB,
 }
 
 #' Options controlling the path-integral algorithm
+#'
 #' See [path_integral_B()], [align_pot_B()] for details.
 #' @inheritParams sim_vf
 #' @inheritParams path_integral_B
 #' @inheritParams align_pot_B
+#' @inherit sim_vf_options return
 #' @export
 pathB_options <- function(vf, lims = rlang::expr(vf$lims), n_path_int = 20, stepsize = 1e-2, tol = 1e-2, numTimeSteps = 1400, n = 200, digits = 2, linear = TRUE, ...) {
   if (!missing(vf)) {

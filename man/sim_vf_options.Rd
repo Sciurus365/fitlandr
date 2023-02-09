@@ -2,8 +2,7 @@
 % Please edit documentation in R/vectorfield_simulation.R
 \name{sim_vf_options}
 \alias{sim_vf_options}
-\title{Options controlling the vector field simulation
-See \code{\link[=sim_vf]{sim_vf()}} for details.}
+\title{Options controlling the vector field simulation}
 \usage{
 sim_vf_options(
   vf,
@@ -40,7 +39,9 @@ sim_vf_options(
 
 \item{inits}{The initial values of each chain.}
 }
+\value{
+A list containing the parameters of the corresponding function. Only intended to be used within \code{\link[=fit_3d_vfld]{fit_3d_vfld()}}
+}
 \description{
-Options controlling the vector field simulation
 See \code{\link[=sim_vf]{sim_vf()}} for details.
 }
