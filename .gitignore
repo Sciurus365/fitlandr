@@ -9,3 +9,4 @@ Rplot*
 *.RDS
 *.ai
 docs
+inst/doc

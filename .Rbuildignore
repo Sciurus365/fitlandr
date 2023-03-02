@@ -12,3 +12,5 @@
 ^docs$
 ^pkgdown$
 ^CRAN-SUBMISSION$
+
+^vignettes/web_only

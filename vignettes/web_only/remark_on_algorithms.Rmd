@@ -1,0 +1,15 @@
+---
+title: "Explanations on the algorithm recommendations"
+output: rmarkdown::html_vignette
+author: "Jingmeng Cui"
+vignette: >
+  %\VignetteIndexEntry{Explanations on the algorithm recommendations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Some users may have noticed that each step in the `fitlandr` package includes multiple algorithms, with a note suggesting the use of `MVKE` and `simlandr` specifically for psychological ILD. In our [preprint](https://psyarxiv.com/wjzg2/), we exclusively used these algorithms. In this explanation, I will elaborate on why I made these recommendations.
+
+While developing `fitlandr`, we drew inspiration from the [`Dynamo`](https://dynamo-release.readthedocs.io/en/latest/) project, which uses `SparseVFC` for vector field estimation and `pathB` for landscape construction. However, when dealing with psychological ILD data, which often exhibit one or more stable phases, `SparseVFC` tends to assume that the drift force is generally stronger for points closer to the local minimum than those further away. This is reasonable in the context where `SparseVFC` was originally developed (image processing), but it is not realistic for psychological data that exhibit homeostasis. Furthermore, it can make the simulation (which is intended for use with `simlandr`) very unstable. `pathB` requires that the system can reach a limited number of reasonable local minima from all possible starting points. Unfortunately, we often found that there were some vectors pointing out of the reasonable range of variables, which made the algorithm unstable. Therefore, currently I don't recommend those algorithms in the context of psychological ILD. Despite these issues, we have included both algorithms in the package since I believe they can be suitable for other types of data, and it is always useful to have more R implementations of algorithms available :)
+
+During the earlier test phase of `fitlandr`, we also used the `waydown` package for landscape construction. However, we found that this algorithm was likely ineffective; in fact, removing the core part of the algorithm (decomposition of the eigenvector) did not alter the output (the author has already been informed.) Thus, this algorithm is no longer supported in `fitlandr`.
