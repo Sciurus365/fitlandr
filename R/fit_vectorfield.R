@@ -27,7 +27,7 @@ fit_2d_vf <- function(data, x, y,
                       n = 20,
                       vector_position = "start",
                       na_action = "omit_data_points",
-                      method = c("MVKE", "MVKE"), ...) {
+                      method = c("MVKE", "VFC"), ...) {
   d <- data
   # extract useful data for construction
   if (is.data.frame(d)) {
