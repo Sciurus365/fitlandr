@@ -12,7 +12,7 @@ fit_2d_vf(
   n = 20,
   vector_position = "start",
   na_action = "omit_data_points",
-  method = c("MVKE", "MVKE"),
+  method = c("MVKE", "VFC"),
   ...
 )
 }
