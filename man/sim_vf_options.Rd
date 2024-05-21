@@ -14,6 +14,7 @@ sim_vf_options(
   stepsize = 0.01,
   sparse = 1,
   forbid_overflow = FALSE,
+  linear_interp = FALSE,
   inits = rlang::expr(matrix(c(stats::runif(chains, min = vf$lims[1], max = vf$lims[2]),
     stats::runif(chains, min = vf$lims[3], max = vf$lims[4])), ncol = 2))
 )
@@ -36,6 +37,8 @@ sim_vf_options(
 \item{sparse}{A number. How much do you want to sparse the output? When the noise is small, sparse the output may make the density estimation more efficient.}
 
 \item{forbid_overflow}{If \code{TRUE}, when the simulated system runs out of the margins specified in \code{vf}, the system will be moved back to the previous value. This can help to stabilize the simulation. \code{FALSE} by default.}
+
+\item{linear_interp}{Use linear interpolation method to estimate the drift vector (and the diffusion matrix). This can speed up the calculation. If \code{TRUE}, be sure that a linear grid was calculated for the vector field using \verb{<vf> <- add_interp_grid(<vf>)}.}
 
 \item{inits}{The initial values of each chain.}
 }

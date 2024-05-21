@@ -16,8 +16,8 @@ find_eqs <- function(vf, starts, jacobian_params = list(), ...) {
       temp <- rootSolve::multiroot(function(x) stats::predict(vf$VFCresult, normalize_v(x, ref = vf$data_normalized)), start = a, ...)
       temp$jacobian <- rlang::exec(numDeriv::jacobian, func = function(x) stats::predict(vf$VFCresult, normalize_v(x, ref = vf$data_normalized)), x = temp$root, !!!jacobian_params)
     } else if (vf$method == "MVKE") {
-      temp <- rootSolve::multiroot(function(x) vf$MVKEresult$mu(normalize_v(x, ref = vf$data_normalized)), start = a, ...)
-      temp$jacobian <- rlang::exec(numDeriv::jacobian, function(x) vf$MVKEresult$mu(normalize_v(x, ref = vf$data_normalized)), x = temp$root, !!!jacobian_params)
+      temp <- rootSolve::multiroot(function(x) vf$MVKEresult(normalize_v(x, ref = vf$data_normalized))$mu, start = a, ...)
+      temp$jacobian <- rlang::exec(numDeriv::jacobian, function(x) vf$MVKEresult(normalize_v(x, ref = vf$data_normalized))$mu, x = temp$root, !!!jacobian_params)
     }
 
     if (temp$root[1] < vf$lims[1] | temp$root[1] > vf$lims[2] | temp$root[2] < vf$lims[3] | temp$root[2] > vf$lims[4]) {

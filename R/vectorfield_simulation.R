@@ -81,7 +81,7 @@ sim_vf_single <- function(init, f, length, noise, noise_warmup, stepsize, discar
 #'
 #' @return A list containing the parameters of the corresponding function. Only intended to be used within [fit_3d_vfld()]
 #' @export
-sim_vf_options <- function(vf, noise = 1,noise_warmup = noise, chains = 10, length = 1e4, discard = 0.3, stepsize = 0.01, sparse = 1, forbid_overflow = FALSE, inits = rlang::expr(matrix(c(
+sim_vf_options <- function(vf, noise = 1,noise_warmup = noise, chains = 10, length = 1e4, discard = 0.3, stepsize = 0.01, sparse = 1, forbid_overflow = FALSE, linear_interp = FALSE, inits = rlang::expr(matrix(c(
                              stats::runif(chains, min = vf$lims[1], max = vf$lims[2]),
                              stats::runif(chains, min = vf$lims[3], max = vf$lims[4])
                            ), ncol = 2))) {
