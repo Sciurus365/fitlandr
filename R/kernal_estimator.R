@@ -16,7 +16,7 @@ MVKE <- function(d, h = 0.2, kernel = c("exp", "Gaussian")) {
   d <- stats::na.omit(d)
   dim <- ncol(d)
 
-  temp_d <- d[1:(nrow(d) - 1), ]
+  temp_d <- d[1:(nrow(d) - 1), , drop = FALSE]
   temp_diff <- diff(d)
   temp_norm <- apply(temp_diff, MARGIN = 1, FUN = function(x) norm(x, "2"))
   temp_diff_tcrossprod <- apply(temp_diff,

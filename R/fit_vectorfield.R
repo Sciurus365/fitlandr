@@ -128,7 +128,7 @@ determine_lims <- function(output, var_names, lims) {
   if (!rlang::is_missing(lims)) {
     return(lims)
   }
-  if (is.list(output)) output <- output[[1]]
+  # if (is.list(output)) output <- output[[1]]
   if (rlang::is_missing(lims)) {
     return(c(sapply(var_names, function(v) grDevices::extendrange(output[, v], f = 0.1))))
   }
