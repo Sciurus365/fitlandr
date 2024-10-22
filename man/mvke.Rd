@@ -4,10 +4,12 @@
 \alias{MVKE}
 \title{Multivariate vector field kernel estimator}
 \usage{
-MVKE(d, h = 0.2, kernel = c("exp", "Gaussian"))
+MVKE(d, v, h = 0.2, kernel = c("exp", "Gaussian"))
 }
 \arguments{
 \item{d}{The dataset. Should be a matrix or a data frame, with each row representing a random vector.}
+
+\item{v}{The vectors corresponding to the dataset. Should be a matrix or a data frame with the same shape as \code{d}. If missing, then the vectors will be calculated from the dataset.}
 
 \item{h}{The bandwidth for the kernel estimator.}
 

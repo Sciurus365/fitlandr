@@ -10,6 +10,8 @@ fit_2d_ld(
   x,
   lims,
   n = 200L,
+  vector_position = "start",
+  na_action = "omit_data_points",
   method = c("MVKE"),
   subdivisions = 100L,
   rel.tol = .Machine$double.eps^0.25,
@@ -30,6 +32,10 @@ fit_2d_ld(
 \item{lims}{The limits of the range for the landscape calculation as \code{c(xl, xu)}.}
 
 \item{n}{The number of equally spaced points in the axis, at which the landscape is to be estimated.}
+
+\item{vector_position}{One of "start", "middle", or "end", representing the position of the vectors. If "start", for example, the starting point of a vector is regarded as the position of the vector.}
+
+\item{na_action}{One of "omit_data_points" or "omit_vectors". If using "omit_data_points", then only the \code{NA} points are omitted, and the points before and after an \code{NA} will form a vector. If using "omit_vectors", then the vectors will be omitted if either of its points is \code{NA}.}
 
 \item{method}{The method used to estimate the gradient. Currently only "MVKE" is supported.}
 
@@ -74,6 +80,14 @@ l <- fit_2d_ld(single_output_grad, "x")
 
 summary(l)
 plot(l)
+
+# different behaviors for different `na_action` choices
+
+l1 <- fit_2d_ld(data.frame(x = c(1,2,1,2,NA,NA,NA,10,11,10,11)), "x")
+plot(l1)
+
+l2 <- fit_2d_ld(data.frame(x = c(1,2,1,2,NA,NA,NA,10,11,10,11)), "x", na_action = "omit_vectors")
+plot(l2)
 
 
 }

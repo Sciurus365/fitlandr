@@ -9,6 +9,7 @@
 #' @param method The method used to estimate the gradient. Currently only "MVKE" is supported.
 #' @param ... Additional arguments passed to [MVKE()].
 #' @inheritParams stats::integrate
+#' @inheritParams fit_2d_vf
 #' @return A `2d_MVKE_landscape` object, which contains the following components:
 #' \itemize{
 #'   \item `dist`: A data frame containing the estimated potential landscape. The data frame has two columns: `x` and `U`, where `x` is the position and `U` is the potential.
@@ -25,10 +26,58 @@
 #' summary(l)
 #' plot(l)
 #'
+#' # different behaviors for different `na_action` choices
 #'
-fit_2d_ld <- function(data, x, lims, n = 200L, method = c("MVKE"), subdivisions = 100L, rel.tol = .Machine$double.eps^0.25, abs.tol = rel.tol, stop.on.error = TRUE, keep.xy = FALSE, aux = NULL, ...) {
+#' l1 <- fit_2d_ld(data.frame(x = c(1,2,1,2,NA,NA,NA,10,11,10,11)), "x")
+#' plot(l1)
+#'
+#' l2 <- fit_2d_ld(data.frame(x = c(1,2,1,2,NA,NA,NA,10,11,10,11)), "x", na_action = "omit_vectors")
+#' plot(l2)
+#'
+#'
+fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_action = "omit_data_points",
+											method = c("MVKE"), subdivisions = 100L, rel.tol = .Machine$double.eps^0.25, abs.tol = rel.tol, stop.on.error = TRUE, keep.xy = FALSE, aux = NULL, ...) {
+	d <- data
+	# extract useful data for construction
+	if (is.data.frame(d)) {
+		d_raw <- d[, c(x), drop = FALSE] %>% as.matrix()
+	} else if (is.matrix(d)) {
+		d_raw <- d[, c(x), drop = FALSE]
+	} else {
+		rlang::abort("`d` must be a data frame or a matrix.")
+	}
+
+	if (na_action != "omit_data_points" & na_action != "omit_vectors") {
+		rlang::abort('`na_action` must be either "omit_data_points" or "omit_vectors".')
+	}
+
+	if (na_action == "omit_data_points" & any(is.na(d_raw))) {
+		d_raw <- stats::na.omit(d_raw)
+		rlang::inform("NA(s) found in the data. Those data points were omitted.")
+	}
+
+	if (vector_position == "start") {
+		x_mat <- d_raw[1:(nrow(d_raw) - 1), , drop = FALSE]
+	} else if (vector_position == "middle") {
+		x_mat <- d_raw[1:(nrow(d_raw) - 1), , drop = FALSE] + 0.5 * v_mat
+	} else if (vector_position == "end") {
+		x_mat <- d_raw[2:nrow(d_raw), , drop = FALSE]
+	} else {
+		rlang::abort('`vector_position` must be one of "start", "middle", or "end".')
+	}
+
+	v_mat <- diff(d_raw)
+
+	data_vectors <- cbind(x_mat, v_mat) %>%
+		`colnames<-`(c("x", "vx"))
+
+	if (any(is.na(data_vectors))) {{ if (na_action == "omit_vectors") {
+		data_vectors <- stats::na.omit(data_vectors)
+		rlang::inform("NA(s) found in the data. Those vectors were omitted.")
+	} }}
+
 	lims <- determine_lims(data, x, lims)
-  MVKEresult <- MVKE(data[, x, drop = FALSE], ...)
+  MVKEresult <- MVKE(data_vectors[,1, drop = FALSE], data_vectors[,2, drop = FALSE], ...)
 
   xseq <- seq(lims[1], lims[2], length.out = n)
   Useq <- vector("numeric", length = n)

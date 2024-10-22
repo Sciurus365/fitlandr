@@ -26,7 +26,7 @@ Should be a data frame or a matrix.}
 
 \item{n}{The number of equally spaced points in each axis, at which the vectors are to be estimated.}
 
-\item{vector_position}{Only useful if \code{method == "VFC"}. One of "start", "middle", or "end", representing the position of the vectors. If "start", for example, the starting point of a vector is regarded as the position of the vector.}
+\item{vector_position}{One of "start", "middle", or "end", representing the position of the vectors. If "start", for example, the starting point of a vector is regarded as the position of the vector.}
 
 \item{na_action}{One of "omit_data_points" or "omit_vectors". If using "omit_data_points", then only the \code{NA} points are omitted, and the points before and after an \code{NA} will form a vector. If using "omit_vectors", then the vectors will be omitted if either of its points is \code{NA}.}
 
