@@ -1,84 +1,30 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/404.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/articles/web_only/remark_on_algorithms.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/index.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/news/index.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/add_interp_grid.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/align_pot_B.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/fast_bilinear.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/find_eqs.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/fit_2d_ld.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/fit_2d_vf.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/fit_3d_vfld.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/fitlandr-package.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/mvke.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/normalize_predict_f.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/pathB_options.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/path_integral_B.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/pipe.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/plot.vectorfield.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/predict.vectorfield.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/reorder_output.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/sim_vf.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/sim_vf_options.html</loc>
-  </url>
-  <url>
-    <loc>https://sciurus365.github.io/fitlandr/reference/simlandr_options.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://sciurus365.github.io/fitlandr/404.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/LICENSE.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/articles/index.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/articles/web_only/remark_on_algorithms.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/authors.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/index.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/news/index.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/add_interp_grid.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/align_pot_B.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/fast_bilinear.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/find_eqs.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/fit_2d_ld.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/fit_2d_vf.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/fit_3d_vfld.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/fitlandr-package.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/index.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/mvke.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/normalize_predict_f.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/pathB_options.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/path_integral_B.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/pipe.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/plot.vectorfield.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/predict.vectorfield.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/reorder_output.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/sim_vf.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/sim_vf_options.html</loc></url>
+<url><loc>https://sciurus365.github.io/fitlandr/reference/simlandr_options.html</loc></url>
 </urlset>
+
