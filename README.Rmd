@@ -51,9 +51,9 @@ single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
 
 library(tidyverse)
 ggplot(data = single_output_grad %>% as_tibble()) +
-	geom_path(aes(x = 1:200, y = x), color = "blue") +
-	geom_path(aes(x = 1:200, y = y), color = "red") +
-	theme_bw()
+  geom_path(aes(x = 1:200, y = x), color = "blue") +
+  geom_path(aes(x = 1:200, y = y), color = "red") +
+  theme_bw()
 ```
 
 Fit the vector field with MVKE (see `?MVKE` for the explanations of parameters):

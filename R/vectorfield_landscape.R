@@ -28,8 +28,9 @@
 #' future::plan("multisession")
 #' set.seed(1614)
 #' l2 <- fit_3d_vfld(v2,
-#' .sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE),
-#' .simlandr_options = simlandr_options(adjust = 5, Umax = 4))
+#'   .sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE),
+#'   .simlandr_options = simlandr_options(adjust = 5, Umax = 4)
+#' )
 #' plot(l2, 2)
 #' future::plan("sequential")
 #' @export
@@ -38,7 +39,7 @@ fit_3d_vfld <- function(vf, method = c("simlandr", "pathB"), .pathB_options = pa
   if (method == "pathB") {
     all_pars <- .pathB_options %>% lapply(eval_pass_missing, list(vf = vf))
     all_pars$f <- function(x) {
-    	stats::predict(all_pars$vf, pos = x, linear_interp = linear_interp, calculate_a = FALSE)$v
+      stats::predict(all_pars$vf, pos = x, linear_interp = linear_interp, calculate_a = FALSE)$v
     }
     cli::cli_progress_step("Calculating path integrals")
     resultB <- do.call(path_integral_B, all_pars)

@@ -43,9 +43,9 @@ single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
 
 library(tidyverse)
 ggplot(data = single_output_grad %>% as_tibble()) +
-    geom_path(aes(x = 1:200, y = x), color = "blue") +
-    geom_path(aes(x = 1:200, y = y), color = "red") +
-    theme_bw()
+  geom_path(aes(x = 1:200, y = x), color = "blue") +
+  geom_path(aes(x = 1:200, y = y), color = "red") +
+  theme_bw()
 ```
 
 <img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
@@ -67,8 +67,8 @@ Fit the potential landscape:
 future::plan("multisession")
 set.seed(1614)
 l2 <- fit_3d_vfld(v2, .sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE), .simlandr_options = simlandr_options(adjust = 5, Umax = 4))
-#> ℹ Simulating the model✔ Simulating the model [26.7s]
-#> ℹ Constructing the landscape✔ Constructing the landscape [3.1s]
+#> ℹ Simulating the model✔ Simulating the model [28.8s]
+#> ℹ Constructing the landscape✔ Constructing the landscape [2.5s]
 plot(l2, 2)
 ```
 

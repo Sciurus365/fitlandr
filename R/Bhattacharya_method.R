@@ -84,7 +84,7 @@ path_integral_B <- function(f, lims, n_path_int = 20, stepsize = 1e-2, tol = 1e-
 
           # check for convergence
           if (is.na(Pot - Pot_old)) {
-          	message(glue::glue("Warning: Missing potential value.
+            message(glue::glue("Warning: Missing potential value.
       										 \t Start point: {i}, {j}.
       										 \t End point: {x_p}, {y_p}. \n"))
           } else if (abs(Pot - Pot_old) > tol) {
@@ -263,7 +263,7 @@ align_pot_B <- function(resultB,
                         digits = 2,
                         linear = TRUE,
                         ...) {
-	rlang::check_installed("akima", reason = "for using the Bhattacharya method. Note that the `akima` package is NOT a free and open software.")
+  rlang::check_installed("akima", reason = "for using the Bhattacharya method. Note that the `akima` package is NOT a free and open software.")
 
   list2env(resultB, envir = environment())
 

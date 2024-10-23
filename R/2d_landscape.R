@@ -28,56 +28,55 @@
 #'
 #' # different behaviors for different `na_action` choices
 #'
-#' l1 <- fit_2d_ld(data.frame(x = c(1,2,1,2,NA,NA,NA,10,11,10,11)), "x")
+#' l1 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x")
 #' plot(l1)
 #'
-#' l2 <- fit_2d_ld(data.frame(x = c(1,2,1,2,NA,NA,NA,10,11,10,11)), "x", na_action = "omit_vectors")
+#' l2 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x", na_action = "omit_vectors")
 #' plot(l2)
 #'
-#'
 fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_action = "omit_data_points",
-											method = c("MVKE"), subdivisions = 100L, rel.tol = .Machine$double.eps^0.25, abs.tol = rel.tol, stop.on.error = TRUE, keep.xy = FALSE, aux = NULL, ...) {
-	d <- data
-	# extract useful data for construction
-	if (is.data.frame(d)) {
-		d_raw <- d[, c(x), drop = FALSE] %>% as.matrix()
-	} else if (is.matrix(d)) {
-		d_raw <- d[, c(x), drop = FALSE]
-	} else {
-		rlang::abort("`d` must be a data frame or a matrix.")
-	}
+                      method = c("MVKE"), subdivisions = 100L, rel.tol = .Machine$double.eps^0.25, abs.tol = rel.tol, stop.on.error = TRUE, keep.xy = FALSE, aux = NULL, ...) {
+  d <- data
+  # extract useful data for construction
+  if (is.data.frame(d)) {
+    d_raw <- d[, c(x), drop = FALSE] %>% as.matrix()
+  } else if (is.matrix(d)) {
+    d_raw <- d[, c(x), drop = FALSE]
+  } else {
+    rlang::abort("`d` must be a data frame or a matrix.")
+  }
 
-	if (na_action != "omit_data_points" & na_action != "omit_vectors") {
-		rlang::abort('`na_action` must be either "omit_data_points" or "omit_vectors".')
-	}
+  if (na_action != "omit_data_points" & na_action != "omit_vectors") {
+    rlang::abort('`na_action` must be either "omit_data_points" or "omit_vectors".')
+  }
 
-	if (na_action == "omit_data_points" & any(is.na(d_raw))) {
-		d_raw <- stats::na.omit(d_raw)
-		rlang::inform("NA(s) found in the data. Those data points were omitted.")
-	}
+  if (na_action == "omit_data_points" & any(is.na(d_raw))) {
+    d_raw <- stats::na.omit(d_raw)
+    rlang::inform("NA(s) found in the data. Those data points were omitted.")
+  }
 
-	if (vector_position == "start") {
-		x_mat <- d_raw[1:(nrow(d_raw) - 1), , drop = FALSE]
-	} else if (vector_position == "middle") {
-		x_mat <- d_raw[1:(nrow(d_raw) - 1), , drop = FALSE] + 0.5 * v_mat
-	} else if (vector_position == "end") {
-		x_mat <- d_raw[2:nrow(d_raw), , drop = FALSE]
-	} else {
-		rlang::abort('`vector_position` must be one of "start", "middle", or "end".')
-	}
+  if (vector_position == "start") {
+    x_mat <- d_raw[1:(nrow(d_raw) - 1), , drop = FALSE]
+  } else if (vector_position == "middle") {
+    x_mat <- d_raw[1:(nrow(d_raw) - 1), , drop = FALSE] + 0.5 * v_mat
+  } else if (vector_position == "end") {
+    x_mat <- d_raw[2:nrow(d_raw), , drop = FALSE]
+  } else {
+    rlang::abort('`vector_position` must be one of "start", "middle", or "end".')
+  }
 
-	v_mat <- diff(d_raw)
+  v_mat <- diff(d_raw)
 
-	data_vectors <- cbind(x_mat, v_mat) %>%
-		`colnames<-`(c("x", "vx"))
+  data_vectors <- cbind(x_mat, v_mat) %>%
+    `colnames<-`(c("x", "vx"))
 
-	if (any(is.na(data_vectors))) {{ if (na_action == "omit_vectors") {
-		data_vectors <- stats::na.omit(data_vectors)
-		rlang::inform("NA(s) found in the data. Those vectors were omitted.")
-	} }}
+  if (any(is.na(data_vectors))) {{ if (na_action == "omit_vectors") {
+    data_vectors <- stats::na.omit(data_vectors)
+    rlang::inform("NA(s) found in the data. Those vectors were omitted.")
+  } }}
 
-	lims <- determine_lims(data, x, lims)
-  MVKEresult <- MVKE(data_vectors[,1, drop = FALSE], data_vectors[,2, drop = FALSE], ...)
+  lims <- determine_lims(data, x, lims)
+  MVKEresult <- MVKE(data_vectors[, 1, drop = FALSE], data_vectors[, 2, drop = FALSE], ...)
 
   xseq <- seq(lims[1], lims[2], length.out = n)
   Useq <- vector("numeric", length = n)
@@ -102,27 +101,32 @@ fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_act
 #' @param ... Not used.
 summary.2d_MVKE_landscape <- function(object, ...) {
   # find the local minimum values in object$dist$U
-	# return a data frame with the x and U values of the local minima
+  # return a data frame with the x and U values of the local minima
 
-	local_minima <- which(diff(sign(diff(object$dist$U))) == 2) + 1
-	cli::cli_inform("{length(local_minima)} local minima were found.")
+  local_minima <- which(diff(sign(diff(object$dist$U))) == 2) + 1
+  cli::cli_inform("{length(local_minima)} local minima were found.")
   return(data.frame(x = object$dist$x[local_minima], U = object$dist$U[local_minima]))
 }
 
 # This function is taken from the `simlandr` package.
-determine_lims <- function (output, var_names, lims)
-{
-	if (!rlang::is_missing(lims)) {
-		return(lims)
-	}
-	if (is.list(output))
-		output <- output[[1]]
-	if (rlang::is_missing(lims)) {
-		return(c(sapply(var_names, function(v) grDevices::extendrange(output[,
-																																				 v], f = 0.1))))
-	}
-	if (any(is.infinite(lims)))
-		stop("Non-infinite values found in `lims`.")
+determine_lims <- function(output, var_names, lims) {
+  if (!rlang::is_missing(lims)) {
+    return(lims)
+  }
+  if (is.list(output)) {
+    output <- output[[1]]
+  }
+  if (rlang::is_missing(lims)) {
+    return(c(sapply(var_names, function(v) {
+      grDevices::extendrange(output[
+        ,
+        v
+      ], f = 0.1)
+    })))
+  }
+  if (any(is.infinite(lims))) {
+    stop("Non-infinite values found in `lims`.")
+  }
 }
 
 utils::globalVariables("U")
