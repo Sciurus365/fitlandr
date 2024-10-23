@@ -3,7 +3,7 @@ pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   web_only/remark_on_algorithms: web_only/remark_on_algorithms.html
-last_built: 2024-10-22T11:14Z
+last_built: 2024-10-23T09:04Z
 urls:
   reference: https://sciurus365.github.io/fitlandr/reference
   article: https://sciurus365.github.io/fitlandr/articles
