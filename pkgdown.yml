@@ -1,9 +1,9 @@
 pandoc: 3.1.11
-pkgdown: 2.1.1
+pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   web_only/remark_on_algorithms: web_only/remark_on_algorithms.html
-last_built: 2024-10-23T09:04Z
+last_built: 2025-09-16T14:23Z
 urls:
   reference: https://sciurus365.github.io/fitlandr/reference
   article: https://sciurus365.github.io/fitlandr/articles
