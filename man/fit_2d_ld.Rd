@@ -53,7 +53,7 @@ fit_2d_ld(
 
 \item{aux}{unused.  For compatibility with S.}
 
-\item{...}{Not used.}
+\item{...}{Additional arguments passed to \code{\link[=MVKE]{MVKE()}}. (Not used for the \code{summary()} function).}
 
 \item{object}{An object of class \verb{2d_MVKE_landscape} returned by \code{\link[=fit_2d_ld]{fit_2d_ld()}}.}
 }
@@ -83,11 +83,11 @@ plot(l)
 
 # different behaviors for different `na_action` choices
 
-l1 <- fit_2d_ld(data.frame(x = c(1,2,1,2,NA,NA,NA,10,11,10,11)), "x")
+l1 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x")
 plot(l1)
 
-l2 <- fit_2d_ld(data.frame(x = c(1,2,1,2,NA,NA,NA,10,11,10,11)), "x", na_action = "omit_vectors")
+l2 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x",
+na_action = "omit_vectors")
 plot(l2)
-
 
 }

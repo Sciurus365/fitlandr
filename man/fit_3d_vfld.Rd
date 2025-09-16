@@ -42,7 +42,7 @@ We recommend the \code{simlandr} method for psychological data because it is mor
 Parallel computing based on \code{future} is supported for both methods. Use \code{future::plan("multisession")} to enable this and speed up computation.
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 # generate data
 single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
 # fit the vector field
@@ -52,8 +52,9 @@ plot(v2)
 future::plan("multisession")
 set.seed(1614)
 l2 <- fit_3d_vfld(v2,
-.sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE),
-.simlandr_options = simlandr_options(adjust = 5, Umax = 4))
+  .sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE),
+  .simlandr_options = simlandr_options(adjust = 5, Umax = 4)
+)
 plot(l2, 2)
 future::plan("sequential")
 \dontshow{\}) # examplesIf}

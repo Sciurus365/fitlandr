@@ -7,7 +7,7 @@
 #' @param lims The limits of the range for the landscape calculation as `c(xl, xu)`.
 #' @param n The number of equally spaced points in the axis, at which the landscape is to be estimated.
 #' @param method The method used to estimate the gradient. Currently only "MVKE" is supported.
-#' @param ... Additional arguments passed to [MVKE()].
+#' @param ... Additional arguments passed to [MVKE()]. (Not used for the `summary()` function).
 #' @inheritParams stats::integrate
 #' @inheritParams fit_2d_vf
 #' @return A `2d_MVKE_landscape` object, which contains the following components:
@@ -31,7 +31,8 @@
 #' l1 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x")
 #' plot(l1)
 #'
-#' l2 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x", na_action = "omit_vectors")
+#' l2 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x",
+#' na_action = "omit_vectors")
 #' plot(l2)
 #'
 fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_action = "omit_data_points",
@@ -83,7 +84,7 @@ fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_act
 
   Useq[1] <- 0
   for (i in 2:n) {
-    Useq[i] <- Useq[i - 1] - stats::integrate(function(x) purrr::map_dbl(x, function(xx) MVKEresult(xx)$mu), xseq[i - 1], xseq[i], subdivisions = subdivisions, rel.tol = rel.tol, abs.tol = abs.tol, stop.on.error = stop.on.error, keep.xy = keep.xy, aux = aux, ...)$value
+    Useq[i] <- Useq[i - 1] - stats::integrate(function(x) purrr::map_dbl(x, function(xx) MVKEresult(xx)$mu), xseq[i - 1], xseq[i], subdivisions = subdivisions, rel.tol = rel.tol, abs.tol = abs.tol, stop.on.error = stop.on.error, keep.xy = keep.xy, aux = aux)$value
   }
 
   dist <- data.frame(x = xseq, U = Useq)
@@ -98,7 +99,6 @@ fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_act
 #' @export
 #' @describeIn fit_2d_ld Find the local minima of the 2D potential landscape
 #' @param object An object of class `2d_MVKE_landscape` returned by [fit_2d_ld()].
-#' @param ... Not used.
 summary.2d_MVKE_landscape <- function(object, ...) {
   # find the local minimum values in object$dist$U
   # return a data frame with the x and U values of the local minima
