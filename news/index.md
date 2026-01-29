@@ -2,6 +2,8 @@
 
 ## fitlandr 0.1.1
 
+CRAN release: 2026-01-29
+
 - Added the
   [`fit_2d_ld()`](https://sciurus365.github.io/fitlandr/reference/fit_2d_ld.md)
   function to fit the landscape for 1D data using the MVKE algorithm and

@@ -8,16 +8,17 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/Sciurus365/fitlandr/blob/master/DESCRIPTION)
+[`inst/CITATION`](https://github.com/Sciurus365/fitlandr/blob/master/inst/CITATION)
 
-Cui J (2026). *fitlandr: Fit Vector Fields and Potential Landscapes from
-Intensive Longitudinal Data*. R package version 0.1.0.9000,
-<https://sciurus365.github.io/fitlandr/>.
+Cui J, Hasselman F, Lichtwarck-Aschoff A (2023). “Unlocking nonlinear
+dynamics and multistability from intensive longitudinal data: A novel
+method.” *Psychological Methods*.
+[doi:10.1037/met0000623](https://doi.org/10.1037/met0000623).
 
-    @Manual{,
-      title = {fitlandr: Fit Vector Fields and Potential Landscapes from Intensive Longitudinal Data},
-      author = {Jingmeng Cui},
-      year = {2026},
-      note = {R package version 0.1.0.9000},
-      url = {https://sciurus365.github.io/fitlandr/},
+    @Article{,
+      title = {Unlocking nonlinear dynamics and multistability from intensive longitudinal data: A novel method},
+      author = {Jingmeng Cui and Fred Hasselman and Anna Lichtwarck-Aschoff},
+      journal = {Psychological Methods},
+      year = {2023},
+      doi = {10.1037/met0000623},
     }
