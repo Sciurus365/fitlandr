@@ -5,12 +5,12 @@
 #' @param d The dataset. Should be a matrix or a data frame, with each row representing a random vector.
 #' @param v The vectors corresponding to the dataset. Should be a matrix or a data frame with the same shape as `d`. If missing, then the vectors will be calculated from the dataset.
 #' @param h The bandwidth for the kernel estimator.
-#' @param kernel The type of kernel estimator used. "exp" by default ([exp()]), and if "Gaussian" then [stats::dnorm()] will be used.
+#' @param kernel The type of kernel estimator used. "Gaussian" by default.
 #'
 #' @return A function(x), which then returns the \eqn{\mu} and \eqn{a} estimators at the position \eqn{x}.
 #' @references Bandi, F. M., & Moloche, G. (2018). On the functional estimation of multivariate diffusion processes. Econometric Theory, 34(4), 896-946. https://doi.org/10.1017/S0266466617000305
 #' @export
-MVKE <- function(d, v, h = 0.2, kernel = c("exp", "Gaussian")) {
+MVKE <- function(d, v, h = 0.2, kernel = c("Gaussian", "exp")) {
   if (is.data.frame(d)) d <- as.matrix(d)
   if (!is.matrix(d)) stop("`d` should be a data.frame or a matrix.")
   if (any(is.na(d))) stop("There are missing values in `d`.")

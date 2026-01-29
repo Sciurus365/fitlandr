@@ -4,7 +4,7 @@
 \alias{MVKE}
 \title{Multivariate vector field kernel estimator}
 \usage{
-MVKE(d, v, h = 0.2, kernel = c("exp", "Gaussian"))
+MVKE(d, v, h = 0.2, kernel = c("Gaussian", "exp"))
 }
 \arguments{
 \item{d}{The dataset. Should be a matrix or a data frame, with each row representing a random vector.}
@@ -13,7 +13,7 @@ MVKE(d, v, h = 0.2, kernel = c("exp", "Gaussian"))
 
 \item{h}{The bandwidth for the kernel estimator.}
 
-\item{kernel}{The type of kernel estimator used. "exp" by default (\code{\link[=exp]{exp()}}), and if "Gaussian" then \code{\link[stats:Normal]{stats::dnorm()}} will be used.}
+\item{kernel}{The type of kernel estimator used. "Gaussian" by default.}
 }
 \value{
 A function(x), which then returns the \eqn{\mu} and \eqn{a} estimators at the position \eqn{x}.

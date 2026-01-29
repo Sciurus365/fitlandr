@@ -72,7 +72,6 @@ sim_vf_single <- function(init, f, length, noise, noise_warmup, stepsize, discar
 }
 
 
-
 #' Options controlling the vector field simulation
 #'
 #' See [sim_vf()] for details.

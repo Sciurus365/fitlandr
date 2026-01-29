@@ -32,7 +32,8 @@
 #' plot(l1)
 #'
 #' l2 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x",
-#' na_action = "omit_vectors")
+#'   na_action = "omit_vectors"
+#' )
 #' plot(l2)
 #'
 fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_action = "omit_data_points",

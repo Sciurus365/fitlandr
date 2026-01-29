@@ -1,10 +1,17 @@
-- This is a re-submission, in which the following issues were solved:
-	- Wrote package names in single quotes in description. 
-	- Added \value field to some functions.
+## Changes of fitlandr 0.1.1
+
+- Added the `fit_2d_ld()` function to fit the landscape for 1D data using the MVKE algorithm and simple integration.
+- Applied the log trick for the kernel calculation for better handling of small values.
+- Debug: 
+	- Changed the function form of `find_eqs()` according to the new setting of the `MVKE()` function; added `linear_interp` to `sim_vf_options`.
+	- Fixed a typo in the `fit_2d_vf()` function.
+	- The parameter `na_action` in `fit_2d_vf()` was not effective for `method = "MVKE"` in the previous version. Now it is fixed. The `vector_position` parameter is now also effective for `method = "MVKE"`.
+	- For `MVKE()`, the Gaussian kernel was used despite the user specifying an exponential kernel. This has been fixed and the default was changed to Gaussian.
+
 
 ## Test environments
 
-- local R installation in Windows R 4.2.2
+- local R installation in Windows R 4.5.2
 - Github R-CMD-check MacOS R 4.2.2
 - Github R-CMD-check Windows R 4.2.2
 - Github R-CMD-check Ubuntu R 4.2.2
@@ -13,8 +20,4 @@
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
-
-- Maintainer: 'Jingmeng Cui <jingmeng.cui@outlook.com>'
-
-  New submission
+0 errors | 0 warnings | 0 note
