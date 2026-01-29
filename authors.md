@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/Sciurus365/fitlandr/blob/master/inst/CITATION)
+[`inst/CITATION`](https://github.com/Sciurus365/fitlandr/blob/v0.1.1/inst/CITATION)
 
 Cui J, Hasselman F, Lichtwarck-Aschoff A (2023). “Unlocking nonlinear
 dynamics and multistability from intensive longitudinal data: A novel
