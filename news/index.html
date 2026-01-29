@@ -36,10 +36,22 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.1" id="fitlandr-011">fitlandr 0.1.1<a class="anchor" aria-label="anchor" href="#fitlandr-011"></a></h2>
+<ul><li>Added the <code><a href="../reference/fit_2d_ld.html">fit_2d_ld()</a></code> function to fit the landscape for 1D data using the MVKE algorithm and simple integration.</li>
+<li>Applied the log trick for the kernel calculation for better handling of small values.</li>
+<li>Debug:
+<ul><li>Changed the function form of <code><a href="../reference/find_eqs.html">find_eqs()</a></code> according to the new setting of the <code><a href="../reference/mvke.html">MVKE()</a></code> function; added <code>linear_interp</code> to <code>sim_vf_options</code>.</li>
+<li>Fixed a typo in the <code><a href="../reference/fit_2d_vf.html">fit_2d_vf()</a></code> function.</li>
+<li>The parameter <code>na_action</code> in <code><a href="../reference/fit_2d_vf.html">fit_2d_vf()</a></code> was not effective for <code>method = "MVKE"</code> in the previous version. Now it is fixed. The <code>vector_position</code> parameter is now also effective for <code>method = "MVKE"</code>.</li>
+<li>For <code><a href="../reference/mvke.html">MVKE()</a></code>, the Gaussian kernel was used despite the user specifying an exponential kernel. This has been fixed and the default was changed to Gaussian.</li>
+</ul></li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="fitlandr-010">fitlandr 0.1.0<a class="anchor" aria-label="anchor" href="#fitlandr-010"></a></h2><p class="text-muted">CRAN release: 2023-02-10</p>
 <ul><li>Initial release.</li>
 </ul></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
@@ -47,7 +59,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>
