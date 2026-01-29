@@ -46,5 +46,10 @@ sim_vf(
 A matrix of the simulated data.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function was deprecated in favor of the more efficient and accurate \code{make_2d_ld} approach.
+
 Parallel computing based on \code{future} is supported. Use \code{future::plan("multisession")} to enable this.
 }
+\keyword{internal}

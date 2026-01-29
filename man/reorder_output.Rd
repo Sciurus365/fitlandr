@@ -15,5 +15,10 @@ reorder_output(s, chains)
 A reordered matrix of the simulation output.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function was deprecated in favor of the more efficient and accurate \code{\link[=make_2d_ld]{make_2d_ld()}} approach.
+
 Then \code{\link[simlandr:check_conv]{simlandr::check_conv()}} can be used meaningfully.
 }
+\keyword{internal}

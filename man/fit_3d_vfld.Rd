@@ -30,6 +30,10 @@ fit_3d_vfld(
 A \code{landscape} object as described in \code{\link[simlandr:make_3d_static]{simlandr::make_3d_static()}}, or a \verb{3d_static_landscape_B} object, which inherits from the \code{landscape} class and contains the following elements: \code{dist}, the distribution estimation for landscapes; \code{plot}, a 3D plot using \code{plotly}; plot_2, a 2D plot using \code{ggplot2}; x, y, from \code{vf}.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function was deprecated in favor of the more efficient and accurate \code{make_2d_ld} approach.
+
 Two methods are available: \code{method = "pathB"} and \code{method = "simlandr"}. See \emph{Details} section.
 }
 \details{
@@ -59,3 +63,4 @@ plot(l2, 2)
 future::plan("sequential")
 \dontshow{\}) # examplesIf}
 }
+\keyword{internal}

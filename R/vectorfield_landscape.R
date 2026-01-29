@@ -1,7 +1,13 @@
 #' Estimate a 3D potential landscape from a vector field
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' This function was deprecated in favor of the more efficient and accurate `make_2d_ld` approach.
+#'
 #' Two methods are available: `method = "pathB"` and `method = "simlandr"`. See *Details* section.
 #'
+#' @details
 #' For `method = "simlandr"`, the landscape is constructed based on the generalized potential landscape by Wang et al. (2008), implemented by the `simlandr` package. This function is a wrapper of [sim_vf()] and [simlandr::make_3d_static()]. Use those two functions separately for more customization.
 #'
 #' For `method = "pathB"`, the landscape is constructed based on the deterministic path-integral quasi-potential defined by Bhattacharya et al. (2011).
@@ -34,8 +40,16 @@
 #' plot(l2, 2)
 #' future::plan("sequential")
 #' @export
+#' @keywords internal
 fit_3d_vfld <- function(vf, method = c("simlandr", "pathB"), .pathB_options = pathB_options(vf), .sim_vf_options = sim_vf_options(vf), .simlandr_options = simlandr_options(vf), linear_interp = FALSE) {
-  method <- match.arg(method[1], c("pathB", "simlandr"))
+  lifecycle::deprecate_warn(
+    "0.2.0",
+    "fit_3d_vfld()",
+    "make_2d_ld()"
+  )
+
+
+	method <- match.arg(method[1], c("pathB", "simlandr"))
   if (method == "pathB") {
     all_pars <- .pathB_options %>% lapply(eval_pass_missing, list(vf = vf))
     all_pars$f <- function(x) {

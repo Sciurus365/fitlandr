@@ -46,5 +46,10 @@ sim_vf_options(
 A list containing the parameters of the corresponding function. Only intended to be used within \code{\link[=fit_3d_vfld]{fit_3d_vfld()}}
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function was deprecated in favor of the more efficient and accurate \code{make_2d_ld} approach.
+
 See \code{\link[=sim_vf]{sim_vf()}} for details.
 }
+\keyword{internal}
