@@ -7,7 +7,7 @@
 \usage{
 bootstrap_2d_ld(boot_vf, ...)
 
-summary.bootstrap_2d_ld(object, exclude_minor = TRUE, ...)
+\method{summary}{bootstrap_2d_ld}(object, exclude_minor = TRUE, ...)
 }
 \arguments{
 \item{boot_vf}{A \code{bootstrap_2d_vf} object containing bootstrap vector fields.}
@@ -20,7 +20,7 @@ summary.bootstrap_2d_ld(object, exclude_minor = TRUE, ...)
 }
 \value{
 An object of class \code{bootstrap_2d_ld} containing:
-- \code{bootstrap_lds}: A list of 2D landscapes from each bootstrap
+- \code{bootstrap_lds}: A list of 2D landscapes from each bootstrap vector field. Note that the plots are removed to save space.
 - \code{original_ld}: The original 2D landscape from the original vector field.
 - \code{n_boot}: The number of bootstrap samples.
 }

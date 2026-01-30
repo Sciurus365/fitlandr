@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{A \code{summary_bootstrap_2d_ld} object.}
+
+\item{...}{Additional arguments (not used).}
 }
 \description{
 Color represents the U value at that minimum.

@@ -34,11 +34,11 @@ sim_vf <- function(vf, noise = 1, noise_warmup = noise, chains = 10, length = 1e
                      stats::runif(chains, min = vf$lims[1], max = vf$lims[2]),
                      stats::runif(chains, min = vf$lims[3], max = vf$lims[4])
                    ), ncol = 2)) {
-	lifecycle::deprecate_warn(
-		"0.2.0",
-		"sim_vf()",
-		"make_2d_ld()"
-	)
+  lifecycle::deprecate_warn(
+    "0.2.0",
+    "sim_vf()",
+    "make_2d_ld()"
+  )
 
   f <- function(x) {
     stats::predict(object = vf, pos = x, linear_interp = linear_interp, calculate_a = TRUE)
@@ -103,11 +103,11 @@ sim_vf_options <- function(vf, noise = 1, noise_warmup = noise, chains = 10, len
                              stats::runif(chains, min = vf$lims[1], max = vf$lims[2]),
                              stats::runif(chains, min = vf$lims[3], max = vf$lims[4])
                            ), ncol = 2))) {
-	lifecycle::deprecate_warn(
-		"0.2.0",
-		"sim_vf_options()",
-		"make_2d_ld()"
-	)
+  lifecycle::deprecate_warn(
+    "0.2.0",
+    "sim_vf_options()",
+    "make_2d_ld()"
+  )
 
   if (!missing(vf)) {
     return(list(vf = vf, noise = noise, chains = chains, length = length, discard = discard, stepsize = stepsize, sparse = sparse, forbid_overflow = forbid_overflow, inits = eval(inits)))
@@ -148,11 +148,11 @@ simlandr_options <- function(vf, x = rlang::expr(vf$x), y = rlang::expr(vf$y), l
 #' @keywords internal
 #' @export
 reorder_output <- function(s, chains) {
-	lifecycle::deprecate_warn(
-		"0.2.0",
-		"reorder_output()",
-		"make_2d_ld()"
-	)
+  lifecycle::deprecate_warn(
+    "0.2.0",
+    "reorder_output()",
+    "make_2d_ld()"
+  )
   reorder_index <- vector("integer", nrow(s))
   current_pos <- 1
   for (i in 1:(nrow(s) / chains)) {

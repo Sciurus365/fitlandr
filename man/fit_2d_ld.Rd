@@ -22,7 +22,7 @@ fit_2d_ld(
   ...
 )
 
-summary.2d_MVKE_landscape(object, ...)
+\method{summary}{`2d_MVKE_landscape`}(object, ...)
 }
 \arguments{
 \item{data}{A data frame or matrix containing the data. The data frame should contain at least a column, with the column name indicated by \code{x}, that represents the dimension for landscape construction.}
@@ -69,7 +69,7 @@ This function is a wrapper of the MVKE method (see \code{\link[=MVKE]{MVKE()}}) 
 }
 \section{Functions}{
 \itemize{
-\item \code{summary.2d_MVKE_landscape()}: Find the local minima of the 2D potential landscape
+\item \code{summary(`2d_MVKE_landscape`)}: Find the local minima of the 2D potential landscape
 
 }}
 \examples{

@@ -26,6 +26,9 @@ calculate_probability_flow(
 \item{y_range}{Vector c(ymin, ymax).}
 
 \item{n_flow}{Number of points along one dimension to sample (default 20).}
+
+\item{devided_by_rho}{Logical indicating whether to divide flow vectors by steady-state density.
+This may be useful when performing the force decomposition.}
 }
 \value{
 Data frame with columns: x, y, Jx, Jy.

@@ -26,6 +26,8 @@ find_gmam_path(
 \item{n_beads}{Number of points to represent the path (default 50).}
 
 \item{max_iter}{Number of optimization-reparameterization cycles.}
+
+\item{progress}{Logical indicating whether to show a progress bar during optimization.}
 }
 \value{
 A data frame containing the x and y coordinates of the optimal path.

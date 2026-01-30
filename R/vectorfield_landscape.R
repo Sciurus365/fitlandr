@@ -49,7 +49,7 @@ fit_3d_vfld <- function(vf, method = c("simlandr", "pathB"), .pathB_options = pa
   )
 
 
-	method <- match.arg(method[1], c("pathB", "simlandr"))
+  method <- match.arg(method[1], c("pathB", "simlandr"))
   if (method == "pathB") {
     all_pars <- .pathB_options %>% lapply(eval_pass_missing, list(vf = vf))
     all_pars$f <- function(x) {

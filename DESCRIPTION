@@ -40,6 +40,7 @@ Imports:
     progressr,
     purrr,
     R.utils,
+    Rcpp,
     Rfast,
     rlang,
     rootSolve,
@@ -55,3 +56,5 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
+LinkingTo: 
+    Rcpp

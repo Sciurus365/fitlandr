@@ -2,9 +2,12 @@
 % Please edit documentation in R/vectorfield_eq.R
 \name{find_eqs}
 \alias{find_eqs}
+\alias{print.vectorfield_eqs}
 \title{Find equilibrium points for a vector field}
 \usage{
 find_eqs(vf, starts, jacobian_params = list(), ...)
+
+\method{print}{vectorfield_eqs}(x, ...)
 }
 \arguments{
 \item{vf}{A \code{vectorfield} object estimated by \code{\link[=fit_2d_vf]{fit_2d_vf()}}.}
@@ -13,7 +16,9 @@ find_eqs(vf, starts, jacobian_params = list(), ...)
 
 \item{jacobian_params}{Parameters passed to \code{\link[numDeriv:jacobian]{numDeriv::jacobian()}}.}
 
-\item{...}{Parameters passed to \code{\link[rootSolve:multiroot]{rootSolve::multiroot()}}.}
+\item{...}{Additional arguments (not used).}
+
+\item{x}{An object of class \code{vectorfield_eqs}.}
 }
 \value{
 A list of equilibrium points and their details. Use \code{print.vectorfield_eqs()} to inspect it.

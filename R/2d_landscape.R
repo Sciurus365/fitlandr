@@ -100,6 +100,7 @@ fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_act
 #' @export
 #' @describeIn fit_2d_ld Find the local minima of the 2D potential landscape
 #' @param object An object of class `2d_MVKE_landscape` returned by [fit_2d_ld()].
+#' @method summary 2d_MVKE_landscape
 summary.2d_MVKE_landscape <- function(object, ...) {
   # find the local minimum values in object$dist$U
   # return a data frame with the x and U values of the local minima

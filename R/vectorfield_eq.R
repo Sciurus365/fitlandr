@@ -41,6 +41,10 @@ find_eqs <- function(vf, starts, jacobian_params = list(), ...) {
 }
 
 #' @export
+#' @rdname find_eqs
+#' @param x An object of class `vectorfield_eqs`.
+#' @param ... Additional arguments (not used).
+#' @method print vectorfield_eqs
 print.vectorfield_eqs <- function(x, ...) {
   cat("Root(s):")
   lapply(x, function(x) {
