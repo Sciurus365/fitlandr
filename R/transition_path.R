@@ -118,5 +118,5 @@ autolayer.gmam_path <- function(object, ...) {
   ))
 }
 
-#' @importFrom ggplot2 autolayer
+#' @importFrom ggplot2 autolayer autoplot
 NULL

@@ -27,6 +27,7 @@ Imports:
     dplyr,
     furrr,
     future.apply,
+    ggforce,
     ggplot2,
     glue,
     grDevices,

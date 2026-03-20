@@ -155,60 +155,217 @@ bootstrap_2d_ld <- function(boot_vf, ...) {
 
 
 #' @rdname bootstrap_2d_ld
-#' @param object A `bootstrap_2d_ld` object.
-#' @param exclude_minor Logical indicating whether to exclude minor local minima. Default TRUE.
-#' @param ... Additional arguments (not used).
-#' @method summary bootstrap_2d_ld
+#'
+#' @param object A `bootstrap_2d_ld` object with fields:
+#'   - `bootstrap_lds`: list of landscapes,
+#'   - `original_ld`: the original landscape,
+#'   - `n_boot`: number of bootstrap runs.
+#' @param exclude_minor Logical; exclude minor local minima. Default TRUE.
+#' @param minPts Integer; HDBSCAN minPts. Default 5.
+#' @param level Confidence level for ellipses (e.g., 0.95). Default 0.95.
+#' @param one_per_run Logical; at most one point per run per cluster for summary stats. Default TRUE.
+#' @param ... Unused.
+#'
+#' @return An object of class `"summary_bootstrap_2d_ld"` with components:
+#'   - `params`, `per_boot`, `per_point`,
+#'   - `per_cluster`: now includes `a_pred`, `b_pred`, `a_conf`, `b_conf`, `angle`, `c2`,
+#'   - `diagnostics`, `original_ld`, `n_boot`.
+#'
+#' @details
+#' Ellipse parameters are derived from the eigen-decomposition of the 2×2 covariance
+#' matrix per cluster. Semi-axes for the **prediction** ellipse are
+#' \eqn{\sqrt{\lambda_i\,\chi^2_{2,\alpha}}}; for the **confidence** ellipse they are
+#' \eqn{\sqrt{\lambda_i\,\chi^2_{2,\alpha}/n_{\text{runs}}}} where \eqn{n_{\text{runs}}}
+#' is the number of bootstrap runs contributing to that cluster (uncertainty of the mean).
+#' Ellipses are drawn with `ggforce::geom_ellipse()` which expects aesthetics
+#' `x0`, `y0`, `a`, `b`, `angle`.  \[See ggforce docs.\]  # (geom_ellipse API)  [1](https://rstudio-pubs-static.s3.amazonaws.com/1236382_7016d680936d411e8fd45fc0b8b62b0c.html)
+#' The \eqn{\chi^2_{2,\alpha}} quantile comes from the chi-square distribution
+#' (e.g., 0.95 → 5.991).  \[See NIST/ITL table.\]  # (chi-square critical)  [2](https://stackoverflow.com/questions/70010774/dbscan-choice-of-epsilon-through-elbow-method)
+#'
 #' @export
-summary.bootstrap_2d_ld <- function(object, exclude_minor = TRUE, ...) {
-  # Find local minima for each bootstrap landscape as well as their U values
-  # and positions.
-  p <- progressr::progressor(steps = length(object$bootstrap_lds))
+#' @method summary bootstrap_2d_ld
+summary.bootstrap_2d_ld <- function(object,
+                                    exclude_minor = TRUE,
+                                    minPts = 5,
+                                    level = 0.95,
+                                    one_per_run = TRUE,
+                                    ...) {
+  stopifnot(is.list(object), !is.null(object$bootstrap_lds), !is.null(object$n_boot))
 
+  # ---------- 1) Collect minima across bootstrap runs ----------
+  p <- progressr::progressor(steps = length(object$bootstrap_lds))
   lds <- object$bootstrap_lds
 
-  boot_mins <- lapply(
-    lds,
-    function(ld) {
-      p()
-      find_loc_min(ld, exclude_minor = exclude_minor)
-    }
-  )
+  boot_mins <- lapply(lds, function(ld) {
+    p()
+    find_loc_min(ld, exclude_minor = exclude_minor)
+  })
 
-  # reduce it into a data frame, with columns: boot_index, min_index, x, y, U
-  boot_min_df <- do.call(rbind, lapply(1:length(boot_mins), function(i) {
+  boot_min_df <- do.call(rbind, lapply(seq_along(boot_mins), function(i) {
     mins <- boot_mins[[i]]$mins
-    if (exclude_minor) {
-      mins <- mins %>% dplyr::filter(!is_minor)
-    }
-
-    if (nrow(mins) == 0) {
+    if (exclude_minor && nrow(mins) > 0) mins <- dplyr::filter(mins, !is_minor)
+    if (!nrow(mins)) {
       return(NULL)
     }
     data.frame(
       boot_index = i,
-      min_index = 1:nrow(mins),
-      x = mins$x,
-      y = mins$y,
-      U = mins$U
+      x = mins$x, y = mins$y, U = mins$U,
+      stringsAsFactors = FALSE
     )
   }))
 
-  # perform clustering based on all local minima of all bootstrapping samples
-  # # using DBSCAN
-  #
-  # dbscan_result <- dbscan::dbscan(
-  # 	boot_min_df[, c("x", "y")],
-  # 	eps = 0.05,
-  # 	minPts = 5
-  # )
+  if (is.null(boot_min_df) || !nrow(boot_min_df)) {
+    out <- list(
+      params = list(
+        exclude_minor = exclude_minor, minPts = minPts, level = level,
+        one_per_run = one_per_run
+      ),
+      per_boot = data.frame(boot_index = seq_len(object$n_boot), n_mins = 0L),
+      per_point = NULL,
+      per_cluster = NULL,
+      diagnostics = list(message = "No minima found"),
+      original_ld = object$original_ld,
+      n_boot = object$n_boot
+    )
+    return(structure(out, class = "summary_bootstrap_2d_ld"))
+  }
 
-  return(structure(list(
-    boot_min_df = boot_min_df,
+  # ---------- 2) HDBSCAN on pooled minima ----------
+  db <- dbscan::hdbscan(boot_min_df[, c("x", "y")], minPts = minPts)
+  boot_min_df$cluster <- db$cluster # 0=noise in HDBSCAN  [3](https://christiangoueguel.com/ConfidenceEllipse/)
+  boot_min_df$is_noise <- boot_min_df$cluster == 0L
+
+  # per-bootstrap counts
+  per_boot <- boot_min_df |>
+    dplyr::group_by(boot_index) |>
+    dplyr::summarise(n_mins = dplyr::n(), .groups = "drop")
+
+  # Exclude noise for per-cluster stats
+  df_c <- dplyr::filter(boot_min_df, !is_noise)
+  if (!nrow(df_c)) {
+    out <- list(
+      params = list(
+        exclude_minor = exclude_minor, minPts = minPts, level = level,
+        one_per_run = one_per_run
+      ),
+      per_boot = per_boot,
+      per_point = boot_min_df,
+      per_cluster = NULL,
+      diagnostics = list(noise_frac = mean(boot_min_df$is_noise)),
+      original_ld = object$original_ld,
+      n_boot = object$n_boot
+    )
+    return(structure(out, class = "summary_bootstrap_2d_ld"))
+  }
+
+  # Optionally: at most one point per run per cluster (closest to provisional center)
+  if (one_per_run) {
+    centers0 <- df_c |>
+      dplyr::group_by(cluster) |>
+      dplyr::summarise(cx = mean(x), cy = mean(y), .groups = "drop")
+    df_c <- df_c |>
+      dplyr::left_join(centers0, by = "cluster") |>
+      dplyr::mutate(d2 = (x - cx)^2 + (y - cy)^2) |>
+      dplyr::group_by(cluster, boot_index) |>
+      dplyr::slice_min(order_by = d2, n = 1, with_ties = FALSE) |>
+      dplyr::ungroup() |>
+      dplyr::select(-cx, -cy, -d2)
+  }
+
+  # ---------- 3) Per-cluster summaries (variances/covariance) ----------
+  per_cluster <- df_c |>
+    dplyr::group_by(cluster) |>
+    dplyr::summarise(
+      n_points = dplyr::n(),
+      n_runs = dplyr::n_distinct(boot_index),
+      stability = n_runs / object$n_boot,
+      mean_x = mean(x),
+      mean_y = mean(y),
+      mean_U = mean(U),
+      sd_x = stats::sd(x),
+      sd_y = stats::sd(y),
+      sd_U = stats::sd(U),
+      CI_U_lower = stats::quantile(U, probs = (1 - level) / 2),
+      CI_U_upper = stats::quantile(U, probs = 1 - (1 - level) / 2),
+      s_xx = stats::var(x),
+      s_yy = stats::var(y),
+      s_xy = stats::cov(x, y),
+      .groups = "drop"
+    )
+
+  # ---------- 4) Add ellipse parameters (prediction & confidence) ----------
+  c2 <- stats::qchisq(level, df = 2) # e.g., 0.95 -> 5.991  [2](https://stackoverflow.com/questions/70010774/dbscan-choice-of-epsilon-through-elbow-method)
+
+  per_cluster <- per_cluster |>
+    dplyr::rowwise() |>
+    dplyr::mutate(
+      Sigma = list(matrix(c(s_xx, s_xy, s_xy, s_yy), 2, 2)),
+      eg = list(eigen(Sigma, symmetric = TRUE)),
+      lam = list(pmax(eg$values, 0)),
+      V = list(eg$vectors),
+      angle = atan2(V[2, 1], V[1, 1]),
+      a_pred = sqrt(lam[1] * c2),
+      b_pred = sqrt(lam[2] * c2),
+      a_conf = sqrt(lam[1] * c2 / n_runs),
+      b_conf = sqrt(lam[2] * c2 / n_runs)
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::select(-Sigma, -eg, -lam, -V)
+
+  out <- list(
+    params = list(
+      exclude_minor = exclude_minor, minPts = minPts, level = level,
+      one_per_run = one_per_run
+    ),
+    per_boot = per_boot,
+    per_point = boot_min_df,
+    per_cluster = per_cluster,
+    diagnostics = list(noise_frac = mean(boot_min_df$is_noise)),
     original_ld = object$original_ld,
     n_boot = object$n_boot
-  ), class = "summary_bootstrap_2d_ld"))
+  )
+  structure(out, class = "summary_bootstrap_2d_ld")
 }
+
+
+#' Quick autoplot: points + 95% prediction & confidence ellipses
+#' @export
+#' @rdname summary.bootstrap_2d_ld
+#' @param object A `"summary_bootstrap_2d_ld"` object produced by `summary()`.
+#' @param show_ellipses Logical; draw ellipses (spread of points). Default TRUE.
+#' @param point_alpha Numeric; alpha for points. Default 0.35.
+#' @param ellipse_alpha Numeric; alpha for filled prediction ellipse. Default 0.15.
+#' @param ... Unused.
+#' @export
+autoplot.summary_bootstrap_2d_ld <- function(object,
+                                             show_ellipses = TRUE,
+                                             point_alpha = 0.35,
+                                             ellipse_alpha = 0.15,
+                                             ...) {
+  stopifnot(inherits(object, "summary_bootstrap_2d_ld"))
+  if (is.null(object$per_point)) {
+    return(ggplot2::ggplot())
+  }
+  df_points <- object$per_point
+  df_cl <- object$per_cluster
+
+  p <- ggplot2::ggplot(df_points) +
+    ggplot2::geom_point(ggplot2::aes(x = x, y = y, color = factor(cluster)), alpha = point_alpha, size = 1) +
+    ggplot2::coord_fixed() +
+    ggplot2::labs(color = "cluster")
+
+  if (!is.null(df_cl) && nrow(df_cl)) {
+    if (show_ellipses) {
+      p <- p + ggforce::geom_ellipse(
+        data = df_cl,
+        ggplot2::aes(x0 = mean_x, y0 = mean_y, a = a_pred, b = b_pred, angle = angle),
+        color = "firebrick", fill = "firebrick", alpha = ellipse_alpha
+      )
+    }
+  }
+  p + ggplot2::theme_bw()
+}
+
 
 # process_single_ld <- function(ld, p_func, find_func, ...) {
 #   p_func()

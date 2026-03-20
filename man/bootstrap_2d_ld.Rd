@@ -7,23 +7,59 @@
 \usage{
 bootstrap_2d_ld(boot_vf, ...)
 
-\method{summary}{bootstrap_2d_ld}(object, exclude_minor = TRUE, ...)
+\method{summary}{bootstrap_2d_ld}(
+  object,
+  exclude_minor = TRUE,
+  minPts = 5,
+  level = 0.95,
+  one_per_run = TRUE,
+  ...
+)
 }
 \arguments{
 \item{boot_vf}{A \code{bootstrap_2d_vf} object containing bootstrap vector fields.}
 
-\item{...}{Additional arguments (not used).}
+\item{...}{Unused.}
 
-\item{object}{A \code{bootstrap_2d_ld} object.}
+\item{object}{A \code{bootstrap_2d_ld} object with fields:
+\itemize{
+\item \code{bootstrap_lds}: list of landscapes,
+\item \code{original_ld}: the original landscape,
+\item \code{n_boot}: number of bootstrap runs.
+}}
 
-\item{exclude_minor}{Logical indicating whether to exclude minor local minima. Default TRUE.}
+\item{exclude_minor}{Logical; exclude minor local minima. Default TRUE.}
+
+\item{minPts}{Integer; HDBSCAN minPts. Default 5.}
+
+\item{level}{Confidence level for ellipses (e.g., 0.95). Default 0.95.}
+
+\item{one_per_run}{Logical; at most one point per run per cluster for summary stats. Default TRUE.}
 }
 \value{
 An object of class \code{bootstrap_2d_ld} containing:
 - \code{bootstrap_lds}: A list of 2D landscapes from each bootstrap vector field. Note that the plots are removed to save space.
 - \code{original_ld}: The original 2D landscape from the original vector field.
 - \code{n_boot}: The number of bootstrap samples.
+
+An object of class \code{"summary_bootstrap_2d_ld"} with components:
+\itemize{
+\item \code{params}, \code{per_boot}, \code{per_point},
+\item \code{per_cluster}: now includes \code{a_pred}, \code{b_pred}, \code{a_conf}, \code{b_conf}, \code{angle}, \code{c2},
+\item \code{diagnostics}, \code{original_ld}, \code{n_boot}.
+}
 }
 \description{
 Generates bootstrap landscapes from bootstrap vector fields.
+}
+\details{
+Ellipse parameters are derived from the eigen-decomposition of the 2×2 covariance
+matrix per cluster. Semi-axes for the \strong{prediction} ellipse are
+\eqn{\sqrt{\lambda_i\,\chi^2_{2,\alpha}}}; for the \strong{confidence} ellipse they are
+\eqn{\sqrt{\lambda_i\,\chi^2_{2,\alpha}/n_{\text{runs}}}} where \eqn{n_{\text{runs}}}
+is the number of bootstrap runs contributing to that cluster (uncertainty of the mean).
+Ellipses are drawn with \code{ggforce::geom_ellipse()} which expects aesthetics
+\code{x0}, \code{y0}, \code{a}, \code{b}, \code{angle}.  [See ggforce docs.]  # (geom_ellipse API)  \href{https://rstudio-pubs-static.s3.amazonaws.com/1236382_7016d680936d411e8fd45fc0b8b62b0c.html}{1}
+The \eqn{\chi^2_{2,\alpha}} quantile comes from the chi-square distribution
+(e.g., 0.95 → 5.991).  [See NIST/ITL table.]  # (chi-square critical)  \href{https://stackoverflow.com/questions/70010774/dbscan-choice-of-epsilon-through-elbow-method}{2}
 }
