@@ -124,7 +124,7 @@ calculate_barrier.2d_ld <- function(l, start_location_value, start_r, end_locati
 find_local_min_3d <- function(dist, localmin, r, Umax, expand = TRUE, first_called = TRUE) {
   # from simlandr:::find_local_min_3d
   if (!is.matrix(dist$d)) {
-    stop("Wrong input. `dist` should be a list with x, y, and d, and d should be a matrix.")
+    cli::cli_abort("Wrong input. {.arg dist} should be a list with {.field x}, {.field y}, and {.field d}, and {.field d} should be a matrix.")
   }
   x1 <- localmin[1]
   y1 <- localmin[2]
@@ -138,7 +138,7 @@ find_local_min_3d <- function(dist, localmin, r, Umax, expand = TRUE, first_call
   if (min_U > Umax) {
     if (expand) {
       if (first_called) {
-        message("The U in this range is too high. Searching range expanded...")
+        cli::cli_inform("The U in this range is too high. Searching range expanded...")
       }
       return(find_local_min_3d(dist, localmin, c(r[1] +
         dist$x[2] - dist$x[1], r[2] + dist$y[2] - dist$y[1]),
@@ -155,7 +155,7 @@ find_local_min_3d <- function(dist, localmin, r, Umax, expand = TRUE, first_call
   location <- c(location_index, location_value)
   names(location) <- c("x_index", "y_index", "x_value", "y_value")
   if (!first_called) {
-    message(paste0("r = c(", r[1], ",", r[2], ")"))
+    cli::cli_inform("r = c({round(r[1], 6)}, {round(r[2], 6)})")
   }
   return(list(U = min_U, location = location))
 }

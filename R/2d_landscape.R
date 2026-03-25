@@ -45,17 +45,19 @@ fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_act
   } else if (is.matrix(d)) {
     d_raw <- d[, c(x), drop = FALSE]
   } else {
-    rlang::abort("`d` must be a data frame or a matrix.")
+    cli::cli_abort("{.arg data} must be a data frame or a matrix.")
   }
 
   if (na_action != "omit_data_points" & na_action != "omit_vectors") {
-    rlang::abort('`na_action` must be either "omit_data_points" or "omit_vectors".')
+    cli::cli_abort('{.arg na_action} must be either "omit_data_points" or "omit_vectors".')
   }
 
   if (na_action == "omit_data_points" & any(is.na(d_raw))) {
     d_raw <- stats::na.omit(d_raw)
-    rlang::inform("NA(s) found in the data. Those data points were omitted.")
+    cli::cli_inform("NA(s) found in the data. Those data points were omitted.")
   }
+
+  v_mat <- diff(d_raw)
 
   if (vector_position == "start") {
     x_mat <- d_raw[1:(nrow(d_raw) - 1), , drop = FALSE]
@@ -64,18 +66,16 @@ fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_act
   } else if (vector_position == "end") {
     x_mat <- d_raw[2:nrow(d_raw), , drop = FALSE]
   } else {
-    rlang::abort('`vector_position` must be one of "start", "middle", or "end".')
+    cli::cli_abort('{.arg vector_position} must be one of "start", "middle", or "end".')
   }
-
-  v_mat <- diff(d_raw)
 
   data_vectors <- cbind(x_mat, v_mat) %>%
     `colnames<-`(c("x", "vx"))
 
-  if (any(is.na(data_vectors))) {{ if (na_action == "omit_vectors") {
+  if (any(is.na(data_vectors)) && na_action == "omit_vectors") {
     data_vectors <- stats::na.omit(data_vectors)
-    rlang::inform("NA(s) found in the data. Those vectors were omitted.")
-  } }}
+    cli::cli_inform("NA(s) found in the data. Those vectors were omitted.")
+  }
 
   lims <- determine_lims(data, x, lims)
   MVKEresult <- MVKE(data_vectors[, 1, drop = FALSE], data_vectors[, 2, drop = FALSE], ...)
@@ -108,27 +108,6 @@ summary.2d_MVKE_landscape <- function(object, ...) {
   local_minima <- which(diff(sign(diff(object$dist$U))) == 2) + 1
   cli::cli_inform("{length(local_minima)} local minima were found.")
   return(data.frame(x = object$dist$x[local_minima], U = object$dist$U[local_minima]))
-}
-
-# This function is taken from the `simlandr` package.
-determine_lims <- function(output, var_names, lims) {
-  if (!rlang::is_missing(lims)) {
-    return(lims)
-  }
-  if (is.list(output)) {
-    output <- output[[1]]
-  }
-  if (rlang::is_missing(lims)) {
-    return(c(sapply(var_names, function(v) {
-      grDevices::extendrange(output[
-        ,
-        v
-      ], f = 0.1)
-    })))
-  }
-  if (any(is.infinite(lims))) {
-    stop("Non-infinite values found in `lims`.")
-  }
 }
 
 utils::globalVariables("U")

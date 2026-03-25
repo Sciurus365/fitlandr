@@ -1,3 +1,12 @@
+# fitlandr 0.1.1.9000
+
+- Fixed a plotting bug in `plot.cv_vectorfield()`.
+- Fixed `fit_2d_ld(..., vector_position = "middle")` so it works correctly.
+- Improved consistency and clarity of user-facing messages and error reporting across core workflows.
+- Updated examples to use the current recommended landscape workflow (`make_2d_ld()`).
+- Fixed a runtime error in `summary.bootstrap_2d_ld()` when filtering minor minima.
+- Fixed additional `summary.bootstrap_2d_ld()` runtime errors introduced by NSE handling changes.
+
 # fitlandr 0.1.1
 
 - Added the `fit_2d_ld()` function to fit the landscape for 1D data using the MVKE algorithm and simple integration.

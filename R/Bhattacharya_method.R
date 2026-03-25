@@ -84,13 +84,9 @@ path_integral_B <- function(f, lims, n_path_int = 20, stepsize = 1e-2, tol = 1e-
 
           # check for convergence
           if (is.na(Pot - Pot_old)) {
-            message(glue::glue("Warning: Missing potential value.
-      										 \t Start point: {i}, {j}.
-      										 \t End point: {x_p}, {y_p}. \n"))
+            cli::cli_warn("Missing potential value. Start point: ({i}, {j}). End point: ({x_p}, {y_p}).")
           } else if (abs(Pot - Pot_old) > tol) {
-            message(glue::glue("Warning: Not converged.
-      										 \t Start point: {i}, {j}.
-      										 \t End point: {x_p}, {y_p}. \n"))
+            cli::cli_warn("Not converged. Start point: ({i}, {j}). End point: ({x_p}, {y_p}).")
           }
           return(list(
             x_path_ind = x_path_ind, y_path_ind = y_path_ind,
@@ -301,7 +297,7 @@ align_pot_B <- function(resultB,
   df_sparse <- df[!duplicated(round(df[, c("x", "y")], digits = digits)), ]
 
   if (any(!is.finite(df_sparse$z))) {
-    warning("`z` contains non-finite values. Removed automatically, but be careful with the result!")
+    cli::cli_warn("{.field z} contains non-finite values. These were removed automatically; interpret results with caution.")
     df_sparse <- df_sparse %>%
       dplyr::filter(is.finite(z))
   }

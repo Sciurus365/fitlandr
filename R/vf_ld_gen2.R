@@ -18,7 +18,7 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
   if (inherits(vf, "cv_vectorfield")) {
     vf <- vf$final_model
   } else if (!inherits(vf, "vectorfield")) {
-    stop("Input 'vf' must be a 'vectorfield' or 'cv_vectorfield' object.")
+    cli::cli_abort("Input {.arg vf} must be a {.cls vectorfield} or {.cls cv_vectorfield} object.")
   }
 
   drift_func <- function(x, y) {
@@ -245,7 +245,7 @@ make_2d_ld <- function(vf, linear_interp = TRUE, n_grid = 100) {
 #' @export
 find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.05) {
   if (!inherits(ld, "2d_ld") && !inherits(ld, "2d_static_ld")) {
-    stop("Input 'ld' must be a '2d_ld' or '2d_static_ld' object.")
+    cli::cli_abort("Input {.arg ld} must be a {.cls 2d_ld} or {.cls 2d_static_ld} object.")
   }
 
   dist <- ld$dist
@@ -363,11 +363,11 @@ transform_to_grid <- function(dist) {
 
 get_min_pos <- function(ld_min, index) {
   if (!inherits(ld_min, "ld_min")) {
-    stop("Input 'ld_min' must be an 'ld_min' object.")
+    cli::cli_abort("Input {.arg ld_min} must be an {.cls ld_min} object.")
   }
 
   if (index < 1 || index > nrow(ld_min$mins)) {
-    stop("Index out of bounds.")
+    cli::cli_abort("{.arg index} is out of bounds.")
   }
 
   return(c(ld_min$mins$x[index], ld_min$mins$y[index]))

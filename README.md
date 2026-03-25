@@ -11,17 +11,19 @@
 [![R-CMD-check](https://github.com/Sciurus365/fitlandr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Sciurus365/fitlandr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-A toolbox for estimating vector fields from intensive longitudinal data,
-and construct potential landscapes thereafter. The vector fields can be
-estimated with two nonparametric methods: the Multivariate Vector Field
-Kernel Estimator (MVKE) by Bandi & Moloche (2018)
+A toolbox for estimating vector fields from intensive longitudinal data
+and constructing potential landscapes. Vector fields can be estimated
+with two nonparametric methods: the Multivariate Vector Field Kernel
+Estimator (MVKE) by Bandi & Moloche (2018)
 <https://doi.org/10.1017/S0266466617000305> and the Sparse Vector Field
 Consensus (SparseVFC) algorithm by Ma et al. (2013)
-<https://doi.org/10.1016/j.patcog.2013.05.017>. The potential landscapes
-can be constructed with a simulation-based approach with the `simlandr`
-package (Cui et al., 2021) <https://doi.org/10.31234/osf.io/pzva3>, or
-the Bhattacharya et al. (2011) method for path integration
-<https://doi.org/10.1186/1752-0509-5-85>.
+<https://doi.org/10.1016/j.patcog.2013.05.017>.
+
+In the current recommended workflow, landscapes are built from the
+estimated vector field by numerically solving for the steady-state
+distribution with a finite-difference method, and then transforming this
+distribution into potential values. Earlier wrapper-based routes (e.g.,
+the previous `pathB`/`simlandr`-based workflow) are deprecated.
 
 ## Installation
 
@@ -48,10 +50,9 @@ ggplot(data = single_output_grad %>% as_tibble()) +
   theme_bw()
 ```
 
-<img src="man/figures/README-unnamed-chunk-2-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-2-1.png" alt="" width="100%" />
 
-Fit the vector field with MVKE (see `?MVKE` for the explanations of
-parameters):
+Fit the vector field with MVKE (see `?MVKE` for parameter details):
 
 ``` r
 library(fitlandr)
@@ -59,23 +60,30 @@ v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
 plot(v2)
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-3-1.png" alt="" width="100%" />
+
+For intensive longitudinal psychological data, `method = "MVKE"` is the
+preferred default because it typically gives more realistic drift
+estimates for observations farther from equilibrium regions (basins).
 
 Fit the potential landscape:
 
+The current `make_2d_ld()` pipeline takes the fitted vector field and
+computes a steady-state distribution numerically using a finite-
+difference scheme, then converts it to a potential landscape.
+
 ``` r
-future::plan("multisession")
 set.seed(1614)
-l2 <- fit_3d_vfld(v2, .sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE), .simlandr_options = simlandr_options(adjust = 5, Umax = 4))
-#> ℹ Simulating the model✔ Simulating the model [28.8s]
-#> ℹ Constructing the landscape✔ Constructing the landscape [2.5s]
+l2 <- make_2d_ld(v2, linear_interp = FALSE, n_grid = 100)
+#> ℹ Setting up grid and pre-calculating fields...✔ Setting up grid and pre-calculating fields... [8.1s]
+#> ℹ Building sparse matrix representation...✔ Building sparse matrix representation... [326ms]
+#> ℹ Solving for steady-state distribution...✔ Solving for steady-state distribution... [72ms]
 plot(l2, 2)
 ```
 
-<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-4-1.png" alt="" width="100%" />
 
 ``` r
 # equivalent:
-# s2 <- sim_vf(v2, chains = 16, stepsize = 1, forbid_overflow = TRUE)
-# l2 <- simlandr::make_3d_static(s2, x = "x", y = "y", lims = v2$lims, adjust = 5, Umax = 4)
+# l2 <- make_2d_ld(v2, linear_interp = FALSE)
 ```

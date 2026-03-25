@@ -14,7 +14,7 @@ make_2d_pf <- function(vf, ld, n = 20, divided_by_rho = FALSE) {
   if (inherits(vf, "cv_vectorfield")) {
     vf <- vf$final_model
   } else if (!inherits(vf, "vectorfield")) {
-    stop("Input 'vf' must be a 'vectorfield' or 'cv_vectorfield' object.")
+    cli::cli_abort("Input {.arg vf} must be a {.cls vectorfield} or {.cls cv_vectorfield} object.")
   }
 
   rho <- ld$ss

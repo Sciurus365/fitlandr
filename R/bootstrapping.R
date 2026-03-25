@@ -56,7 +56,7 @@ bootstrap_2d_vf <- function(vf, block_length = NULL, n_boot = 200, seed = 1614, 
   kernel <- environment(vf[["MVKEresult"]])[["kernel"]]
   dv <- vf$data_normalized
   lims <- vf$lims
-  vec <- vf$vec[, 1:2] %>% dplyr::rowwise()
+  vec <- vf$vec_grid[, c("x", "y")] %>% dplyr::rowwise()
   x <- vf$x
   y <- vf$y
   n <- vf$n
@@ -190,7 +190,9 @@ summary.bootstrap_2d_ld <- function(object,
                                     level = 0.95,
                                     one_per_run = TRUE,
                                     ...) {
-  stopifnot(is.list(object), !is.null(object$bootstrap_lds), !is.null(object$n_boot))
+  if (!is.list(object) || is.null(object$bootstrap_lds) || is.null(object$n_boot)) {
+    cli::cli_abort("{.arg object} must be a {.cls bootstrap_2d_ld} object with {.field bootstrap_lds} and {.field n_boot}.")
+  }
 
   # ---------- 1) Collect minima across bootstrap runs ----------
   p <- progressr::progressor(steps = length(object$bootstrap_lds))
@@ -203,7 +205,7 @@ summary.bootstrap_2d_ld <- function(object,
 
   boot_min_df <- do.call(rbind, lapply(seq_along(boot_mins), function(i) {
     mins <- boot_mins[[i]]$mins
-    if (exclude_minor && nrow(mins) > 0) mins <- dplyr::filter(mins, !is_minor)
+    if (exclude_minor && nrow(mins) > 0) mins <- mins[!mins$is_minor, , drop = FALSE]
     if (!nrow(mins)) {
       return(NULL)
     }
@@ -262,14 +264,18 @@ summary.bootstrap_2d_ld <- function(object,
   if (one_per_run) {
     centers0 <- df_c |>
       dplyr::group_by(cluster) |>
-      dplyr::summarise(cx = mean(x), cy = mean(y), .groups = "drop")
+      dplyr::summarise(
+        cx = mean(x),
+        cy = mean(y),
+        .groups = "drop"
+      )
     df_c <- df_c |>
       dplyr::left_join(centers0, by = "cluster") |>
       dplyr::mutate(d2 = (x - cx)^2 + (y - cy)^2) |>
       dplyr::group_by(cluster, boot_index) |>
       dplyr::slice_min(order_by = d2, n = 1, with_ties = FALSE) |>
       dplyr::ungroup() |>
-      dplyr::select(-cx, -cy, -d2)
+      dplyr::select(-dplyr::any_of(c("cx", "cy", "d2")))
   }
 
   # ---------- 3) Per-cluster summaries (variances/covariance) ----------
@@ -278,7 +284,6 @@ summary.bootstrap_2d_ld <- function(object,
     dplyr::summarise(
       n_points = dplyr::n(),
       n_runs = dplyr::n_distinct(boot_index),
-      stability = n_runs / object$n_boot,
       mean_x = mean(x),
       mean_y = mean(y),
       mean_U = mean(U),
@@ -291,26 +296,27 @@ summary.bootstrap_2d_ld <- function(object,
       s_yy = stats::var(y),
       s_xy = stats::cov(x, y),
       .groups = "drop"
-    )
+    ) |>
+    dplyr::mutate(stability = n_runs / object$n_boot)
 
   # ---------- 4) Add ellipse parameters (prediction & confidence) ----------
   c2 <- stats::qchisq(level, df = 2) # e.g., 0.95 -> 5.991  [2](https://stackoverflow.com/questions/70010774/dbscan-choice-of-epsilon-through-elbow-method)
 
-  per_cluster <- per_cluster |>
-    dplyr::rowwise() |>
-    dplyr::mutate(
-      Sigma = list(matrix(c(s_xx, s_xy, s_xy, s_yy), 2, 2)),
-      eg = list(eigen(Sigma, symmetric = TRUE)),
-      lam = list(pmax(eg$values, 0)),
-      V = list(eg$vectors),
-      angle = atan2(V[2, 1], V[1, 1]),
-      a_pred = sqrt(lam[1] * c2),
-      b_pred = sqrt(lam[2] * c2),
-      a_conf = sqrt(lam[1] * c2 / n_runs),
-      b_conf = sqrt(lam[2] * c2 / n_runs)
-    ) |>
-    dplyr::ungroup() |>
-    dplyr::select(-Sigma, -eg, -lam, -V)
+  ellipse_df <- lapply(seq_len(nrow(per_cluster)), function(i) {
+    sigma <- matrix(c(per_cluster$s_xx[[i]], per_cluster$s_xy[[i]], per_cluster$s_xy[[i]], per_cluster$s_yy[[i]]), 2, 2)
+    eig <- eigen(sigma, symmetric = TRUE)
+    lambda <- pmax(eig$values, 0)
+    angle <- atan2(eig$vectors[2, 1], eig$vectors[1, 1])
+    n_runs_i <- per_cluster$n_runs[[i]]
+    data.frame(
+      angle = angle,
+      a_pred = sqrt(lambda[1] * c2),
+      b_pred = sqrt(lambda[2] * c2),
+      a_conf = sqrt(lambda[1] * c2 / n_runs_i),
+      b_conf = sqrt(lambda[2] * c2 / n_runs_i)
+    )
+  })
+  per_cluster <- dplyr::bind_cols(per_cluster, dplyr::bind_rows(ellipse_df))
 
   out <- list(
     params = list(
@@ -342,7 +348,9 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
                                              point_alpha = 0.35,
                                              ellipse_alpha = 0.15,
                                              ...) {
-  stopifnot(inherits(object, "summary_bootstrap_2d_ld"))
+  if (!inherits(object, "summary_bootstrap_2d_ld")) {
+    cli::cli_abort("{.arg object} must inherit from {.cls summary_bootstrap_2d_ld}.")
+  }
   if (is.null(object$per_point)) {
     return(ggplot2::ggplot())
   }
@@ -350,7 +358,11 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
   df_cl <- object$per_cluster
 
   p <- ggplot2::ggplot(df_points) +
-    ggplot2::geom_point(ggplot2::aes(x = x, y = y, color = factor(cluster)), alpha = point_alpha, size = 1) +
+    ggplot2::geom_point(
+      ggplot2::aes(x = x, y = y, color = factor(cluster)),
+      alpha = point_alpha,
+      size = 1
+    ) +
     ggplot2::coord_fixed() +
     ggplot2::labs(color = "cluster")
 
@@ -358,7 +370,10 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
     if (show_ellipses) {
       p <- p + ggforce::geom_ellipse(
         data = df_cl,
-        ggplot2::aes(x0 = mean_x, y0 = mean_y, a = a_pred, b = b_pred, angle = angle),
+        ggplot2::aes(
+          x0 = mean_x, y0 = mean_y,
+          a = a_pred, b = b_pred, angle = angle
+        ),
         color = "firebrick", fill = "firebrick", alpha = ellipse_alpha
       )
     }
@@ -393,13 +408,13 @@ plot.summary_bootstrap_2d_ld <- function(x, ...) {
   # the shape of the dot represents how many local minima are found in that bootstrap sample
   # so first calculate the counts
 
-  boot_counts <- table(x$boot_min_df$boot_index)
+  boot_counts <- table(x$per_point$boot_index)
   boot_count_df <- data.frame(
     boot_index = as.integer(names(boot_counts)),
     count = as.integer(boot_counts)
   )
 
-  plot_df <- x$boot_min_df %>%
+  plot_df <- x$per_point %>%
     dplyr::left_join(boot_count_df, by = "boot_index")
 
   # now make the plot

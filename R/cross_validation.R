@@ -70,7 +70,7 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
     h_curr <- h_values[j]
     fold_mse <- numeric(k)
 
-    message(paste("  Testing h =", h_curr))
+    cli::cli_inform("Testing h = {h_curr}")
 
     # 3. Loop over Folds
     for (i in 1:k) {
@@ -168,12 +168,12 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
 #' @param x An object of class 'cv_vectorfield' returned by cv_fit_2d_vf.
 #' @param ... Additional arguments (not used).
 plot.cv_vectorfield <- function(x, ...) {
-  cv_data <- cv_object$cv_results
+  cv_data <- x$cv_results
   ggplot2::ggplot(cv_data, ggplot2::aes(x = h, y = cv_mse)) +
     ggplot2::geom_line() +
     ggplot2::geom_point() +
     ggplot2::annotate(
-      x = cv_object$h_optimal, y = min(cv_data$cv_mse),
+      x = x$h_optimal, y = min(cv_data$cv_mse),
       geom = "point", color = "red"
     ) +
     ggplot2::scale_x_log10() +

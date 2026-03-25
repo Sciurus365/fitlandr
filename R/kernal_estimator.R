@@ -12,16 +12,16 @@
 #' @export
 MVKE <- function(d, v, h = 0.2, kernel = c("Gaussian", "exp")) {
   if (is.data.frame(d)) d <- as.matrix(d)
-  if (!is.matrix(d)) stop("`d` should be a data.frame or a matrix.")
-  if (any(is.na(d))) stop("There are missing values in `d`.")
+  if (!is.matrix(d)) cli::cli_abort("{.arg d} should be a data frame or a matrix.")
+  if (any(is.na(d))) cli::cli_abort("There are missing values in {.arg d}.")
   if (missing(v)) {
     v <- diff(d)
     d <- d[1:(nrow(d) - 1), , drop = FALSE]
   } else {
     if (is.data.frame(v)) v <- as.matrix(v)
-    if (!is.matrix(v)) stop("`v` should be a data.frame or a matrix.")
-    if (any(is.na(v))) stop("There are missing values in `v`.")
-    if (!all(dim(v) == dim(d))) stop("`v` should have the same shape as `d`.")
+    if (!is.matrix(v)) cli::cli_abort("{.arg v} should be a data frame or a matrix.")
+    if (any(is.na(v))) cli::cli_abort("There are missing values in {.arg v}.")
+    if (!all(dim(v) == dim(d))) cli::cli_abort("{.arg v} should have the same shape as {.arg d}.")
   }
 
 
@@ -43,12 +43,12 @@ MVKE <- function(d, v, h = 0.2, kernel = c("Gaussian", "exp")) {
   } else if (kernel == "exp") {
     log_K <- log_K_exp_mat
   } else {
-    stop('`kernel` must be one of "Gaussian" or "exp".')
+    cli::cli_abort('{.arg kernel} must be one of "Gaussian" or "exp".')
   }
 
   force(h)
   function(x) {
-    if (length(x) != dim) stop("Input of wrong dimension.")
+    if (length(x) != dim) cli::cli_abort("Input has wrong dimension.")
 
     # Get logs instead of raw values
     log_w_upper <- log_K(temp_d, x, h = h)

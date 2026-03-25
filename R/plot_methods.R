@@ -133,10 +133,10 @@ plot.vectorfield <- function(x, arrow = grid::arrow(length = grid::unit(0.1, "cm
 #' @references krassowski's answer at https://stackoverflow.com/questions/20249653/insert-layer-underneath-existing-layers-in-ggplot2-object
 `-.gg` <- function(plot, layer) {
   if (missing(layer)) {
-    stop("Cannot use `-.gg()` with a single argument. Did you accidentally put - on a new line?")
+    cli::cli_abort("Cannot use {.code -.gg()} with a single argument. Did you accidentally put {-} on a new line?")
   }
   if (!ggplot2::is.ggplot(plot)) {
-    stop("Need a plot on the left side")
+    cli::cli_abort("Need a plot on the left side.")
   }
   plot$layers <- c(layer, plot$layers)
   plot
