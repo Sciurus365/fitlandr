@@ -10,3 +10,7 @@ Rplot*
 *.ai
 docs
 inst/doc
+
+fitlandr.Rcheck/
+..Rcheck/
+fitlandr_*.tar.gz

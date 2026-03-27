@@ -86,22 +86,22 @@ fit_2d_vf <- function(data, x, y,
   lims <- determine_lims(d_raw, c(x, y), lims)
 
   vec <- tidyr::expand_grid(x = seq(lims[1], lims[2], length.out = n), y = seq(lims[3], lims[4], length.out = n))
-  vec <- vec %>% dplyr::rowwise()
+  grid_xy <- as.matrix(vec[, c("x", "y")])
+  n_grid <- nrow(grid_xy)
+  v_mat <- matrix(NA_real_, nrow = n_grid, ncol = 2)
 
-  if (method == "VFC") {
-    vec <- vec %>% dplyr::mutate(v = list(stats::predict(VFCresult, c(x, y) %>% normalize_v(dv)) %>% scale_up(dv)))
-  } else if (method == "MVKE") {
-    vec <- vec %>% dplyr::mutate(v = list(MVKEresult(c(x, y) %>% normalize_v(dv))$mu %>% scale_up(dv)))
+  for (idx in seq_len(n_grid)) {
+    pos_norm <- normalize_v(grid_xy[idx, ], dv)
+    if (method == "VFC") {
+      v_mat[idx, ] <- stats::predict(VFCresult, pos_norm) %>% scale_up(dv)
+    } else if (method == "MVKE") {
+      v_mat[idx, ] <- MVKEresult(pos_norm)$mu %>% scale_up(dv)
+    }
   }
 
-  vec <- vec %>%
-    dplyr::mutate(
-      vx = v[1],
-      vy = v[2],
-      v_norm = (sum(v^2))^(1 / 2)
-    ) %>%
-    dplyr::select(-v) %>%
-    dplyr::ungroup()
+  vec$vx <- v_mat[, 1]
+  vec$vy <- v_mat[, 2]
+  vec$v_norm <- sqrt(vec$vx^2 + vec$vy^2)
 
   result <- list(
     vec_grid = vec,

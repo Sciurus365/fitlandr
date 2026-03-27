@@ -10,6 +10,7 @@ bootstrap_2d_ld(boot_vf, ...)
 \method{summary}{bootstrap_2d_ld}(
   object,
   exclude_minor = TRUE,
+  clustering_method = c("hdbscan", "hungarian", "gmm_bic"),
   minPts = 5,
   level = 0.95,
   one_per_run = TRUE,
@@ -29,6 +30,9 @@ bootstrap_2d_ld(boot_vf, ...)
 }}
 
 \item{exclude_minor}{Logical; exclude minor local minima. Default TRUE.}
+
+\item{clustering_method}{Clustering backend for pooled minima. One of
+\code{"hdbscan"} (default), \code{"hungarian"}, \code{"gmm_bic"}.}
 
 \item{minPts}{Integer; HDBSCAN minPts. Default 5.}
 

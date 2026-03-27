@@ -6,6 +6,7 @@
 \usage{
 \method{autoplot}{summary_bootstrap_2d_ld}(
   object,
+  mode = c("clusters", "minima"),
   show_ellipses = TRUE,
   point_alpha = 0.35,
   ellipse_alpha = 0.15,
@@ -14,6 +15,9 @@
 }
 \arguments{
 \item{object}{A \code{"summary_bootstrap_2d_ld"} object produced by \code{summary()}.}
+
+\item{mode}{Plot style. \code{"clusters"} shows cluster-colored points and ellipses;
+\code{"minima"} reproduces the minima-U jitter plot.}
 
 \item{show_ellipses}{Logical; draw ellipses (spread of points). Default TRUE.}
 

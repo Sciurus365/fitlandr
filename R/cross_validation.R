@@ -25,10 +25,13 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
   n <- nrow(data)
   data <- as.data.frame(data)
   folds <- sample(rep(1:k, length.out = n)) # Assign data points to folds
+  verbose <- isTRUE(getOption("fitlandr.verbose", TRUE))
 
   mse_by_h <- numeric(length(h_values))
 
-  cli::cli_inform("Starting {k}-Fold CV for {length(h_values)} candidate bandwidths.")
+  if (verbose) {
+    cli::cli_inform("Starting {k}-Fold CV for {length(h_values)} candidate bandwidths.")
+  }
 
   # --- Helper function to prepare training data (NA insertion) ---
   # Inserts NA rows between non-consecutive segments to prevent artifact vectors
@@ -70,7 +73,9 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
     h_curr <- h_values[j]
     fold_mse <- numeric(k)
 
-    cli::cli_inform("Testing h = {h_curr}")
+    if (verbose) {
+      cli::cli_inform("Testing h = {h_curr}")
+    }
 
     # 3. Loop over Folds
     for (i in 1:k) {
@@ -105,7 +110,9 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
       model_train <- tryCatch(
         suppressMessages(fit_2d_vf(train_data, x = x, y = y, h = h_curr, ...)),
         error = function(e) {
-          cli::cli_alert("Error in fit_2d_vf for fold {i}, h = {h_curr}: {e$message}")
+          if (verbose) {
+            cli::cli_alert("Error in fit_2d_vf for fold {i}, h = {h_curr}: {e$message}")
+          }
           return(NULL)
         }
       )
@@ -116,14 +123,11 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
       }
 
       # Predict the drift 'v' at the test states X_t individually
-      predicted_v_list <- apply(X_t, 1, function(row) {
-        # 'row' is a two-element vector c(x, y), which is passed to predict()
-        pred <- stats::predict(model_train, c(row[1], row[2]))
-        return(pred$v)
-      })
-
-      # Transpose the list result to an N x 2 matrix for comparison
-      predicted_drift_matrix <- t(predicted_v_list)
+      predicted_drift_matrix <- matrix(NA_real_, nrow = nrow(X_t), ncol = 2)
+      for (idx in seq_len(nrow(X_t))) {
+        pred <- stats::predict(model_train, c(X_t[idx, 1], X_t[idx, 2]))
+        predicted_drift_matrix[idx, ] <- pred$v
+      }
 
       # --- D. Calculate Mean Squared Error (MSE) ---
 
@@ -144,12 +148,15 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
   cv_results <- data.frame(h = h_values, cv_mse = mse_by_h)
   h_optimal <- cv_results$h[which.min(cv_results$cv_mse)]
 
-  cli::cli_inform("Cross-Validation complete.")
-  cli::cli_inform("Optimal Bandwidth (h) selected: {round(h_optimal, 4)}")
-
-  cli::cli_inform("Fitting the optimal model on the full dataset...")
+  if (verbose) {
+    cli::cli_inform("Cross-Validation complete.")
+    cli::cli_inform("Optimal Bandwidth (h) selected: {round(h_optimal, 4)}")
+    cli::cli_inform("Fitting the optimal model on the full dataset...")
+  }
   final_model <- fit_2d_vf(data, x = x, y = y, h = h_optimal, ...)
-  cli::cli_inform("Final model fitted.")
+  if (verbose) {
+    cli::cli_inform("Final model fitted.")
+  }
 
   return(structure(list(
     final_model = final_model,

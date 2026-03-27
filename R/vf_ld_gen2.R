@@ -21,13 +21,8 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
     cli::cli_abort("Input {.arg vf} must be a {.cls vectorfield} or {.cls cv_vectorfield} object.")
   }
 
-  drift_func <- function(x, y) {
-    pred <- stats::predict(vf, c(x, y), linear_interp = linear_interp)
-    return(pred$v)
-  }
-  diffusion_func <- function(x, y) {
-    pred <- stats::predict(vf, c(x, y), linear_interp = linear_interp)
-    return(pred$a)
+  predict_both <- function(x, y) {
+    stats::predict(vf, c(x, y), linear_interp = linear_interp)
   }
 
   x_range <- vf$lims[1:2]
@@ -52,8 +47,9 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
 
   for (i in 1:n_grid) {
     for (j in 1:n_grid) {
-      drt <- drift_func(x_coords[i], y_coords[j])
-      diff <- diffusion_func(x_coords[i], y_coords[j])
+      pred <- predict_both(x_coords[i], y_coords[j])
+      drt <- pred$v
+      diff <- pred$a
       Ax[i, j] <- drt[1]
       Ay[i, j] <- drt[2]
       Dxx[i, j] <- diff[1, 1]
@@ -70,14 +66,20 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
   x_vec <- numeric(N * 25)
   cnt <- 0
 
-  add_entry <- function(row, col, val) {
-    if (val == 0) {
+  add_entries <- function(rows, cols, vals) {
+    keep <- vals != 0
+    if (!any(keep)) {
       return()
     }
-    cnt <<- cnt + 1
-    i_vec[cnt] <<- row
-    j_vec[cnt] <<- col
-    x_vec[cnt] <<- val
+    rows <- rows[keep]
+    cols <- cols[keep]
+    vals <- vals[keep]
+    n_add <- length(vals)
+    idx <- (cnt + 1):(cnt + n_add)
+    i_vec[idx] <<- rows
+    j_vec[idx] <<- cols
+    x_vec[idx] <<- vals
+    cnt <<- cnt + n_add
   }
 
   k_idx <- function(i, j) i + (j - 1) * n_grid
@@ -105,16 +107,21 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
 
       # Add to matrix (Rate of change = -div(J))
       # Normal Flow
-      add_entry(k1, k1, -coeff_k1 / hx)
-      add_entry(k1, k2, -coeff_k2 / hx)
-      add_entry(k2, k1, coeff_k1 / hx)
-      add_entry(k2, k2, coeff_k2 / hx)
+      add_entries(
+        rows = c(k1, k1, k2, k2),
+        cols = c(k1, k2, k1, k2),
+        vals = c(-coeff_k1 / hx, -coeff_k2 / hx, coeff_k1 / hx, coeff_k2 / hx)
+      )
 
       # Mixed Flow (affects k1 and k2 by drawing from surrounding y-cells)
       for (curr_i in c(i, i + 1)) {
         mult <- if (curr_i == i) -1 else 1 # Sign change for k1 vs k2
-        add_entry(if (mult < 0) k1 else k2, k_idx(curr_i, jp), -mult * Dxy[curr_i, jp] * coeff_mixed / hx)
-        add_entry(if (mult < 0) k1 else k2, k_idx(curr_i, jm), mult * Dxy[curr_i, jm] * coeff_mixed / hx)
+        row_target <- if (mult < 0) k1 else k2
+        add_entries(
+          rows = c(row_target, row_target),
+          cols = c(k_idx(curr_i, jp), k_idx(curr_i, jm)),
+          vals = c(-mult * Dxy[curr_i, jp] * coeff_mixed / hx, mult * Dxy[curr_i, jm] * coeff_mixed / hx)
+        )
       }
     }
   }
@@ -135,15 +142,20 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
       denom_x <- if (i == 1 || i == n_grid) hx else 2 * hx
       coeff_mixed <- 1 / (2 * denom_x)
 
-      add_entry(k1, k1, -coeff_k1 / hy)
-      add_entry(k1, k2, -coeff_k2 / hy)
-      add_entry(k2, k1, coeff_k1 / hy)
-      add_entry(k2, k2, coeff_k2 / hy)
+      add_entries(
+        rows = c(k1, k1, k2, k2),
+        cols = c(k1, k2, k1, k2),
+        vals = c(-coeff_k1 / hy, -coeff_k2 / hy, coeff_k1 / hy, coeff_k2 / hy)
+      )
 
       for (curr_j in c(j, j + 1)) {
         mult <- if (curr_j == j) -1 else 1
-        add_entry(if (mult < 0) k1 else k2, k_idx(ip, curr_j), -mult * Dxy[ip, curr_j] * coeff_mixed / hy)
-        add_entry(if (mult < 0) k1 else k2, k_idx(im, curr_j), mult * Dxy[im, curr_j] * coeff_mixed / hy)
+        row_target <- if (mult < 0) k1 else k2
+        add_entries(
+          rows = c(row_target, row_target),
+          cols = c(k_idx(ip, curr_j), k_idx(im, curr_j)),
+          vals = c(-mult * Dxy[ip, curr_j] * coeff_mixed / hy, mult * Dxy[im, curr_j] * coeff_mixed / hy)
+        )
       }
     }
   }
@@ -255,24 +267,29 @@ find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.05) {
   n_y <- ncol(U_matrix)
 
   local_mins <- data.frame(x = numeric(0), y = numeric(0), U = numeric(0))
+  if (n_x >= 3 && n_y >= 3) {
+    U_center <- U_matrix[2:(n_x - 1), 2:(n_y - 1), drop = FALSE]
+    is_min <-
+      (U_center < U_matrix[1:(n_x - 2), 2:(n_y - 1), drop = FALSE]) &
+      (U_center < U_matrix[3:n_x, 2:(n_y - 1), drop = FALSE]) &
+      (U_center < U_matrix[2:(n_x - 1), 1:(n_y - 2), drop = FALSE]) &
+      (U_center < U_matrix[2:(n_x - 1), 3:n_y, drop = FALSE]) &
+      (U_center < U_matrix[1:(n_x - 2), 1:(n_y - 2), drop = FALSE]) &
+      (U_center < U_matrix[1:(n_x - 2), 3:n_y, drop = FALSE]) &
+      (U_center < U_matrix[3:n_x, 1:(n_y - 2), drop = FALSE]) &
+      (U_center < U_matrix[3:n_x, 3:n_y, drop = FALSE])
 
-  for (i in 2:(n_x - 1)) {
-    for (j in 2:(n_y - 1)) {
-      current_U <- U_matrix[i, j]
-      neighbors <- c(
-        U_matrix[i - 1, j], U_matrix[i + 1, j],
-        U_matrix[i, j - 1], U_matrix[i, j + 1],
-        U_matrix[i - 1, j - 1], U_matrix[i - 1, j + 1],
-        U_matrix[i + 1, j - 1], U_matrix[i + 1, j + 1]
+    idx <- which(is_min, arr.ind = TRUE)
+    if (nrow(idx) > 0) {
+      idx <- idx[order(idx[, 1], idx[, 2]), , drop = FALSE]
+      ux <- unique(dist$x)
+      uy <- unique(dist$y)
+      local_mins <- data.frame(
+        x = ux[idx[, 1] + 1],
+        y = uy[idx[, 2] + 1],
+        U = U_center[idx],
+        row.names = NULL
       )
-
-      if (all(current_U < neighbors)) {
-        local_mins <- rbind(local_mins, data.frame(
-          x = unique(dist$x)[i],
-          y = unique(dist$y)[j],
-          U = current_U
-        ))
-      }
     }
   }
 

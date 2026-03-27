@@ -20,7 +20,7 @@ test_that("fit_2d_ld supports vector_position = middle", {
   expect_true(all(c("x", "U") %in% names(ld$dist)))
 })
 
-test_that("plot.summary_bootstrap_2d_ld consumes per_point field", {
+test_that("autoplot.summary_bootstrap_2d_ld minima mode consumes per_point field", {
   x_coords <- seq(0, 1, length.out = 5)
   y_coords <- seq(0, 1, length.out = 5)
 
@@ -43,7 +43,7 @@ test_that("plot.summary_bootstrap_2d_ld consumes per_point field", {
     class = "summary_bootstrap_2d_ld"
   )
 
-  p <- plot(summary_obj)
+  p <- autoplot(summary_obj, mode = "minima")
   expect_s3_class(p, "ggplot")
 })
 

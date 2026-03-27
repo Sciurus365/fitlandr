@@ -23,6 +23,7 @@ URL: https://sciurus365.github.io/fitlandr/,
 BugReports: https://github.com/Sciurus365/fitlandr/issues
 Imports: 
     cli,
+    clue,
     dbscan,
     dplyr,
     furrr,
@@ -35,6 +36,7 @@ Imports:
     magrittr,
     MASS,
     Matrix,
+    mclust,
     numDeriv,
     plotly,
     progressr,

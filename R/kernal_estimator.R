@@ -28,15 +28,7 @@ MVKE <- function(d, v, h = 0.2, kernel = c("Gaussian", "exp")) {
   # d <- stats::na.omit(d)
   dim <- ncol(d)
 
-  temp_d <- d
   temp_diff <- v
-  temp_norm <- apply(temp_diff, MARGIN = 1, FUN = function(x) norm(x, "2"))
-  temp_diff_tcrossprod <- apply(temp_diff,
-    MARGIN = 1,
-    FUN = function(x) {
-      tcrossprod(x, x)
-    }, simplify = FALSE
-  )
   kernel <- kernel[1]
   if (kernel == "Gaussian") {
     log_K <- log_K_gaussian_mat
@@ -50,25 +42,27 @@ MVKE <- function(d, v, h = 0.2, kernel = c("Gaussian", "exp")) {
   function(x) {
     if (length(x) != dim) cli::cli_abort("Input has wrong dimension.")
 
-    # Get logs instead of raw values
-    log_w_upper <- log_K(temp_d, x, h = h)
-    log_w_lower <- log_K(d, x, h = h)
+    # Compute log-kernel weights once. The same weights are used in both
+    # drift and diffusion estimators.
+    log_w <- log_K(d, x, h = h)
 
     # Find a common constant to shift by (usually the max of the denominator weights)
-    max_log <- max(log_w_lower)
+    max_log <- max(log_w)
 
     # Shift and exponentiate: exp(log_w - max_log)
     # This brings the largest value to 1, others will be relative to it
-    w_upper_shifted <- exp(log_w_upper - max_log)
-    w_lower_shifted <- exp(log_w_lower - max_log)
+    w_shifted <- exp(log_w - max_log)
 
     # The constant (exp(max_log)) cancels out in the numerator and denominator
-    denom_sum <- sum(w_lower_shifted)
+    denom_sum <- sum(w_shifted)
+
+    # Sum_i w_i * (v_i %*% t(v_i)) using a weighted crossproduct.
+    weighted_diff <- temp_diff * sqrt(w_shifted)
+    a_est <- crossprod(weighted_diff) / denom_sum
 
     return(list(
-      mu = colSums(w_upper_shifted * temp_diff) / denom_sum,
-      a = mapply(`*`, w_upper_shifted, temp_diff_tcrossprod, SIMPLIFY = FALSE) %>%
-        Reduce(`+`, .) / denom_sum
+      mu = colSums(w_shifted * temp_diff) / denom_sum,
+      a = a_est
     ))
   }
 }
