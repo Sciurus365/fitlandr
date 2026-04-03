@@ -10,7 +10,8 @@ bootstrap_2d_ld(boot_vf, ...)
 \method{summary}{bootstrap_2d_ld}(
   object,
   exclude_minor = TRUE,
-  clustering_method = c("hdbscan", "hungarian", "gmm_bic"),
+  min_barrier = 0.05,
+  clustering_method = c("hdbscan", "hungarian", "gmm_bic", "mean_potential_hessian"),
   minPts = 5,
   level = 0.95,
   one_per_run = TRUE,
@@ -31,8 +32,10 @@ bootstrap_2d_ld(boot_vf, ...)
 
 \item{exclude_minor}{Logical; exclude minor local minima. Default TRUE.}
 
+\item{min_barrier}{Minimum barrier height fraction used by \code{find_loc_min()} to classify minor minima. Default 0.05.}
+
 \item{clustering_method}{Clustering backend for pooled minima. One of
-\code{"hdbscan"} (default), \code{"hungarian"}, \code{"gmm_bic"}.}
+\code{"hdbscan"} (default), \code{"hungarian"}, \code{"gmm_bic"}, \code{"mean_potential_hessian"}.}
 
 \item{minPts}{Integer; HDBSCAN minPts. Default 5.}
 
@@ -57,11 +60,16 @@ An object of class \code{"summary_bootstrap_2d_ld"} with components:
 Generates bootstrap landscapes from bootstrap vector fields.
 }
 \details{
-Ellipse parameters are derived from the eigen-decomposition of the 2×2 covariance
-matrix per cluster. Semi-axes for the \strong{prediction} ellipse are
+For clustering-based methods, ellipse parameters are derived from the eigen-decomposition
+of the 2×2 covariance matrix per cluster. For \code{"mean_potential_hessian"}, minima are first
+detected on the mean potential surface across bootstrap landscapes; each bootstrap minimum is
+then matched to the closest reference minimum, and ellipse parameters are derived from the
+inverse of the mean matched Hessian.
+
+Semi-axes for the \strong{prediction} ellipse are
 \eqn{\sqrt{\lambda_i\,\chi^2_{2,\alpha}}}; for the \strong{confidence} ellipse they are
 \eqn{\sqrt{\lambda_i\,\chi^2_{2,\alpha}/n_{\text{runs}}}} where \eqn{n_{\text{runs}}}
-is the number of bootstrap runs contributing to that cluster (uncertainty of the mean).
+is the number of bootstrap runs contributing to that minimum.
 Ellipses are drawn with \code{ggforce::geom_ellipse()} which expects aesthetics
 \code{x0}, \code{y0}, \code{a}, \code{b}, \code{angle}.  [See ggforce docs.]  # (geom_ellipse API)  \href{https://rstudio-pubs-static.s3.amazonaws.com/1236382_7016d680936d411e8fd45fc0b8b62b0c.html}{1}
 The \eqn{\chi^2_{2,\alpha}} quantile comes from the chi-square distribution
