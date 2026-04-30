@@ -11,7 +11,9 @@ find_loc_min(ld, exclude_minor = TRUE, min_barrier = 0.05)
 
 \item{exclude_minor}{Logical indicating whether to mark minor local minima
 based on the barrier height criterion, so that they can be easily excluded
-from subsequent calculations. Default is TRUE.}
+from subsequent calculations. Minima outside the convex hull of the observed
+data points are always marked as minor before this barrier-height rule.
+Default is TRUE.}
 
 \item{min_barrier}{When the barrier height between a local minimum and any of the
 saddle points connecting it to other local minima is less than \code{min_barrier} times

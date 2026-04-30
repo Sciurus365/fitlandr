@@ -4,7 +4,16 @@
 \alias{MVKE}
 \title{Multivariate vector field kernel estimator}
 \usage{
-MVKE(d, v, h = 0.2, kernel = c("Gaussian", "exp"))
+MVKE(
+	d,
+	v,
+	h = 0.2,
+	kernel = c("Gaussian", "exp"),
+	prior_mean_drift = FALSE,
+	prior_strength = 0.2,
+	prior_n_eff_scale = 2,
+	prior_distance_linear = FALSE
+)
 }
 \arguments{
 \item{d}{The dataset. Should be a matrix or a data frame, with each row representing a random vector.}
@@ -14,6 +23,20 @@ MVKE(d, v, h = 0.2, kernel = c("Gaussian", "exp"))
 \item{h}{The bandwidth for the kernel estimator.}
 
 \item{kernel}{The type of kernel estimator used. "Gaussian" by default.}
+
+\item{prior_mean_drift}{Logical. If \code{TRUE}, apply a weak prior drift that points
+toward the mean position of \code{d}. The prior is only active in very low-support
+regions and is negligible close to the data.}
+
+\item{prior_strength}{Non-negative numeric scalar controlling the maximum strength
+of the prior in extremely low-support regions.}
+
+\item{prior_n_eff_scale}{Positive numeric scalar controlling how quickly the prior
+decays as local effective sample size increases.}
+
+\item{prior_distance_linear}{Logical. If \code{TRUE}, use a linear distance-scaled
+prior value: the prior drift magnitude is proportional to
+\code{distance_to_mean / median_distance_to_mean_data}.}
 }
 \value{
 A function(x), which then returns the \eqn{\mu} and \eqn{a} estimators at the position \eqn{x}.

@@ -243,6 +243,32 @@ make_2d_ld <- function(vf, linear_interp = TRUE, n_grid = 100) {
 }
 
 
+is_inside_convex_hull <- function(points, hull_vertices, tol = 1e-10) {
+  if (nrow(points) == 0) {
+    return(logical(0))
+  }
+  if (nrow(hull_vertices) < 3) {
+    return(rep(TRUE, nrow(points)))
+  }
+
+  x1 <- hull_vertices[, 1]
+  y1 <- hull_vertices[, 2]
+  x2 <- c(x1[-1], x1[1])
+  y2 <- c(y1[-1], y1[1])
+
+  out <- logical(nrow(points))
+  for (k in seq_len(nrow(points))) {
+    px <- points[k, 1]
+    py <- points[k, 2]
+    cross <- (x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)
+    non_zero <- cross[abs(cross) > tol]
+    out[k] <- length(non_zero) == 0 || all(non_zero >= 0) || all(non_zero <= 0)
+  }
+
+  out
+}
+
+
 #' Finds local minima in a 2D landscape object.
 #'
 #' @param ld A `2d_ld` or `2d_static_ld` object representing the landscape.
@@ -252,7 +278,9 @@ make_2d_ld <- function(vf, linear_interp = TRUE, n_grid = 100) {
 #' Default is 0.1.
 #' @param exclude_minor Logical indicating whether to mark minor local minima
 #' based on the barrier height criterion, so that they can be easily excluded
-#' from subsequent calculations. Default is TRUE.
+#' from subsequent calculations. Minima outside the convex hull of the observed
+#' data points are always marked as minor before this barrier-height rule.
+#' Default is TRUE.
 #' @return A data frame with columns x, y, U for each local minimum found.
 #' @export
 find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.05) {
@@ -307,9 +335,27 @@ find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.05) {
   # Oh no. it's not. no recalculation needed.
 
   n_mins <- nrow(local_mins)
+
+  hull_minor_mins <- integer(0)
+  if (n_mins > 0 && !is.null(ld$vf) && !is.null(ld$vf$data)) {
+    data_xy <- as.matrix(ld$vf$data)
+    if (ncol(data_xy) >= 2) {
+      data_xy <- data_xy[, 1:2, drop = FALSE]
+      data_xy <- data_xy[stats::complete.cases(data_xy), , drop = FALSE]
+      data_xy <- unique(data_xy)
+      if (nrow(data_xy) >= 3) {
+        hull_idx <- grDevices::chull(data_xy[, 1], data_xy[, 2])
+        hull_vertices <- data_xy[hull_idx, , drop = FALSE]
+        mins_xy <- as.matrix(local_mins[, c("x", "y"), drop = FALSE])
+        inside <- is_inside_convex_hull(mins_xy, hull_vertices)
+        hull_minor_mins <- which(!inside)
+      }
+    }
+  }
+
   if (n_mins <= 1 || exclude_minor == FALSE) {
     all_barriers <- matrix(NA, nrow = n_mins, ncol = n_mins)
-    minor_mins <- c()
+    minor_mins <- hull_minor_mins
   } else {
     all_barriers <- matrix(NA, nrow = n_mins, ncol = n_mins)
     ld_reformated <- ld
@@ -331,7 +377,15 @@ find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.05) {
     }
 
     # find the highest barrier height
-    max_barrier <- max(all_barriers, na.rm = TRUE)
+    minor_mins <- hull_minor_mins
+    all_barriers_copy <- all_barriers
+    if (length(minor_mins) > 0) {
+      all_barriers_copy[minor_mins, ] <- NA
+      all_barriers_copy[, minor_mins] <- NA
+    }
+
+    finite_barriers <- all_barriers_copy[is.finite(all_barriers_copy)]
+    max_barrier <- if (length(finite_barriers) > 0) max(finite_barriers) else Inf
 
 
     # do the following until no remaining barriers are lower than min_barrier * max_barrier
@@ -340,16 +394,18 @@ find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.05) {
     # remove this minimum from the matrix (set the corresponding row and column to NA)
     # repeat
 
-    minor_mins <- c()
-    all_barriers_copy <- all_barriers
     repeat {
-      current_min_barrier <- min(all_barriers_copy, na.rm = TRUE)
+      current_barriers <- all_barriers_copy[is.finite(all_barriers_copy)]
+      if (length(current_barriers) == 0) {
+        break
+      }
+      current_min_barrier <- min(current_barriers)
       if (is.infinite(current_min_barrier) || current_min_barrier >= min_barrier * max_barrier) {
         break
       }
       locs <- which(all_barriers_copy == current_min_barrier, arr.ind = TRUE)
       min_to_remove <- locs[1, 1] # arbitrarily choose the first
-      minor_mins <- c(minor_mins, min_to_remove)
+      minor_mins <- unique(c(minor_mins, min_to_remove))
       all_barriers_copy[min_to_remove, ] <- NA
       all_barriers_copy[, min_to_remove] <- NA
     }
