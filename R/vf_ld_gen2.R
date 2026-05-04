@@ -278,12 +278,13 @@ is_inside_convex_hull <- function(points, hull_vertices, tol = 1e-10) {
 #' Default is 0.1.
 #' @param exclude_minor Logical indicating whether to mark minor local minima
 #' based on the barrier height criterion, so that they can be easily excluded
-#' from subsequent calculations. Minima outside the convex hull of the observed
-#' data points are always marked as minor before this barrier-height rule.
-#' Default is TRUE.
+#' from subsequent calculations. Default is TRUE.
+#' @param use_convex_hull Logical indicating whether to mark minima outside
+#' the convex hull of observed data points as minor before barrier-based
+#' minor-minimum detection. Default is TRUE.
 #' @return A data frame with columns x, y, U for each local minimum found.
 #' @export
-find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.05) {
+find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.05, use_convex_hull = TRUE) {
   if (!inherits(ld, "2d_ld") && !inherits(ld, "2d_static_ld")) {
     cli::cli_abort("Input {.arg ld} must be a {.cls 2d_ld} or {.cls 2d_static_ld} object.")
   }
@@ -337,7 +338,7 @@ find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.05) {
   n_mins <- nrow(local_mins)
 
   hull_minor_mins <- integer(0)
-  if (n_mins > 0 && !is.null(ld$vf) && !is.null(ld$vf$data)) {
+  if (isTRUE(use_convex_hull) && n_mins > 0 && !is.null(ld$vf) && !is.null(ld$vf$data)) {
     data_xy <- as.matrix(ld$vf$data)
     if (ncol(data_xy) >= 2) {
       data_xy <- data_xy[, 1:2, drop = FALSE]
