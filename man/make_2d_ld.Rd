@@ -4,7 +4,14 @@
 \alias{make_2d_ld}
 \title{Creates a 2D Potential Landscape object from a vector field.}
 \usage{
-make_2d_ld(vf, linear_interp = TRUE, n_grid = 100)
+make_2d_ld(
+  vf,
+  linear_interp = TRUE,
+  n_grid = 100,
+  drift_scheme = c("upwind", "central"),
+  cross_diffusion_mode = c("drop", "full"),
+  boundary_mode = c("reflective", "legacy_implicit")
+)
 }
 \arguments{
 \item{vf}{A \code{vectorfield} or \code{cv_vectorfield} object representing the vector field.}
@@ -12,6 +19,14 @@ make_2d_ld(vf, linear_interp = TRUE, n_grid = 100)
 \item{linear_interp}{Logical indicating whether to use linear interpolation in predictions.}
 
 \item{n_grid}{The number of grid points along one dimension (e.g., 100).}
+
+\item{drift_scheme}{Drift discretization scheme. One of \code{"upwind"} or \code{"central"}.}
+
+\item{cross_diffusion_mode}{Cross-diffusion handling mode. One of
+\code{"drop"} (default, ignore \code{Dxy}) or \code{"full"} (use full diffusion tensor).}
+
+\item{boundary_mode}{Boundary handling mode. One of \code{"reflective"} (explicit
+zero-normal-flux handling) or \code{"legacy_implicit"} (index-clamping behavior).}
 }
 \value{
 An object of class \verb{2d_static_ld} containing:
