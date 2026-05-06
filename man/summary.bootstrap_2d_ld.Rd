@@ -8,6 +8,7 @@
   object,
   mode = c("clusters", "minima"),
   show_ellipses = TRUE,
+  show_original_major_minima = TRUE,
   point_alpha = 0.35,
   ellipse_alpha = 0.15,
   ...
@@ -20,6 +21,9 @@
 \code{"minima"} reproduces the minima-U jitter plot.}
 
 \item{show_ellipses}{Logical; draw ellipses (spread of points). Default TRUE.}
+
+\item{show_original_major_minima}{Logical; overlay major minima estimated
+from the original (non-bootstrap) sample. Default TRUE.}
 
 \item{point_alpha}{Numeric; alpha for points. Default 0.35.}
 

@@ -5,14 +5,14 @@
 \title{Multivariate vector field kernel estimator}
 \usage{
 MVKE(
-	d,
-	v,
-	h = 0.2,
-	kernel = c("Gaussian", "exp"),
-	prior_mean_drift = FALSE,
-	prior_strength = 0.2,
-	prior_n_eff_scale = 2,
-	prior_distance_linear = FALSE
+  d,
+  v,
+  h = 0.2,
+  kernel = c("Gaussian", "exp"),
+  prior_mean_drift = FALSE,
+  prior_strength = 0.2,
+  prior_n_eff_scale = 2,
+  prior_distance_linear = FALSE
 )
 }
 \arguments{

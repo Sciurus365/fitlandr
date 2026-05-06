@@ -5,15 +5,28 @@
 NULL
 
 
-#' Estimates the steady-state distribution using Central Differencing for an
-#' arbitrary rectangular domain defined by x_range and y_range.
+#' Estimates the steady-state distribution from a 2D drift-diffusion field.
 #'
 #' @param vf A `vectorfield` or `cv_vectorfield` object representing the vector field.
 #' @param linear_interp Logical indicating whether to use linear interpolation in predictions.
 #' @param n_grid The number of grid points along one dimension (e.g., 100).
+#' @param drift_scheme Drift discretization scheme. One of `"upwind"` or `"central"`.
+#' @param cross_diffusion_mode Cross-diffusion handling mode. One of
+#' `"drop"` (default, ignore `Dxy`) or `"full"` (use full diffusion tensor).
+#' @param boundary_mode Boundary handling mode. One of `"reflective"` (explicit
+#' zero-normal-flux handling) or `"legacy_implicit"` (index-clamping behavior).
 #' @return matrix of probability density.
-ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
+ss_fp_2d <- function(vf,
+                     linear_interp = TRUE,
+                     n_grid = 100,
+                     drift_scheme = c("upwind", "central"),
+                     cross_diffusion_mode = c("drop", "full"),
+                     boundary_mode = c("reflective", "legacy_implicit")) {
   # Extract drift and diffusion functions from the vector field object
+
+  drift_scheme <- match.arg(drift_scheme)
+  cross_diffusion_mode <- match.arg(cross_diffusion_mode)
+  boundary_mode <- match.arg(boundary_mode)
 
   if (inherits(vf, "cv_vectorfield")) {
     vf <- vf$final_model
@@ -82,6 +95,16 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
     cnt <<- cnt + n_add
   }
 
+  reflect_index <- function(idx, n) {
+    if (idx < 1L) {
+      return(2L - idx)
+    }
+    if (idx > n) {
+      return(2L * n - idx)
+    }
+    idx
+  }
+
   k_idx <- function(i, j) i + (j - 1) * n_grid
 
   # 1. X-Interfaces (Flow Jx between (i,j) and (i+1, j))
@@ -90,20 +113,17 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
       k1 <- k_idx(i, j)
       k2 <- k_idx(i + 1, j)
 
-      # A. Standard Drift & Dxx contribution
+      # A. Drift + Dxx contribution
       A_mid <- (Ax[i, j] + Ax[i + 1, j]) / 2
-      coeff_k1 <- (A_mid / 2) + (Dxx[i, j] / hx)
-      coeff_k2 <- (A_mid / 2) - (Dxx[i + 1, j] / hx)
-
-      # B. Mixed Dxy contribution: -d(Dxy * rho)/dy
-      # We use a 4-point central difference for the y-gradient at the interface
-      jp <- if (j == n_grid) j else j + 1
-      jm <- if (j == 1) j else j - 1
-      denom_y <- if (j == 1 || j == n_grid) hy else 2 * hy
-
-      # Contribution from neighbors to the flux Jx
-      # Jx_mixed = - [ (Dxy*rho)_{i+1/2, j+1} - (Dxy*rho)_{i+1/2, j-1} ] / 2hy
-      coeff_mixed <- 1 / (2 * denom_y)
+      if (drift_scheme == "upwind") {
+        adv_k1 <- if (A_mid >= 0) A_mid else 0
+        adv_k2 <- if (A_mid < 0) A_mid else 0
+        coeff_k1 <- adv_k1 + (Dxx[i, j] / hx)
+        coeff_k2 <- adv_k2 - (Dxx[i + 1, j] / hx)
+      } else {
+        coeff_k1 <- (A_mid / 2) + (Dxx[i, j] / hx)
+        coeff_k2 <- (A_mid / 2) - (Dxx[i + 1, j] / hx)
+      }
 
       # Add to matrix (Rate of change = -div(J))
       # Normal Flow
@@ -113,15 +133,34 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
         vals = c(-coeff_k1 / hx, -coeff_k2 / hx, coeff_k1 / hx, coeff_k2 / hx)
       )
 
-      # Mixed Flow (affects k1 and k2 by drawing from surrounding y-cells)
-      for (curr_i in c(i, i + 1)) {
-        mult <- if (curr_i == i) -1 else 1 # Sign change for k1 vs k2
-        row_target <- if (mult < 0) k1 else k2
-        add_entries(
-          rows = c(row_target, row_target),
-          cols = c(k_idx(curr_i, jp), k_idx(curr_i, jm)),
-          vals = c(-mult * Dxy[curr_i, jp] * coeff_mixed / hx, mult * Dxy[curr_i, jm] * coeff_mixed / hx)
-        )
+      if (cross_diffusion_mode != "drop") {
+        # B. Mixed Dxy contribution: -d(Dxy * rho)/dy
+        if (boundary_mode == "reflective") {
+          jp <- reflect_index(j + 1L, n_grid)
+          jm <- reflect_index(j - 1L, n_grid)
+          denom_y <- 2 * hy
+        } else {
+          jp <- if (j == n_grid) j else j + 1
+          jm <- if (j == 1) j else j - 1
+          denom_y <- if (j == 1 || j == n_grid) hy else 2 * hy
+        }
+
+        coeff_mixed <- 1 / denom_y
+
+        # Mixed Flow (affects k1 and k2 by drawing from surrounding y-cells)
+        for (curr_i in c(i, i + 1)) {
+          mult <- if (curr_i == i) -1 else 1
+          row_target <- if (mult < 0) k1 else k2
+
+          dxy_jp <- Dxy[curr_i, jp]
+          dxy_jm <- Dxy[curr_i, jm]
+
+          add_entries(
+            rows = c(row_target, row_target),
+            cols = c(k_idx(curr_i, jp), k_idx(curr_i, jm)),
+            vals = c(-mult * dxy_jp * coeff_mixed / hx, mult * dxy_jm * coeff_mixed / hx)
+          )
+        }
       }
     }
   }
@@ -133,14 +172,15 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
       k2 <- k_idx(i, j + 1)
 
       A_mid <- (Ay[i, j] + Ay[i, j + 1]) / 2
-      coeff_k1 <- (A_mid / 2) + (Dyy[i, j] / hy)
-      coeff_k2 <- (A_mid / 2) - (Dyy[i, j + 1] / hy)
-
-      # Mixed Dxy contribution: -d(Dxy * rho)/dx
-      ip <- if (i == n_grid) i else i + 1
-      im <- if (i == 1) i else i - 1
-      denom_x <- if (i == 1 || i == n_grid) hx else 2 * hx
-      coeff_mixed <- 1 / (2 * denom_x)
+      if (drift_scheme == "upwind") {
+        adv_k1 <- if (A_mid >= 0) A_mid else 0
+        adv_k2 <- if (A_mid < 0) A_mid else 0
+        coeff_k1 <- adv_k1 + (Dyy[i, j] / hy)
+        coeff_k2 <- adv_k2 - (Dyy[i, j + 1] / hy)
+      } else {
+        coeff_k1 <- (A_mid / 2) + (Dyy[i, j] / hy)
+        coeff_k2 <- (A_mid / 2) - (Dyy[i, j + 1] / hy)
+      }
 
       add_entries(
         rows = c(k1, k1, k2, k2),
@@ -148,14 +188,32 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
         vals = c(-coeff_k1 / hy, -coeff_k2 / hy, coeff_k1 / hy, coeff_k2 / hy)
       )
 
-      for (curr_j in c(j, j + 1)) {
-        mult <- if (curr_j == j) -1 else 1
-        row_target <- if (mult < 0) k1 else k2
-        add_entries(
-          rows = c(row_target, row_target),
-          cols = c(k_idx(ip, curr_j), k_idx(im, curr_j)),
-          vals = c(-mult * Dxy[ip, curr_j] * coeff_mixed / hy, mult * Dxy[im, curr_j] * coeff_mixed / hy)
-        )
+      if (cross_diffusion_mode != "drop") {
+        # Mixed Dxy contribution: -d(Dxy * rho)/dx
+        if (boundary_mode == "reflective") {
+          ip <- reflect_index(i + 1L, n_grid)
+          im <- reflect_index(i - 1L, n_grid)
+          denom_x <- 2 * hx
+        } else {
+          ip <- if (i == n_grid) i else i + 1
+          im <- if (i == 1) i else i - 1
+          denom_x <- if (i == 1 || i == n_grid) hx else 2 * hx
+        }
+        coeff_mixed <- 1 / denom_x
+
+        for (curr_j in c(j, j + 1)) {
+          mult <- if (curr_j == j) -1 else 1
+          row_target <- if (mult < 0) k1 else k2
+
+          dxy_ip <- Dxy[ip, curr_j]
+          dxy_im <- Dxy[im, curr_j]
+
+          add_entries(
+            rows = c(row_target, row_target),
+            cols = c(k_idx(ip, curr_j), k_idx(im, curr_j)),
+            vals = c(-mult * dxy_ip * coeff_mixed / hy, mult * dxy_im * coeff_mixed / hy)
+          )
+        }
       }
     }
   }
@@ -172,6 +230,18 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
 
   sol <- solve(M_aug, b_aug)
   rho_ss <- matrix(sol[1:N], n_grid, n_grid)
+
+  if (cross_diffusion_mode == "full") {
+    n_negative <- sum(rho_ss < 0, na.rm = TRUE)
+    neg_warn_threshold <- max(5L, ceiling(0.01 * N))
+    if (n_negative >= neg_warn_threshold) {
+      cli::cli_warn(paste0(
+        "Using cross_diffusion_mode='full' produced ", n_negative,
+        " negative density cell(s). Consider cross_diffusion_mode='drop' (default) if this causes instability."
+      ))
+    }
+  }
+
   attr(rho_ss, "M") <- M
   attr(rho_ss, "x_coords") <- x_coords
   attr(rho_ss, "y_coords") <- y_coords
@@ -183,6 +253,11 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
 #' @param vf A `vectorfield` or `cv_vectorfield` object representing the vector field.
 #' @param linear_interp Logical indicating whether to use linear interpolation in predictions.
 #' @param n_grid The number of grid points along one dimension (e.g., 100).
+#' @param drift_scheme Drift discretization scheme. One of `"upwind"` or `"central"`.
+#' @param cross_diffusion_mode Cross-diffusion handling mode. One of
+#' `"drop"` (default, ignore `Dxy`) or `"full"` (use full diffusion tensor).
+#' @param boundary_mode Boundary handling mode. One of `"reflective"` (explicit
+#' zero-normal-flux handling) or `"legacy_implicit"` (index-clamping behavior).
 #' @return An object of class `2d_static_ld` containing:
 #'        - `dist`: A data frame with columns x, y, d (steady-state distribution), U (potential).
 #'        - `plot`: A plotly surface plot of the potential landscape U.
@@ -191,28 +266,128 @@ ss_fp_2d <- function(vf, linear_interp = TRUE, n_grid = 100) {
 #'        - `ss`: The steady-state distribution matrix.
 #'
 #' @export
-make_2d_ld <- function(vf, linear_interp = TRUE, n_grid = 100) {
-  ss <- ss_fp_2d(vf, linear_interp = linear_interp)
-  if (min(ss) <= 0) {
-    cli::cli_warn("Steady-state distribution contains non-positive values,
-                  cannot compute potential landscape directly.
-                  The smallest value is {min(ss)}.
-                  I will try adding a small constant to ss to fix this.")
-    ss <- ss + abs(min(ss)) + 1e-10
+make_2d_ld <- function(vf,
+                       linear_interp = TRUE,
+                       n_grid = 100,
+                       drift_scheme = c("upwind", "central"),
+                       cross_diffusion_mode = c("drop", "full"),
+                       boundary_mode = c("reflective", "legacy_implicit")) {
+  drift_scheme <- match.arg(drift_scheme)
+  cross_diffusion_mode <- match.arg(cross_diffusion_mode)
+  boundary_mode <- match.arg(boundary_mode)
+
+  ss_raw <- ss_fp_2d(
+    vf,
+    linear_interp = linear_interp,
+    n_grid = n_grid,
+    drift_scheme = drift_scheme,
+    cross_diffusion_mode = cross_diffusion_mode,
+    boundary_mode = boundary_mode
+  )
+
+  # Preserve solver attributes before any post-processing.
+  x_coords <- attr(ss_raw, "x_coords")
+  y_coords <- attr(ss_raw, "y_coords")
+  M <- attr(ss_raw, "M")
+
+  nonfinite_mask <- !is.finite(ss_raw)
+  nonpos_mask <- is.finite(ss_raw) & ss_raw <= 0
+  correction_mask <- nonfinite_mask | nonpos_mask
+
+  # Backup correction: remove problematic cells and renormalize remaining mass.
+  # This keeps corrected cells out of the density support instead of shifting
+  # the full surface.
+  ss <- ss_raw
+  if (any(correction_mask)) {
+    ss[nonfinite_mask] <- 0
+    ss[is.finite(ss) & ss <= 0] <- 0
+
+    remaining_mass <- sum(ss, na.rm = TRUE)
+    if (remaining_mass > 0) {
+      ss <- ss / remaining_mass
+    } else {
+      # Degenerate safeguard: if everything is invalid, use a uniform fallback.
+      ss[] <- 1 / length(ss)
+    }
   }
-  U <- -log(ss)
+
+  ss[!is.finite(ss)] <- 0
+  ss[ss < 0] <- 0
+
+  # For plotting, blank cells that were numerically problematic in the raw
+  # solver output (non-finite or non-positive).
+  bad_mask <- correction_mask
+  n_bad <- sum(bad_mask)
+
+  n_nonfinite <- sum(nonfinite_mask)
+  n_nonpos <- sum(nonpos_mask)
+  n_problem <- n_nonfinite + n_nonpos
+
+  U <- matrix(NA_real_, nrow = nrow(ss), ncol = ncol(ss))
+  U[ss > 0] <- -log(ss[ss > 0])
+  U_plot <- U
+  U_plot[bad_mask] <- NA_real_
+
+  if (n_problem > 0 || n_bad > 0) {
+    total_cells <- length(ss_raw)
+    pct_problem <- 100 * n_problem / total_cells
+    pct_bad <- 100 * n_bad / total_cells
+    strong_warn_threshold <- max(5L, ceiling(0.01 * total_cells))
+
+    bad_idx <- which(bad_mask, arr.ind = TRUE)
+    n_boundary_bad <- if (length(bad_idx) > 0) {
+      sum(
+        bad_idx[, 1] %in% c(1L, nrow(ss_raw)) |
+          bad_idx[, 2] %in% c(1L, ncol(ss_raw))
+      )
+    } else {
+      0L
+    }
+
+    if (n_problem < strong_warn_threshold) {
+      cli::cli_warn(paste0(
+        "Detected ", n_problem, " numerically problematic grid cell(s) (",
+        sprintf("%.2f", pct_problem),
+        "% of grid) with non-finite/non-positive steady-state density.",
+        " Plotting blanks ", n_bad, " corrected/non-finite cell(s) (",
+        sprintf("%.2f", pct_bad), "% of grid)",
+        if (n_boundary_bad > 0) {
+          paste0(" (", n_boundary_bad, " at the boundary)")
+        } else {
+          ""
+        },
+        ". Breakdown: ", n_nonpos, " non-positive, ", n_nonfinite, " non-finite",
+        ". These pixels are shown as blank in landscape plots due to local numerical issues; ",
+        "this usually does not affect the main results."
+      ))
+    } else {
+      cli::cli_warn(paste0(
+        "Detected ", n_problem, " numerically problematic grid cell(s) (",
+        sprintf("%.2f", pct_problem),
+        "% of grid) with non-finite/non-positive steady-state density.",
+        " Plotting blanks ", n_bad, " corrected/non-finite cell(s) (",
+        sprintf("%.2f", pct_bad), "% of grid)",
+        if (n_boundary_bad > 0) {
+          paste0(" (", n_boundary_bad, " at the boundary)")
+        } else {
+          ""
+        },
+        ". Breakdown: ", n_nonpos, " non-positive, ", n_nonfinite, " non-finite",
+        ". These pixels are shown as blank in landscape plots, but the count is high and may indicate ",
+        "broader numerical instability. Please inspect this fit more closely."
+      ))
+    }
+  }
 
   # Make a regular data frame for plotting. It contains x, y, d, U. (d: steady-state distribution, ss)
-
-  x_coords <- attr(ss, "x_coords")
-  y_coords <- attr(ss, "y_coords")
   dist <- expand.grid(x = x_coords, y = y_coords)
   dist$d <- as.vector(ss)
   dist$U <- as.vector(U)
+  dist$U_plot <- as.vector(U_plot)
 
   plot <- plotly::plot_ly(
     data = dist,
-    x = x_coords, y = y_coords, z = U,
+    x = x_coords, y = y_coords, z = U_plot,
     type = "surface"
   ) %>%
     plotly::layout(scene = list(
@@ -225,13 +400,17 @@ make_2d_ld <- function(vf, linear_interp = TRUE, n_grid = 100) {
     dist,
     ggplot2::aes(x = x, y = y)
   ) +
-    ggplot2::geom_raster(ggplot2::aes(fill = U)) +
+    ggplot2::geom_raster(ggplot2::aes(fill = U_plot)) +
     ggplot2::scale_fill_viridis_c() +
     ggplot2::labs(
       x = vf$x,
       y = vf$y, fill = "U"
     ) +
     ggplot2::theme_bw()
+
+  attr(ss, "x_coords") <- x_coords
+  attr(ss, "y_coords") <- y_coords
+  attr(ss, "M") <- M
 
   return(structure(list(
     dist = dist,
@@ -284,7 +463,7 @@ is_inside_convex_hull <- function(points, hull_vertices, tol = 1e-10) {
 #' minor-minimum detection. Default is TRUE.
 #' @return A data frame with columns x, y, U for each local minimum found.
 #' @export
-find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.05, use_convex_hull = TRUE) {
+find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.1, use_convex_hull = TRUE) {
   if (!inherits(ld, "2d_ld") && !inherits(ld, "2d_static_ld")) {
     cli::cli_abort("Input {.arg ld} must be a {.cls 2d_ld} or {.cls 2d_static_ld} object.")
   }

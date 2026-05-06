@@ -32,6 +32,7 @@ Imports:
     ggplot2,
     grDevices,
     grid,
+    igraph,
     lifecycle,
     magrittr,
     MASS,
