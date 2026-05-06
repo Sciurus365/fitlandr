@@ -4,7 +4,12 @@
 \alias{find_loc_min}
 \title{Finds local minima in a 2D landscape object.}
 \usage{
-find_loc_min(ld, exclude_minor = TRUE, min_barrier = 0.05)
+find_loc_min(
+  ld,
+  exclude_minor = TRUE,
+  min_barrier = 0.1,
+  use_convex_hull = TRUE
+)
 }
 \arguments{
 \item{ld}{A \verb{2d_ld} or \verb{2d_static_ld} object representing the landscape.}
@@ -17,6 +22,10 @@ from subsequent calculations. Default is TRUE.}
 saddle points connecting it to other local minima is less than \code{min_barrier} times
 the highest barrier height value, the local minimum will be considered minor.
 Default is 0.1.}
+
+\item{use_convex_hull}{Logical indicating whether to mark minima outside
+the convex hull of observed data points as minor before barrier-based
+minor-minimum detection. Default is TRUE.}
 }
 \value{
 A data frame with columns x, y, U for each local minimum found.

@@ -10,9 +10,11 @@ bootstrap_2d_ld(boot_vf, ...)
 \method{summary}{bootstrap_2d_ld}(
   object,
   exclude_minor = TRUE,
-  min_barrier = 0.05,
-  clustering_method = c("hdbscan", "hungarian", "gmm_bic", "mean_potential_hessian"),
+  min_barrier = 0.1,
+  clustering_method = c("hdbscan", "hungarian", "gmm_bic", "mean_potential",
+    "mean_potential_hessian", "pairwise_hungarian_graph"),
   minPts = 5,
+  pairwise_leiden_gamma = 0.01,
   level = 0.95,
   one_per_run = TRUE,
   ...
@@ -32,12 +34,16 @@ bootstrap_2d_ld(boot_vf, ...)
 
 \item{exclude_minor}{Logical; exclude minor local minima. Default TRUE.}
 
-\item{min_barrier}{Minimum barrier height fraction used by \code{find_loc_min()} to classify minor minima. Default 0.05.}
+\item{min_barrier}{Minimum barrier height fraction used by \code{find_loc_min()} to classify minor minima. Default 0.1.}
 
 \item{clustering_method}{Clustering backend for pooled minima. One of
-\code{"hdbscan"} (default), \code{"hungarian"}, \code{"gmm_bic"}, \code{"mean_potential_hessian"}.}
+\code{"hdbscan"} (default), \code{"hungarian"}, \code{"gmm_bic"}, \code{"mean_potential"}, \code{"mean_potential_hessian"},
+\code{"pairwise_hungarian_graph"}.}
 
 \item{minPts}{Integer; HDBSCAN minPts. Default 5.}
+
+\item{pairwise_leiden_gamma}{Numeric Leiden CPM resolution parameter used only
+for \code{"pairwise_hungarian_graph"}. Default 0.01.}
 
 \item{level}{Confidence level for ellipses (e.g., 0.95). Default 0.95.}
 
@@ -61,7 +67,10 @@ Generates bootstrap landscapes from bootstrap vector fields.
 }
 \details{
 For clustering-based methods, ellipse parameters are derived from the eigen-decomposition
-of the 2×2 covariance matrix per cluster. For \code{"mean_potential_hessian"}, minima are first
+of the 2×2 covariance matrix per cluster. For \code{"mean_potential"}, minima are first
+detected on the mean potential surface across bootstrap landscapes; each bootstrap minimum is
+then matched to the closest reference minimum, and ellipse parameters are derived from the
+covariance of matched minima locations. For \code{"mean_potential_hessian"}, minima are first
 detected on the mean potential surface across bootstrap landscapes; each bootstrap minimum is
 then matched to the closest reference minimum, and ellipse parameters are derived from the
 inverse of the mean matched Hessian.

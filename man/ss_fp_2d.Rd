@@ -2,10 +2,16 @@
 % Please edit documentation in R/vf_ld_gen2.R
 \name{ss_fp_2d}
 \alias{ss_fp_2d}
-\title{Estimates the steady-state distribution using Central Differencing for an
-arbitrary rectangular domain defined by x_range and y_range.}
+\title{Estimates the steady-state distribution from a 2D drift-diffusion field.}
 \usage{
-ss_fp_2d(vf, linear_interp = TRUE, n_grid = 100)
+ss_fp_2d(
+  vf,
+  linear_interp = TRUE,
+  n_grid = 100,
+  drift_scheme = c("upwind", "central"),
+  cross_diffusion_mode = c("drop", "full"),
+  boundary_mode = c("reflective", "legacy_implicit")
+)
 }
 \arguments{
 \item{vf}{A \code{vectorfield} or \code{cv_vectorfield} object representing the vector field.}
@@ -13,11 +19,18 @@ ss_fp_2d(vf, linear_interp = TRUE, n_grid = 100)
 \item{linear_interp}{Logical indicating whether to use linear interpolation in predictions.}
 
 \item{n_grid}{The number of grid points along one dimension (e.g., 100).}
+
+\item{drift_scheme}{Drift discretization scheme. One of \code{"upwind"} or \code{"central"}.}
+
+\item{cross_diffusion_mode}{Cross-diffusion handling mode. One of
+\code{"drop"} (default, ignore \code{Dxy}) or \code{"full"} (use full diffusion tensor).}
+
+\item{boundary_mode}{Boundary handling mode. One of \code{"reflective"} (explicit
+zero-normal-flux handling) or \code{"legacy_implicit"} (index-clamping behavior).}
 }
 \value{
 matrix of probability density.
 }
 \description{
-Estimates the steady-state distribution using Central Differencing for an
-arbitrary rectangular domain defined by x_range and y_range.
+Estimates the steady-state distribution from a 2D drift-diffusion field.
 }
