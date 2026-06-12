@@ -3,6 +3,7 @@
 #' @description Performs 10-fold cross-validation to find the optimal bandwidth 'h'
 #'              by minimizing the MSE of the predicted drift (v) against the
 #'              empirical drift of the test set (X_t+1 - X_t).
+#'              Folds are assigned as contiguous blocks to respect temporal order.
 #'              Handles single-input prediction and NA insertion.
 #'
 #' @param data A matrix/data.frame with columns x and y representing the STATE coordinates (X_t, Y_t).
@@ -24,7 +25,11 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
 
   n <- nrow(data)
   data <- as.data.frame(data)
-  folds <- sample(rep(1:k, length.out = n)) # Assign data points to folds
+  fold_sizes <- rep.int(floor(n / k), k)
+  if (n %% k > 0) {
+    fold_sizes[seq_len(n %% k)] <- fold_sizes[seq_len(n %% k)] + 1L
+  }
+  folds <- rep.int(seq_len(k), times = fold_sizes)
   verbose <- isTRUE(getOption("fitlandr.verbose", TRUE))
 
   mse_by_h <- numeric(length(h_values))
