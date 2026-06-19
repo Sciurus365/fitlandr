@@ -2,7 +2,7 @@
 % Please edit documentation in R/probability_flow.R
 \name{make_2d_pf}
 \alias{make_2d_pf}
-\title{Generates Probability Flow vectors and a corresponding plot
+\title{Generates probability-flow vectors
 for a given vector field and landscape.}
 \usage{
 make_2d_pf(vf, ld, n = 20, divided_by_rho = FALSE)
@@ -18,12 +18,11 @@ make_2d_pf(vf, ld, n = 20, divided_by_rho = FALSE)
 }
 \value{
 An object of class \verb{2d_pf} containing:
-- \code{pf_data}: Data frame with columns x, y, Jx, Jy.
-- \code{plot}: ggplot2 object visualizing the probability flow vectors.
+- \code{vec_grid}: Data frame with columns x, y, vx, vy.
 - \code{vf}: The input vector field object.
 - \code{ld}: The input landscape object.
 }
 \description{
-Generates Probability Flow vectors and a corresponding plot
+Generates probability-flow vectors
 for a given vector field and landscape.
 }

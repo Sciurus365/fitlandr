@@ -13,7 +13,7 @@
 #' @return A `2d_MVKE_landscape` object, which contains the following components:
 #' \itemize{
 #'   \item `dist`: A data frame containing the estimated potential landscape. The data frame has two columns: `x` and `U`, where `x` is the position and `U` is the potential.
-#'   \item `p`: A ggplot object containing the plot of the potential landscape.
+#'   \item `plot`: A ggplot object containing the plot of the potential landscape.
 #' }
 #' @export
 #'
@@ -24,17 +24,17 @@
 #' l <- fit_2d_ld(single_output_grad, "x")
 #'
 #' summary(l)
-#' plot(l)
+#' autoplot(l)
 #'
 #' # different behaviors for different `na_action` choices
 #'
 #' l1 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x")
-#' plot(l1)
+#' autoplot(l1)
 #'
 #' l2 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x",
 #'   na_action = "omit_vectors"
 #' )
-#' plot(l2)
+#' autoplot(l2)
 #'
 fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_action = "omit_data_points",
                       method = c("MVKE"), subdivisions = 100L, rel.tol = .Machine$double.eps^0.25, abs.tol = rel.tol, stop.on.error = TRUE, keep.xy = FALSE, aux = NULL, ...) {
@@ -77,7 +77,7 @@ fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_act
     cli::cli_inform("NA(s) found in the data. Those vectors were omitted.")
   }
 
-  lims <- determine_lims(data, x, lims)
+  lims <- simlandr::determine_lims(data, x, lims)
   MVKEresult <- MVKE(data_vectors[, 1, drop = FALSE], data_vectors[, 2, drop = FALSE], ...)
 
   xseq <- seq(lims[1], lims[2], length.out = n)

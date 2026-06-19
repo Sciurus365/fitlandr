@@ -21,6 +21,7 @@ License: GPL (>= 3)
 URL: https://sciurus365.github.io/fitlandr/,
     https://github.com/Sciurus365/fitlandr
 BugReports: https://github.com/Sciurus365/fitlandr/issues
+Depends: R (>= 4.1.0)
 Imports: 
     cli,
     clue,
@@ -43,11 +44,10 @@ Imports:
     progressr,
     purrr,
     R.utils,
-    Rcpp,
     Rfast,
     rlang,
     rootSolve,
-    simlandr (>= 0.3.0),
+    simlandr (>= 0.4.1),
     SparseVFC,
     tidyr
 Suggests: 
@@ -60,6 +60,4 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
-LinkingTo: 
-    Rcpp
+Config/roxygen2/version: 8.0.0

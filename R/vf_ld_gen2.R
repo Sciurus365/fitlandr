@@ -260,8 +260,10 @@ ss_fp_2d <- function(vf,
 #' zero-normal-flux handling) or `"legacy_implicit"` (index-clamping behavior).
 #' @return An object of class `2d_static_ld` containing:
 #'        - `dist`: A data frame with columns x, y, d (steady-state distribution), U (potential).
-#'        - `plot`: A plotly surface plot of the potential landscape U.
-#'        - `plot_2`: A ggplot2 raster plot of the potential landscape U.
+#'        - `plot`: A plotly surface plot of the potential landscape U, retained
+#'          for compatibility. Use [plotly_ld()] to access it.
+#'        - `plot_2`: A ggplot2 raster plot of the potential landscape U,
+#'          retained for compatibility. Use [autoplot()] to access it.
 #'        - `vf`: The input vector field object.
 #'        - `ss`: The steady-state distribution matrix.
 #'

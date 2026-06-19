@@ -177,15 +177,15 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
 #' @rdname cv_fit_2d_vf
 #' @export
 #'
-#' @param x An object of class 'cv_vectorfield' returned by cv_fit_2d_vf.
+#' @param object An object of class 'cv_vectorfield' returned by cv_fit_2d_vf.
 #' @param ... Additional arguments (not used).
-plot.cv_vectorfield <- function(x, ...) {
-  cv_data <- x$cv_results
+autoplot.cv_vectorfield <- function(object, ...) {
+  cv_data <- object$cv_results
   ggplot2::ggplot(cv_data, ggplot2::aes(x = h, y = cv_mse)) +
     ggplot2::geom_line() +
     ggplot2::geom_point() +
     ggplot2::annotate(
-      x = x$h_optimal, y = min(cv_data$cv_mse),
+      x = object$h_optimal, y = min(cv_data$cv_mse),
       geom = "point", color = "red"
     ) +
     ggplot2::scale_x_log10() +
@@ -194,4 +194,23 @@ plot.cv_vectorfield <- function(x, ...) {
       y = "Cross-Validation MSE"
     ) +
     ggplot2::theme_bw()
+}
+
+#' Plot cross-validation results
+#'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `plot.cv_vectorfield()` is deprecated in favor of [autoplot()].
+#'
+#' @param x An object of class `cv_vectorfield` returned by [cv_fit_2d_vf()].
+#' @param ... Arguments passed to [autoplot()].
+#'
+#' @export
+plot.cv_vectorfield <- function(x, ...) {
+  lifecycle::deprecate_warn(
+    "0.2.0",
+    "plot.cv_vectorfield()",
+    "autoplot()"
+  )
+  autoplot(x, ...)
 }

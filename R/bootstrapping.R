@@ -1385,6 +1385,9 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
           exclude_minor = TRUE,
           min_barrier = min_barrier
         )$mins
+        if (!is.null(mins) && nrow(mins) && "is_minor" %in% names(mins)) {
+          mins <- mins[!mins$is_minor, , drop = FALSE]
+        }
         if (is.null(mins) || !nrow(mins)) {
           NULL
         } else {

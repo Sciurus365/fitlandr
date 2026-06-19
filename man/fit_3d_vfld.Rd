@@ -51,7 +51,7 @@ Parallel computing based on \code{future} is supported for both methods. Use \co
 single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
 # fit the vector field
 v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
-plot(v2)
+autoplot(v2)
 # fit the landscape
 future::plan("multisession")
 set.seed(1614)
@@ -59,7 +59,7 @@ l2 <- fit_3d_vfld(v2,
   .sim_vf_options = sim_vf_options(chains = 16, stepsize = 1, forbid_overflow = TRUE),
   .simlandr_options = simlandr_options(adjust = 5, Umax = 4)
 )
-plot(l2, 2)
+autoplot(l2)
 future::plan("sequential")
 \dontshow{\}) # examplesIf}
 }

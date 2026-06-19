@@ -45,8 +45,8 @@ Estimate a 2D vector field from intensive longitudinal data. Two methods can be 
 single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
 # fit the vector field
 v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
-plot(v2)
+autoplot(v2)
 }
 \seealso{
-\code{\link[=plot.vectorfield]{plot.vectorfield()}}
+\code{\link[=autoplot]{autoplot()}}
 }

@@ -1,4 +1,4 @@
-#' Generates Probability Flow vectors and a corresponding plot
+#' Generates probability-flow vectors
 #' for a given vector field and landscape.
 #'
 #' @param vf A `vectorfield` or `cv_vectorfield` object representing the vector field.
@@ -6,8 +6,7 @@
 #' @param n Number of flow vectors to generate along each dimension (default 20).
 #' @param divided_by_rho Logical indicating whether to divide flow vectors by steady-state density.
 #' @return An object of class `2d_pf` containing:
-#'         - `pf_data`: Data frame with columns x, y, Jx, Jy.
-#'         - `plot`: ggplot2 object visualizing the probability flow vectors.
+#'         - `vec_grid`: Data frame with columns x, y, vx, vy.
 #'         - `vf`: The input vector field object.
 #'         - `ld`: The input landscape object.
 make_2d_pf <- function(vf, ld, n = 20, divided_by_rho = FALSE) {
@@ -35,27 +34,12 @@ make_2d_pf <- function(vf, ld, n = 20, divided_by_rho = FALSE) {
     n_flow = n,
     devided_by_rho = divided_by_rho
   )
-  plot <- ggplot2::ggplot(
-    pf_data,
-    ggplot2::aes(x = x, y = y)
-  ) +
-    ggplot2::geom_segment(
-      ggplot2::aes(
-        xend = x + Jx,
-        yend = y + Jy
-      ),
-      arrow = ggplot2::arrow(length = ggplot2::unit(0.1, "cm")),
-      alpha = 0.7
-    ) +
-    ggplot2::labs(
-      x = vf$x,
-      y = vf$y,
-      title = "Probability Flow Vectors"
-    ) +
-    ggplot2::theme_bw()
-
   return(structure(list(
-    vec_grid = pf_data
+    vec_grid = pf_data,
+    x = vf$x,
+    y = vf$y,
+    vf = vf,
+    ld = ld
   ), class = c("2d_pf", "probabilityflow", "vectorfield")))
 }
 

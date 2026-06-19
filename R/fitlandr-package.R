@@ -4,9 +4,7 @@
 ## usethis namespace: start
 #' @importFrom grid arrow
 #' @importFrom grid unit
-#' @importFrom Rcpp sourceCpp
 #' @importFrom simlandr get_dist
-#' @useDynLib fitlandr, .registration = TRUE
 ## usethis namespace: end
 NULL
 
@@ -16,8 +14,6 @@ utils::globalVariables(c(
   ".data",
   "Jx",
   "Jy",
-  "NULL_path",
-  "NULL_point",
   "attractors_pot",
   "count",
   "cv_mse",

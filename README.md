@@ -57,7 +57,7 @@ Fit the vector field with MVKE (see `?MVKE` for parameter details):
 ``` r
 library(fitlandr)
 v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
-plot(v2)
+autoplot(v2)
 ```
 
 <img src="man/figures/README-unnamed-chunk-3-1.png" alt="" width="100%" />
@@ -78,7 +78,8 @@ l2 <- make_2d_ld(v2, linear_interp = FALSE, n_grid = 100)
 #> ℹ Setting up grid and pre-calculating fields...✔ Setting up grid and pre-calculating fields... [8.1s]
 #> ℹ Building sparse matrix representation...✔ Building sparse matrix representation... [326ms]
 #> ℹ Solving for steady-state distribution...✔ Solving for steady-state distribution... [72ms]
-plot(l2, 2)
+autoplot(l2)
+# Use plotly_ld(l2) for the interactive 3D landscape.
 ```
 
 <img src="man/figures/README-unnamed-chunk-4-1.png" alt="" width="100%" />

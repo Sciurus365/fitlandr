@@ -61,7 +61,7 @@ fit_2d_ld(
 A \verb{2d_MVKE_landscape} object, which contains the following components:
 \itemize{
 \item \code{dist}: A data frame containing the estimated potential landscape. The data frame has two columns: \code{x} and \code{U}, where \code{x} is the position and \code{U} is the potential.
-\item \code{p}: A ggplot object containing the plot of the potential landscape.
+\item \code{plot}: A ggplot object containing the plot of the potential landscape.
 }
 }
 \description{
@@ -79,16 +79,16 @@ single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
 l <- fit_2d_ld(single_output_grad, "x")
 
 summary(l)
-plot(l)
+autoplot(l)
 
 # different behaviors for different `na_action` choices
 
 l1 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x")
-plot(l1)
+autoplot(l1)
 
 l2 <- fit_2d_ld(data.frame(x = c(1, 2, 1, 2, NA, NA, NA, 10, 11, 10, 11)), "x",
   na_action = "omit_vectors"
 )
-plot(l2)
+autoplot(l2)
 
 }

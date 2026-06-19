@@ -13,14 +13,14 @@
 #' @param ... Other parameters to be passed to [MVKE()] or [SparseVFC::SparseVFC()].
 #'
 #' @return A `vectorfield` object.
-#' @seealso [plot.vectorfield()]
+#' @seealso [autoplot()]
 #'
 #' @examples
 #' # generate data
 #' single_output_grad <- simlandr::sim_fun_grad(length = 200, seed = 1614)
 #' # fit the vector field
 #' v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
-#' plot(v2)
+#' autoplot(v2)
 #' @export
 fit_2d_vf <- function(data, x, y,
                       lims,
@@ -83,7 +83,7 @@ fit_2d_vf <- function(data, x, y,
     MVKEresult <- MVKE(original_vectors_normalized[, 1:2], original_vectors_normalized[, 3:4], ...)
   }
 
-  lims <- determine_lims(d_raw, c(x, y), lims)
+  lims <- simlandr::determine_lims(d_raw, c(x, y), lims)
 
   vec <- tidyr::expand_grid(x = seq(lims[1], lims[2], length.out = n), y = seq(lims[3], lims[4], length.out = n))
   grid_xy <- as.matrix(vec[, c("x", "y")])

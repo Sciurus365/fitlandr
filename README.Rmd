@@ -64,7 +64,7 @@ Fit the vector field with MVKE (see `?MVKE` for parameter details):
 ```{r}
 library(fitlandr)
 v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
-plot(v2)
+autoplot(v2)
 ```
 
 For intensive longitudinal psychological data, `method = "MVKE"` is the
@@ -80,7 +80,8 @@ difference scheme, then converts it to a potential landscape.
 ```{r warning=FALSE}
 set.seed(1614)
 l2 <- make_2d_ld(v2, linear_interp = FALSE, n_grid = 100)
-plot(l2, 2)
+autoplot(l2)
+# Use plotly_ld(l2) for the interactive 3D landscape.
 # equivalent:
 # l2 <- make_2d_ld(v2, linear_interp = FALSE)
 ```

@@ -1,5 +1,8 @@
 # fitlandr 0.1.1.9000
 
+- Standardized plotting APIs: use `autoplot()` for ggplot output and
+  `plotly_ld()` for interactive 3D landscapes. Existing `plot()` methods remain
+  available with soft-deprecation warnings.
 - Fixed a plotting bug in `plot.cv_vectorfield()`.
 - Fixed `fit_2d_ld(..., vector_position = "middle")` so it works correctly.
 - Improved consistency and clarity of user-facing messages and error reporting across core workflows.

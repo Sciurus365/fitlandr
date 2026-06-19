@@ -2,7 +2,7 @@
 % Please edit documentation in R/cross_validation.R
 \name{cv_fit_2d_vf}
 \alias{cv_fit_2d_vf}
-\alias{plot.cv_vectorfield}
+\alias{autoplot.cv_vectorfield}
 \title{10-Fold Cross-Validation for fit_2d_vf Bandwidth Selection}
 \usage{
 cv_fit_2d_vf(
@@ -14,12 +14,12 @@ cv_fit_2d_vf(
   ...
 )
 
-\method{plot}{cv_vectorfield}(x, ...)
+\method{autoplot}{cv_vectorfield}(object, ...)
 }
 \arguments{
 \item{data}{A matrix/data.frame with columns x and y representing the STATE coordinates (X_t, Y_t).}
 
-\item{x}{An object of class 'cv_vectorfield' returned by cv_fit_2d_vf.}
+\item{x}{The name of the column representing the X coordinate.}
 
 \item{y}{The name of the column representing the Y coordinate.}
 
@@ -28,6 +28,8 @@ cv_fit_2d_vf(
 \item{k}{The number of folds for cross-validation (default is 10).}
 
 \item{...}{Additional arguments (not used).}
+
+\item{object}{An object of class 'cv_vectorfield' returned by cv_fit_2d_vf.}
 }
 \value{
 A list containing:
@@ -38,5 +40,6 @@ A list containing:
 Performs 10-fold cross-validation to find the optimal bandwidth 'h'
 by minimizing the MSE of the predicted drift (v) against the
 empirical drift of the test set (X_t+1 - X_t).
+Folds are assigned as contiguous blocks to respect temporal order.
 Handles single-input prediction and NA insertion.
 }
