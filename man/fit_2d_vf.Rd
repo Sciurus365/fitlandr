@@ -12,6 +12,8 @@ fit_2d_vf(
   n = 20,
   vector_position = "start",
   na_action = "omit_data_points",
+  dayvar = NULL,
+  beepvar = NULL,
   method = c("MVKE", "VFC"),
   ...
 )
@@ -29,6 +31,16 @@ Should be a data frame or a matrix.}
 \item{vector_position}{One of "start", "middle", or "end", representing the position of the vectors. If "start", for example, the starting point of a vector is regarded as the position of the vector.}
 
 \item{na_action}{One of "omit_data_points" or "omit_vectors". If using "omit_data_points", then only the \code{NA} points are omitted, and the points before and after an \code{NA} will form a vector. If using "omit_vectors", then the vectors will be omitted if either of its points is \code{NA}.}
+
+\item{dayvar}{Optional character scalar naming the variable that identifies
+measurement days. When supplied, separator rows are inserted between
+different days so overnight transitions are excluded if
+\code{na_action = "omit_vectors"}.}
+
+\item{beepvar}{Optional character scalar naming the within-day assessment
+order variable. When supplied, separator rows are inserted between
+non-consecutive beeps so only consecutive assessments are used if
+\code{na_action = "omit_vectors"}.}
 
 \item{method}{One of "MVKE" or "VFC".}
 

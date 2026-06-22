@@ -25,10 +25,7 @@ Depends: R (>= 4.1.0)
 Imports: 
     cli,
     clue,
-    dbscan,
     dplyr,
-    furrr,
-    future.apply,
     ggforce,
     ggplot2,
     grDevices,
@@ -36,9 +33,7 @@ Imports:
     igraph,
     lifecycle,
     magrittr,
-    MASS,
     Matrix,
-    mclust,
     numDeriv,
     plotly,
     progressr,
@@ -49,12 +44,18 @@ Imports:
     rootSolve,
     simlandr (>= 0.4.1),
     SparseVFC,
+    tibble,
     tidyr
 Suggests: 
     akima,
     colorRamps,
+    dbscan,
     future,
+    furrr,
+    future.apply,
     knitr,
+    MASS,
+    mclust,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8

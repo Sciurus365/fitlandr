@@ -56,15 +56,6 @@ test_that("autoplot.2d_pf plots probability-flow vectors", {
   expect_warning(expect_s3_class(plot(pf), "ggplot"), "deprecated")
 })
 
-test_that("fit_2d_ld supports vector_position = middle", {
-  set.seed(1)
-  d <- data.frame(x = cumsum(stats::rnorm(50)))
-
-  ld <- fit_2d_ld(d, x = "x", vector_position = "middle", n = 20)
-  expect_s3_class(ld, "2d_MVKE_landscape")
-  expect_true(all(c("x", "U") %in% names(ld$dist)))
-})
-
 test_that("autoplot.summary_bootstrap_2d_ld minima mode consumes per_point field", {
   x_coords <- seq(0, 1, length.out = 5)
   y_coords <- seq(0, 1, length.out = 5)
@@ -93,8 +84,16 @@ test_that("autoplot.summary_bootstrap_2d_ld minima mode consumes per_point field
 })
 
 test_that("autoplot.summary_bootstrap_2d_ld overlays only original major minima", {
+  x_coords <- seq(0, 1, length.out = 5)
+  y_coords <- seq(0, 1, length.out = 5)
   original_ld <- structure(
-    list(),
+    list(
+      ss = structure(
+        matrix(0, nrow = 5, ncol = 5),
+        x_coords = x_coords,
+        y_coords = y_coords
+      )
+    ),
     class = c("2d_static_ld", "2d_ld", "landscape")
   )
   summary_obj <- structure(
@@ -144,4 +143,95 @@ test_that("summary/bootstrap validation errors are explicit", {
     "must inherit from .*summary_bootstrap_2d_ld",
     perl = TRUE
   )
+})
+
+test_that("fit_2d_vf excludes cross-day and non-consecutive transitions", {
+  d <- data.frame(
+    x = c(0, 1, 10, 11, 20),
+    y = c(0, 1, 10, 11, 20),
+    day = c(1, 1, 2, 2, 2),
+    beep = c(1, 2, 1, 3, 4)
+  )
+
+  local_mocked_bindings(
+    MVKE = function(d, v, ...) {
+      force(d)
+      force(v)
+      function(pos) list(mu = c(0, 0), a = diag(2))
+    },
+    .package = "fitlandr"
+  )
+
+  vf <- fit_2d_vf(
+    d,
+    x = "x",
+    y = "y",
+    dayvar = "day",
+    beepvar = "beep",
+    na_action = "omit_vectors",
+    method = "MVKE",
+    n = 3
+  )
+
+  expect_equal(nrow(vf$original_vectors), 2L)
+  expect_equal(unname(vf$original_vectors[, c("x", "y")]), matrix(c(0, 0, 11, 11), ncol = 2, byrow = TRUE))
+})
+
+test_that("fit_2d_vf warns when time-boundary arguments are ineffective", {
+  d <- data.frame(
+    x = c(0, 1, 10),
+    y = c(0, 1, 10),
+    day = c(1, 1, 2)
+  )
+
+  local_mocked_bindings(
+    MVKE = function(d, v, ...) {
+      force(d)
+      force(v)
+      function(pos) list(mu = c(0, 0), a = diag(2))
+    },
+    .package = "fitlandr"
+  )
+
+  expect_warning(
+    fit_2d_vf(
+      d,
+      x = "x",
+      y = "y",
+      dayvar = "day",
+      na_action = "omit_data_points",
+      method = "MVKE",
+      n = 3
+    ),
+    "vectors can still connect observations across day boundaries or non-consecutive beeps"
+  )
+})
+
+test_that("fit_1d_vf and make_1d_ld return the new 1D classes", {
+  set.seed(1)
+  d <- data.frame(x = cumsum(stats::rnorm(50)))
+
+  vf <- fit_1d_vf(d, x = "x", method = "MVKE", n = 25)
+  vf <- add_interp_grid(vf)
+  ld <- make_1d_ld(vf, n_grid = 50)
+
+  expect_s3_class(vf, "1d_vectorfield")
+  expect_s3_class(ld, "1d_static_ld")
+  expect_true(all(c("x", "vx", "v_norm") %in% names(vf$vec_grid)))
+  expect_true(all(c("x", "d", "U") %in% names(ld$dist)))
+})
+
+test_that("summary.bootstrap_1d_ld returns a structured summary", {
+  set.seed(1)
+  d <- data.frame(x = cumsum(stats::rnorm(60)))
+  vf <- fit_1d_vf(d, x = "x", method = "MVKE", n = 25)
+  vf <- add_interp_grid(vf)
+  boot_vf <- bootstrap_1d_vf(vf, n_boot = 5, block_length = 4)
+  boot_vf$bootstrap_models <- lapply(boot_vf$bootstrap_models, add_interp_grid)
+  boot_ld <- bootstrap_1d_ld(boot_vf, n_grid = 40)
+  smry <- summary(boot_ld, clustering_method = "mean_potential")
+
+  expect_s3_class(smry, "summary_bootstrap_1d_ld")
+  expect_true(all(c("boot_index", "n_mins") %in% names(smry$per_boot)))
+  expect_true(!is.null(smry$original_ld))
 })

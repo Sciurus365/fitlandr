@@ -9,6 +9,12 @@
 #' @param data A matrix/data.frame with columns x and y representing the STATE coordinates (X_t, Y_t).
 #' @param x The name of the column representing the X coordinate.
 #' @param y The name of the column representing the Y coordinate.
+#' @param dayvar Optional character scalar naming the day variable. When
+#'   supplied, overnight transitions are excluded from both training and
+#'   validation.
+#' @param beepvar Optional character scalar naming the within-day assessment
+#'   order variable. When supplied, only consecutive beeps are used in
+#'   training and validation.
 #' @param h_values A numeric vector of candidate bandwidths to test.
 #' @param k The number of folds for cross-validation (default is 10).
 #' @param ... Additional arguments passed to fit_2d_vf (e.g., method, lims).
@@ -17,10 +23,16 @@
 #'         - 'h_optimal': The bandwidth that yielded the minimum 'cv_mse'.
 #'
 #' @export
-cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), length.out = 20)), k = 10, ...) {
+cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = exp(seq(log(0.01), log(2), length.out = 20)), k = 10, ...) {
   # 1. Setup and Initialization
   if (!all(c(x, y) %in% colnames(data))) {
     cli::cli_abort("Data must contain columns named '{x}' and '{y}'.")
+  }
+  if (!is.null(dayvar) && !dayvar %in% colnames(data)) {
+    cli::cli_abort("Data must contain the day variable column named '{dayvar}'.")
+  }
+  if (!is.null(beepvar) && !beepvar %in% colnames(data)) {
+    cli::cli_abort("Data must contain the beep variable column named '{beepvar}'.")
   }
 
   n <- nrow(data)
@@ -31,6 +43,17 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
   }
   folds <- rep.int(seq_len(k), times = fold_sizes)
   verbose <- isTRUE(getOption("fitlandr.verbose", TRUE))
+
+  is_valid_transition <- function(full_data, idx) {
+    valid <- idx < nrow(full_data)
+    if (!is.null(dayvar)) {
+      valid <- valid & (full_data[[dayvar]][idx] == full_data[[dayvar]][idx + 1L])
+    }
+    if (!is.null(beepvar)) {
+      valid <- valid & ((full_data[[beepvar]][idx + 1L] - full_data[[beepvar]][idx]) == 1)
+    }
+    valid
+  }
 
   mse_by_h <- numeric(length(h_values))
 
@@ -97,7 +120,7 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
 
       # We test on all points X_t in the fold *except* the very last point of the series (n)
       # if the last point of the series happens to be in the current fold.
-      test_set_start_indices <- test_indices[test_indices < n]
+      test_set_start_indices <- test_indices[is_valid_transition(data, test_indices)]
 
       if (length(test_set_start_indices) == 0) next
 
@@ -113,7 +136,7 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
 
       # --- C. Train Model and Predict ---
       model_train <- tryCatch(
-        suppressMessages(fit_2d_vf(train_data, x = x, y = y, h = h_curr, ...)),
+        suppressMessages(fit_2d_vf(train_data, x = x, y = y, h = h_curr, dayvar = dayvar, beepvar = beepvar, ...)),
         error = function(e) {
           if (verbose) {
             cli::cli_alert("Error in fit_2d_vf for fold {i}, h = {h_curr}: {e$message}")
@@ -158,7 +181,7 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
     cli::cli_inform("Optimal Bandwidth (h) selected: {round(h_optimal, 4)}")
     cli::cli_inform("Fitting the optimal model on the full dataset...")
   }
-  final_model <- fit_2d_vf(data, x = x, y = y, h = h_optimal, ...)
+  final_model <- fit_2d_vf(data, x = x, y = y, h = h_optimal, dayvar = dayvar, beepvar = beepvar, ...)
   if (verbose) {
     cli::cli_inform("Final model fitted.")
   }
@@ -170,7 +193,9 @@ cv_fit_2d_vf <- function(data, x, y, h_values = exp(seq(log(0.01), log(2), lengt
     data = data,
     folds = folds,
     x = x,
-    y = y
+    y = y,
+    dayvar = dayvar,
+    beepvar = beepvar
   ), class = "cv_vectorfield"))
 }
 

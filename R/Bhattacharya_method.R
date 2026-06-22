@@ -24,6 +24,11 @@
 #' @references Bhattacharya, S., Zhang, Q., & Andersen, M. E. (2011). A deterministic map of Waddington’s epigenetic landscape for cell fate specification. BMC Systems Biology, 5(1), 85. https://doi.org/10.1186/1752-0509-5-85.
 #' The functions in this file were translated from the Matlab code provided with the reference above, and its Python translation at https://dynamo-release.readthedocs.io/en/v0.95.2/_modules/dynamo/vectorfield/Bhattacharya.html
 path_integral_B <- function(f, lims, n_path_int = 20, stepsize = 1e-2, tol = 1e-2, numTimeSteps = 1400, ...) {
+  rlang::check_installed(
+    "furrr",
+    reason = "for the Bhattacharya path-integration method. Install it with {.code install.packages(\"furrr\") }."
+  )
+
   ### Parallel simulation
   sim_df <- tidyr::expand_grid(
     i = seq(lims[1], lims[2], length.out = n_path_int),

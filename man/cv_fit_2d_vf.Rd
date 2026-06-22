@@ -9,6 +9,8 @@ cv_fit_2d_vf(
   data,
   x,
   y,
+  dayvar = NULL,
+  beepvar = NULL,
   h_values = exp(seq(log(0.01), log(2), length.out = 20)),
   k = 10,
   ...
@@ -22,6 +24,14 @@ cv_fit_2d_vf(
 \item{x}{The name of the column representing the X coordinate.}
 
 \item{y}{The name of the column representing the Y coordinate.}
+
+\item{dayvar}{Optional character scalar naming the day variable. When
+supplied, overnight transitions are excluded from both training and
+validation.}
+
+\item{beepvar}{Optional character scalar naming the within-day assessment
+order variable. When supplied, only consecutive beeps are used in
+training and validation.}
 
 \item{h_values}{A numeric vector of candidate bandwidths to test.}
 

@@ -2,12 +2,18 @@
 % Please edit documentation in R/plot_api.R
 \name{plot.2d_static_ld}
 \alias{plot.2d_static_ld}
+\alias{plot.1d_static_ld}
+\alias{plot.1d_ld}
 \alias{plot.2d_ld}
 \alias{plot.2d_MVKE_landscape}
 \alias{plot.2d_pf}
 \title{Deprecated landscape and probability-flow plot methods}
 \usage{
 \method{plot}{`2d_static_ld`}(x, index = 1, ...)
+
+\method{plot}{`1d_static_ld`}(x, index = 1, ...)
+
+\method{plot}{`1d_ld`}(x, index = 1, ...)
 
 \method{plot}{`2d_ld`}(x, index = 1, ...)
 

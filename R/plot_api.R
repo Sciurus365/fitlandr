@@ -15,6 +15,18 @@ autoplot.2d_static_ld <- function(object, ...) {
 
 #' @rdname autoplot.2d_static_ld
 #' @export
+autoplot.1d_static_ld <- function(object, ...) {
+  object$plot_2
+}
+
+#' @rdname autoplot.2d_static_ld
+#' @export
+autoplot.1d_ld <- function(object, ...) {
+  object$plot_2
+}
+
+#' @rdname autoplot.2d_static_ld
+#' @export
 autoplot.2d_ld <- function(object, ...) {
   object$plot_2
 }
@@ -44,6 +56,16 @@ autoplot.2d_pf <- function(object, ...) {
 
 #' @export
 plotly_ld.2d_static_ld <- function(object, ...) {
+  object$plot
+}
+
+#' @export
+plotly_ld.1d_static_ld <- function(object, ...) {
+  object$plot
+}
+
+#' @export
+plotly_ld.1d_ld <- function(object, ...) {
   object$plot
 }
 
@@ -88,6 +110,20 @@ legacy_landscape_plot <- function(x, index, ...) {
 #' @export
 plot.2d_static_ld <- function(x, index = 1, ...) {
   deprecate_landscape_plot("plot.2d_static_ld()", index)
+  legacy_landscape_plot(x, index, ...)
+}
+
+#' @rdname plot.2d_static_ld
+#' @export
+plot.1d_static_ld <- function(x, index = 1, ...) {
+  deprecate_landscape_plot("plot.1d_static_ld()", index)
+  legacy_landscape_plot(x, index, ...)
+}
+
+#' @rdname plot.2d_static_ld
+#' @export
+plot.1d_ld <- function(x, index = 1, ...) {
+  deprecate_landscape_plot("plot.1d_ld()", index)
   legacy_landscape_plot(x, index, ...)
 }
 

@@ -1,5 +1,22 @@
 # fitlandr 0.1.1.9000
 
+
+## Important changes
+
+- The core algorithm has been substantially redesigned:
+  - A cross-validation procedure is now used to select the kernel width in the drift–diffusion (MVKE) estimation.
+  - A finite volume method is introduced to compute the steady-state distribution from the drift–diffusion function.
+  - The previous simulation-based approach is now discouraged in favor of this new method.
+  - A bootstrapping pipeline has been added to support inference based on the potential landscape.
+- As a result of these changes, several previously central functions are now deprecated.
+
+- Dimension notation has been standardized:
+  - The dimension of the system is now defined solely by the input data (state variables).
+  - This dimension is used consistently for both the vector field and the landscape.
+  - The potential function \(U\) is no longer treated as an additional dimension.
+
+## Other changes
+
 - Standardized plotting APIs: use `autoplot()` for ggplot output and
   `plotly_ld()` for interactive 3D landscapes. Existing `plot()` methods remain
   available with soft-deprecation warnings.

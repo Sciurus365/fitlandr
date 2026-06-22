@@ -2,12 +2,18 @@
 % Please edit documentation in R/plot_api.R
 \name{autoplot.2d_static_ld}
 \alias{autoplot.2d_static_ld}
+\alias{autoplot.1d_static_ld}
+\alias{autoplot.1d_ld}
 \alias{autoplot.2d_ld}
 \alias{autoplot.2d_MVKE_landscape}
 \alias{autoplot.2d_pf}
 \title{Autoplot a landscape or probability flow}
 \usage{
 \method{autoplot}{`2d_static_ld`}(object, ...)
+
+\method{autoplot}{`1d_static_ld`}(object, ...)
+
+\method{autoplot}{`1d_ld`}(object, ...)
 
 \method{autoplot}{`2d_ld`}(object, ...)
 

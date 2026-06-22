@@ -466,8 +466,12 @@ is_inside_convex_hull <- function(points, hull_vertices, tol = 1e-10) {
 #' @return A data frame with columns x, y, U for each local minimum found.
 #' @export
 find_loc_min <- function(ld, exclude_minor = TRUE, min_barrier = 0.1, use_convex_hull = TRUE) {
+  if (inherits(ld, "1d_ld") || inherits(ld, "1d_static_ld")) {
+    return(find_loc_min_1d(ld, exclude_minor = exclude_minor, min_barrier = min_barrier))
+  }
+
   if (!inherits(ld, "2d_ld") && !inherits(ld, "2d_static_ld")) {
-    cli::cli_abort("Input {.arg ld} must be a {.cls 2d_ld} or {.cls 2d_static_ld} object.")
+    cli::cli_abort("Input {.arg ld} must be a {.cls 1d_ld}, {.cls 1d_static_ld}, {.cls 2d_ld}, or {.cls 2d_static_ld} object.")
   }
 
   dist <- ld$dist
