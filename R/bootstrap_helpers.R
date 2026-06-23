@@ -144,7 +144,8 @@ ellipse_from_hessian <- function(hessian, level, n_runs) {
 summarize_mean_potential_hessian <- function(object,
                                              boot_min_df,
                                              exclude_minor,
-                                             min_barrier,
+                                             min_barrier_fraction,
+                                             min_convex_hull_range_fraction,
                                              level,
                                              one_per_run) {
   scaler <- get_bootstrap_distance_scaler(object)
@@ -153,7 +154,8 @@ summarize_mean_potential_hessian <- function(object,
   ref_mins <- find_loc_min(
     mean_ld,
     exclude_minor = exclude_minor,
-    min_barrier = min_barrier
+    min_barrier_fraction = min_barrier_fraction,
+    min_convex_hull_range_fraction = min_convex_hull_range_fraction
   )$mins
 
   if (exclude_minor && nrow(ref_mins) > 0) {
@@ -172,7 +174,8 @@ summarize_mean_potential_hessian <- function(object,
     out <- list(
       params = list(
         exclude_minor = exclude_minor,
-        min_barrier = min_barrier,
+        min_barrier_fraction = min_barrier_fraction,
+        min_convex_hull_range_fraction = min_convex_hull_range_fraction,
         clustering_method = "mean_potential_hessian",
         minPts = NA_integer_,
         level = level,
@@ -294,7 +297,8 @@ summarize_mean_potential_hessian <- function(object,
   out <- list(
     params = list(
       exclude_minor = exclude_minor,
-      min_barrier = min_barrier,
+      min_barrier_fraction = min_barrier_fraction,
+      min_convex_hull_range_fraction = min_convex_hull_range_fraction,
       clustering_method = "mean_potential_hessian",
       minPts = NA_integer_,
       level = level,
@@ -323,7 +327,8 @@ summarize_mean_potential_hessian <- function(object,
 summarize_mean_potential <- function(object,
                                      boot_min_df,
                                      exclude_minor,
-                                     min_barrier,
+                                     min_barrier_fraction,
+                                     min_convex_hull_range_fraction,
                                      level,
                                      one_per_run) {
   scaler <- get_bootstrap_distance_scaler(object)
@@ -332,7 +337,8 @@ summarize_mean_potential <- function(object,
   ref_mins <- find_loc_min(
     mean_ld,
     exclude_minor = exclude_minor,
-    min_barrier = min_barrier
+    min_barrier_fraction = min_barrier_fraction,
+    min_convex_hull_range_fraction = min_convex_hull_range_fraction
   )$mins
 
   if (exclude_minor && nrow(ref_mins) > 0) {
@@ -351,7 +357,8 @@ summarize_mean_potential <- function(object,
     out <- list(
       params = list(
         exclude_minor = exclude_minor,
-        min_barrier = min_barrier,
+        min_barrier_fraction = min_barrier_fraction,
+        min_convex_hull_range_fraction = min_convex_hull_range_fraction,
         clustering_method = "mean_potential",
         minPts = NA_integer_,
         level = level,
@@ -448,7 +455,8 @@ summarize_mean_potential <- function(object,
   out <- list(
     params = list(
       exclude_minor = exclude_minor,
-      min_barrier = min_barrier,
+      min_barrier_fraction = min_barrier_fraction,
+      min_convex_hull_range_fraction = min_convex_hull_range_fraction,
       clustering_method = "mean_potential",
       minPts = NA_integer_,
       level = level,
@@ -479,7 +487,12 @@ summarize_mean_potential <- function(object,
 #'   - `original_ld`: the original landscape,
 #'   - `n_boot`: number of bootstrap runs.
 #' @param exclude_minor Logical; exclude minor local minima. Default TRUE.
-#' @param min_barrier Minimum barrier height fraction used by `find_loc_min()` to classify minor minima. Default 0.1.
+#' @param min_barrier_fraction Minimum barrier height fraction, relative to the
+#'   highest barrier, used by `find_loc_min()` to classify minor minima.
+#'   Default 0.1.
+#' @param min_convex_hull_range_fraction Minimum barrier height fraction,
+#'   relative to the potential range inside the observed-data convex hull,
+#'   used by `find_loc_min()` to classify minor minima. Default 0.01.
 #' @param clustering_method Clustering backend for pooled minima. One of
 #'   `"hungarian"` (default), `"mean_potential"`, `"hdbscan"`,
 #'   `"pairwise_hungarian_graph"`, `"mean_potential_hessian"`, or `"gmm_bic"`.

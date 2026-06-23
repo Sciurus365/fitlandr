@@ -95,10 +95,10 @@ bootstrap_1d_ld <- function(boot_vf, ...) {
     cli::cli_abort("Input {.arg boot_vf} must be a {.cls bootstrap_1d_vf} object.")
   }
 
-  original_ld <- purrr::quietly(make_1d_ld)(boot_vf$original_vf, ...)$result
+  original_ld <- suppressWarnings(suppressMessages(make_1d_ld(boot_vf$original_vf, ...)))
   ref_x <- original_ld$dist$x
   boot_lds <- lapply(boot_vf$bootstrap_models, function(vf) {
-    result <- purrr::quietly(make_1d_ld)(vf, ...)$result
+    result <- suppressWarnings(suppressMessages(make_1d_ld(vf, ...)))
     result$plot <- NULL
     result$plot_2 <- NULL
     if (!identical(result$dist$x, ref_x)) {
@@ -118,8 +118,11 @@ bootstrap_1d_ld <- function(boot_vf, ...) {
 #'
 #' @param object A `bootstrap_1d_ld` object.
 #' @param exclude_minor Logical; exclude minor minima before clustering.
-#' @param min_barrier Minimum barrier threshold used in minor-minimum
-#'   detection.
+#' @param min_barrier_fraction Minimum barrier threshold, relative to the
+#'   highest barrier, used in minor-minimum detection.
+#' @param min_convex_hull_range_fraction Additional lower bound for barrier-based
+#'   retention. In 1D this is applied to the potential range over the observed
+#'   data range.
 #' @param clustering_method One of `"hungarian"` (default),
 #'   `"mean_potential"`, `"pairwise_hungarian_graph"`, or `"gmm_bic"`.
 #' @param level Coverage level for intervals.
@@ -131,7 +134,8 @@ bootstrap_1d_ld <- function(boot_vf, ...) {
 #' @export
 summary.bootstrap_1d_ld <- function(object,
                                     exclude_minor = TRUE,
-                                    min_barrier = 0.1,
+                                    min_barrier_fraction = 0.1,
+                                    min_convex_hull_range_fraction = 0.01,
                                     clustering_method = c("hungarian", "mean_potential", "pairwise_hungarian_graph", "gmm_bic"),
                                     level = 0.95,
                                     one_per_run = TRUE,
@@ -143,7 +147,12 @@ summary.bootstrap_1d_ld <- function(object,
   clustering_method <- match.arg(clustering_method)
 
   boot_min_list <- lapply(seq_along(object$bootstrap_lds), function(i) {
-    mins <- find_loc_min(object$bootstrap_lds[[i]], exclude_minor = exclude_minor, min_barrier = min_barrier)$mins
+    mins <- find_loc_min(
+      object$bootstrap_lds[[i]],
+      exclude_minor = exclude_minor,
+      min_barrier_fraction = min_barrier_fraction,
+      min_convex_hull_range_fraction = min_convex_hull_range_fraction
+    )$mins
     if (exclude_minor && nrow(mins)) {
       mins <- mins[!mins$is_minor, , drop = FALSE]
     }
@@ -161,7 +170,7 @@ summary.bootstrap_1d_ld <- function(object,
 
   if (!nrow(boot_min_df)) {
     out <- list(
-      params = list(exclude_minor = exclude_minor, min_barrier = min_barrier, clustering_method = clustering_method, level = level, one_per_run = one_per_run),
+      params = list(exclude_minor = exclude_minor, min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction, clustering_method = clustering_method, level = level, one_per_run = one_per_run),
       per_boot = per_boot,
       per_point = boot_min_df,
       per_cluster = NULL,
@@ -181,7 +190,12 @@ summary.bootstrap_1d_ld <- function(object,
   boot_min_df$x_scaled <- boot_min_df$x / dx
 
   if (clustering_method == "hungarian") {
-    ref_mins <- find_loc_min(object$original_ld, exclude_minor = exclude_minor, min_barrier = min_barrier)$mins
+    ref_mins <- find_loc_min(
+      object$original_ld,
+      exclude_minor = exclude_minor,
+      min_barrier_fraction = min_barrier_fraction,
+      min_convex_hull_range_fraction = min_convex_hull_range_fraction
+    )$mins
     if (exclude_minor && nrow(ref_mins)) {
       ref_mins <- ref_mins[!ref_mins$is_minor, , drop = FALSE]
     }
@@ -194,7 +208,12 @@ summary.bootstrap_1d_ld <- function(object,
     diagnostics <- list(clustering_method = "hungarian", n_reference = nrow(ref_mins), distance_scale_dx = dx)
   } else if (clustering_method == "mean_potential") {
     mean_ld <- build_mean_potential_ld_1d(object)
-    ref_mins <- find_loc_min(mean_ld, exclude_minor = exclude_minor, min_barrier = min_barrier)$mins
+    ref_mins <- find_loc_min(
+      mean_ld,
+      exclude_minor = exclude_minor,
+      min_barrier_fraction = min_barrier_fraction,
+      min_convex_hull_range_fraction = min_convex_hull_range_fraction
+    )$mins
     if (exclude_minor && nrow(ref_mins)) {
       ref_mins <- ref_mins[!ref_mins$is_minor, , drop = FALSE]
     }
@@ -244,7 +263,7 @@ summary.bootstrap_1d_ld <- function(object,
 
   if (!nrow(df_c)) {
     out <- list(
-      params = list(exclude_minor = exclude_minor, min_barrier = min_barrier, clustering_method = clustering_method, level = level, one_per_run = one_per_run),
+      params = list(exclude_minor = exclude_minor, min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction, clustering_method = clustering_method, level = level, one_per_run = one_per_run),
       per_boot = per_boot,
       per_point = boot_min_df,
       per_cluster = NULL,
@@ -279,7 +298,7 @@ summary.bootstrap_1d_ld <- function(object,
     )
 
   out <- list(
-    params = list(exclude_minor = exclude_minor, min_barrier = min_barrier, clustering_method = clustering_method, level = level, one_per_run = one_per_run),
+    params = list(exclude_minor = exclude_minor, min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction, clustering_method = clustering_method, level = level, one_per_run = one_per_run),
     per_boot = per_boot,
     per_point = boot_min_df,
     per_cluster = per_cluster,
@@ -359,7 +378,12 @@ autoplot.summary_bootstrap_1d_ld <- function(object,
 
   if (isTRUE(show_original_major_minima) && !is.null(object$original_ld)) {
     orig_major <- tryCatch({
-      mins <- find_loc_min(object$original_ld, exclude_minor = TRUE, min_barrier = object$params$min_barrier)$mins
+      mins <- find_loc_min(
+        object$original_ld,
+        exclude_minor = TRUE,
+        min_barrier_fraction = object$params$min_barrier_fraction,
+        min_convex_hull_range_fraction = object$params$min_convex_hull_range_fraction
+      )$mins
       if (!is.null(mins) && nrow(mins) && "is_minor" %in% names(mins)) {
         mins <- mins[!mins$is_minor, , drop = FALSE]
       }

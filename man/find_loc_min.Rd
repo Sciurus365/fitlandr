@@ -7,7 +7,8 @@
 find_loc_min(
   ld,
   exclude_minor = TRUE,
-  min_barrier = 0.1,
+  min_barrier_fraction = 0.1,
+  min_convex_hull_range_fraction = 0.01,
   use_convex_hull = TRUE
 )
 }
@@ -18,17 +19,27 @@ find_loc_min(
 based on the barrier height criterion, so that they can be easily excluded
 from subsequent calculations. Default is TRUE.}
 
-\item{min_barrier}{When the barrier height between a local minimum and any of the
-saddle points connecting it to other local minima is less than \code{min_barrier} times
-the highest barrier height value, the local minimum will be considered minor.
-Default is 0.1.}
+\item{min_barrier_fraction}{When the barrier height between a local minimum
+and any of the saddle points connecting it to other local minima is less
+than \code{min_barrier_fraction} times the highest barrier height value, the
+local minimum will be considered minor. Default is 0.1.}
+
+\item{min_convex_hull_range_fraction}{Additional lower bound for barrier-based
+retention. In 2D, this is expressed as a fraction of the potential range
+within the observed-data convex hull. In 1D, it is expressed as a fraction
+of the potential range over the observed data range. Default is 0.01.}
 
 \item{use_convex_hull}{Logical indicating whether to mark minima outside
 the convex hull of observed data points as minor before barrier-based
 minor-minimum detection. Default is TRUE.}
 }
 \value{
-A data frame with columns x, y, U for each local minimum found.
+An object of class \code{ld_min}. Its \code{mins} component contains one row
+per local minimum with coordinates, potential, \code{is_minor}, and
+\code{exclusion_reason}. The exclusion reason is one of
+\code{"retained_major"}, \code{"retained_major_outside_observed_data_convex_hull"},
+\code{"outside_observed_data_convex_hull"}, \code{"insufficient_barrier_separation"},
+or both minor criteria joined by \code{"; "}.
 }
 \description{
 Finds local minima in a 2D landscape object.

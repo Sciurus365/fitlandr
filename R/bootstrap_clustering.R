@@ -174,45 +174,21 @@ cluster_pairwise_hungarian_graph <- function(boot_min_df, pairwise_leiden_gamma 
     d_thr <- max(edges$d, na.rm = TRUE)
   }
 
-  leiden_used <- FALSE
-  leiden_error <- NULL
-  cluster_vec <- rep(0L, n_points)
+  g <- igraph::graph_from_data_frame(
+    d = strong_edges[, c("node_u", "node_v", "weight")],
+    directed = FALSE,
+    vertices = data.frame(name = as.character(seq_len(n_points)))
+  )
 
-  if (requireNamespace("igraph", quietly = TRUE) && "cluster_leiden" %in% getNamespaceExports("igraph")) {
-    g <- igraph::graph_from_data_frame(
-      d = strong_edges[, c("node_u", "node_v", "weight")],
-      directed = FALSE,
-      vertices = data.frame(name = as.character(seq_len(n_points)))
-    )
-
-    lc <- tryCatch(
-      igraph::cluster_leiden(
-        g,
-        weights = igraph::E(g)$weight,
-        objective_function = "CPM",
-        resolution = pairwise_leiden_gamma
-      ),
-      error = function(e) {
-        leiden_error <<- conditionMessage(e)
-        NULL
-      }
-    )
-
-    if (!is.null(lc)) {
-      memb <- as.integer(igraph::membership(lc))
-      if (length(memb) == n_points) {
-        cluster_vec <- memb
-        leiden_used <- TRUE
-      }
-    }
-  }
-
-  if (!leiden_used) {
-    cluster_vec <- connected_components_from_edges(
-      n_nodes = n_points,
-      edge_u = strong_edges$node_u,
-      edge_v = strong_edges$node_v
-    )
+  lc <- igraph::cluster_leiden(
+    g,
+    weights = igraph::E(g)$weight,
+    objective_function = "CPM",
+    resolution = pairwise_leiden_gamma
+  )
+  cluster_vec <- as.integer(igraph::membership(lc))
+  if (length(cluster_vec) != n_points) {
+    cli::cli_abort("Leiden clustering returned an unexpected number of memberships.")
   }
 
   boot_min_df$cluster <- as.integer(cluster_vec[boot_min_df$node_id])
@@ -239,8 +215,7 @@ cluster_pairwise_hungarian_graph <- function(boot_min_df, pairwise_leiden_gamma 
     boot_min_df = boot_min_df,
     diagnostics = list(
       clustering_method = "pairwise_hungarian_graph",
-      graph_clustering = if (leiden_used) "leiden" else "connected_components_fallback",
-      leiden_error = leiden_error,
+      graph_clustering = "leiden",
       n_run_pairs = choose(length(run_ids), 2),
       n_edges = nrow(edges),
       n_edges_kept = nrow(strong_edges),
@@ -251,7 +226,7 @@ cluster_pairwise_hungarian_graph <- function(boot_min_df, pairwise_leiden_gamma 
   )
 }
 
-cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_barrier, clustering_method, minPts, pairwise_leiden_gamma = 0.01) {
+cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_barrier_fraction, min_convex_hull_range_fraction, clustering_method, minPts, pairwise_leiden_gamma = 0.01) {
   if (is.null(boot_min_df$node_id)) {
     boot_min_df$node_id <- seq_len(nrow(boot_min_df))
   }
@@ -289,7 +264,12 @@ cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_bar
   }
 
   if (clustering_method == "hungarian") {
-    ref_mins <- find_loc_min(object$original_ld, exclude_minor = exclude_minor, min_barrier = min_barrier)$mins
+    ref_mins <- find_loc_min(
+      object$original_ld,
+      exclude_minor = exclude_minor,
+      min_barrier_fraction = min_barrier_fraction,
+      min_convex_hull_range_fraction = min_convex_hull_range_fraction
+    )$mins
     if (exclude_minor && nrow(ref_mins) > 0) {
       ref_mins <- ref_mins[!ref_mins$is_minor, , drop = FALSE]
     }

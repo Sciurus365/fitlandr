@@ -93,7 +93,10 @@ make_1d_ld <- function(vf, linear_interp = TRUE, n_grid = 200L) {
   ), class = c("1d_static_ld", "1d_ld", "landscape"))
 }
 
-find_loc_min_1d <- function(ld, exclude_minor = TRUE, min_barrier = 0.1) {
+find_loc_min_1d <- function(ld,
+                            exclude_minor = TRUE,
+                            min_barrier_fraction = 0.1,
+                            min_convex_hull_range_fraction = 0.01) {
   dist <- ld$dist
   local_minima <- which(diff(sign(diff(dist$U))) == 2) + 1L
   local_maxima <- which(diff(sign(diff(dist$U))) == -2) + 1L
@@ -106,6 +109,21 @@ find_loc_min_1d <- function(ld, exclude_minor = TRUE, min_barrier = 0.1) {
   n_mins <- nrow(mins)
   all_barriers <- matrix(NA_real_, nrow = n_mins, ncol = n_mins)
   minor_mins <- integer(0)
+  observed_range_threshold <- 0
+
+  if (!is.null(ld$vf) && !is.null(ld$vf$data)) {
+    x_obs <- ld$vf$data[, 1]
+    x_obs <- x_obs[is.finite(x_obs)]
+    if (length(x_obs) > 0) {
+      x_min <- min(x_obs)
+      x_max <- max(x_obs)
+      in_observed_range <- dist$x >= x_min & dist$x <= x_max & is.finite(dist$U)
+      observed_u <- dist$U[in_observed_range]
+      if (length(observed_u) > 0) {
+        observed_range_threshold <- min_convex_hull_range_fraction * (max(observed_u) - min(observed_u))
+      }
+    }
+  }
 
   if (n_mins > 1L && exclude_minor) {
     for (i in seq_len(n_mins - 1L)) {
@@ -129,7 +147,11 @@ find_loc_min_1d <- function(ld, exclude_minor = TRUE, min_barrier = 0.1) {
         break
       }
       current_min_barrier <- min(current_barriers)
-      if (is.infinite(current_min_barrier) || current_min_barrier >= min_barrier * max_barrier) {
+      barrier_threshold <- max(
+        min_barrier_fraction * max_barrier,
+        observed_range_threshold
+      )
+      if (is.infinite(current_min_barrier) || current_min_barrier >= barrier_threshold) {
         break
       }
       locs <- which(all_barriers_copy == current_min_barrier, arr.ind = TRUE)
@@ -141,6 +163,11 @@ find_loc_min_1d <- function(ld, exclude_minor = TRUE, min_barrier = 0.1) {
   }
 
   mins$is_minor <- seq_len(n_mins) %in% minor_mins
+  mins$exclusion_reason <- ifelse(
+    mins$is_minor,
+    "insufficient_barrier_separation",
+    "retained_major"
+  )
   structure(list(mins = mins, barriers = all_barriers, maxima_index = local_maxima), class = "ld_min")
 }
 

@@ -89,9 +89,13 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
   }
 
   if (isTRUE(show_original_major_minima) && !is.null(object$original_ld)) {
-    min_barrier <- object$params$min_barrier
-    if (is.null(min_barrier) || !is.finite(min_barrier)) {
-      min_barrier <- 0.1
+    min_barrier_fraction <- object$params$min_barrier_fraction
+    min_convex_hull_range_fraction <- object$params$min_convex_hull_range_fraction
+    if (is.null(min_barrier_fraction) || !is.finite(min_barrier_fraction)) {
+      min_barrier_fraction <- 0.1
+    }
+    if (is.null(min_convex_hull_range_fraction) || !is.finite(min_convex_hull_range_fraction)) {
+      min_convex_hull_range_fraction <- 0.01
     }
 
     orig_major <- tryCatch(
@@ -99,7 +103,8 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
         mins <- find_loc_min(
           object$original_ld,
           exclude_minor = TRUE,
-          min_barrier = min_barrier
+          min_barrier_fraction = min_barrier_fraction,
+          min_convex_hull_range_fraction = min_convex_hull_range_fraction
         )$mins
         if (!is.null(mins) && nrow(mins) && "is_minor" %in% names(mins)) {
           mins <- mins[!mins$is_minor, , drop = FALSE]

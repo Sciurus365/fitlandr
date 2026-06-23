@@ -1,6 +1,7 @@
 summary.bootstrap_2d_ld <- function(object,
                                     exclude_minor = TRUE,
-                                    min_barrier = 0.1,
+                                    min_barrier_fraction = 0.1,
+                                    min_convex_hull_range_fraction = 0.01,
                                     clustering_method = c("hungarian", "mean_potential", "hdbscan", "pairwise_hungarian_graph", "mean_potential_hessian", "gmm_bic"),
                                     minPts = 5,
                                     pairwise_leiden_gamma = 0.01,
@@ -21,7 +22,12 @@ summary.bootstrap_2d_ld <- function(object,
 
   boot_mins <- lapply(lds, function(ld) {
     p()
-    find_loc_min(ld, exclude_minor = exclude_minor, min_barrier = min_barrier)
+    find_loc_min(
+      ld,
+      exclude_minor = exclude_minor,
+      min_barrier_fraction = min_barrier_fraction,
+      min_convex_hull_range_fraction = min_convex_hull_range_fraction
+    )
   })
 
   boot_min_df <- do.call(rbind, lapply(seq_along(boot_mins), function(i) {
@@ -40,7 +46,8 @@ summary.bootstrap_2d_ld <- function(object,
   if (is.null(boot_min_df) || !nrow(boot_min_df)) {
     out <- list(
       params = list(
-        exclude_minor = exclude_minor, min_barrier = min_barrier, clustering_method = clustering_method,
+        exclude_minor = exclude_minor, clustering_method = clustering_method,
+        min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction,
         minPts = minPts, pairwise_leiden_gamma = pairwise_leiden_gamma, level = level,
         one_per_run = one_per_run
       ),
@@ -59,7 +66,8 @@ summary.bootstrap_2d_ld <- function(object,
       object = object,
       boot_min_df = boot_min_df,
       exclude_minor = exclude_minor,
-      min_barrier = min_barrier,
+      min_barrier_fraction = min_barrier_fraction,
+      min_convex_hull_range_fraction = min_convex_hull_range_fraction,
       level = level,
       one_per_run = one_per_run
     ))
@@ -70,7 +78,8 @@ summary.bootstrap_2d_ld <- function(object,
       object = object,
       boot_min_df = boot_min_df,
       exclude_minor = exclude_minor,
-      min_barrier = min_barrier,
+      min_barrier_fraction = min_barrier_fraction,
+      min_convex_hull_range_fraction = min_convex_hull_range_fraction,
       level = level,
       one_per_run = one_per_run
     ))
@@ -81,7 +90,8 @@ summary.bootstrap_2d_ld <- function(object,
     boot_min_df = boot_min_df,
     object = object,
     exclude_minor = exclude_minor,
-    min_barrier = min_barrier,
+    min_barrier_fraction = min_barrier_fraction,
+    min_convex_hull_range_fraction = min_convex_hull_range_fraction,
     clustering_method = clustering_method,
     minPts = minPts,
     pairwise_leiden_gamma = pairwise_leiden_gamma
@@ -98,7 +108,8 @@ summary.bootstrap_2d_ld <- function(object,
   if (!nrow(df_c)) {
     out <- list(
       params = list(
-        exclude_minor = exclude_minor, min_barrier = min_barrier, clustering_method = clustering_method,
+        exclude_minor = exclude_minor, clustering_method = clustering_method,
+        min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction,
         minPts = minPts, pairwise_leiden_gamma = pairwise_leiden_gamma, level = level,
         one_per_run = one_per_run
       ),
@@ -172,7 +183,8 @@ summary.bootstrap_2d_ld <- function(object,
 
   out <- list(
     params = list(
-      exclude_minor = exclude_minor, min_barrier = min_barrier, clustering_method = clustering_method,
+      exclude_minor = exclude_minor, clustering_method = clustering_method,
+      min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction,
       minPts = minPts, pairwise_leiden_gamma = pairwise_leiden_gamma, level = level,
       one_per_run = one_per_run
     ),

@@ -7,7 +7,8 @@
 \method{summary}{bootstrap_1d_ld}(
   object,
   exclude_minor = TRUE,
-  min_barrier = 0.1,
+  min_barrier_fraction = 0.1,
+  min_convex_hull_range_fraction = 0.01,
   clustering_method = c("hungarian", "mean_potential", "pairwise_hungarian_graph",
     "gmm_bic"),
   level = 0.95,
@@ -20,8 +21,12 @@
 
 \item{exclude_minor}{Logical; exclude minor minima before clustering.}
 
-\item{min_barrier}{Minimum barrier threshold used in minor-minimum
-detection.}
+\item{min_barrier_fraction}{Minimum barrier threshold, relative to the
+highest barrier, used in minor-minimum detection.}
+
+\item{min_convex_hull_range_fraction}{Additional lower bound for barrier-based
+retention. In 1D this is applied to the potential range over the observed
+data range.}
 
 \item{clustering_method}{One of \code{"hungarian"} (default),
 \code{"mean_potential"}, \code{"pairwise_hungarian_graph"}, or \code{"gmm_bic"}.}

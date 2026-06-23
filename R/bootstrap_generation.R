@@ -136,7 +136,7 @@ bootstrap_2d_ld <- function(boot_vf, ...) {
     cli::cli_abort("Input 'boot_vf' must be a 'bootstrap_2d_vf' object.")
   }
 
-  original_ld <- purrr::quietly(make_2d_ld)(boot_vf$original_vf, ...)$result
+  original_ld <- suppressWarnings(suppressMessages(make_2d_ld(boot_vf$original_vf, ...)))
   ref_x <- sort(unique(original_ld$dist$x))
   ref_y <- sort(unique(original_ld$dist$y))
 
@@ -146,7 +146,7 @@ bootstrap_2d_ld <- function(boot_vf, ...) {
     boot_vf$bootstrap_models,
     function(vf) {
       p()
-      result <- purrr::quietly(make_2d_ld)(vf, ...)$result
+      result <- suppressWarnings(suppressMessages(make_2d_ld(vf, ...)))
       # to save space:
       result$plot <- NULL
       result$plot_2 <- NULL
