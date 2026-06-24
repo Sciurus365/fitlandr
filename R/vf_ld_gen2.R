@@ -499,17 +499,24 @@ find_loc_min <- function(ld,
   n_y <- ncol(U_matrix)
 
   local_mins <- data.frame(x = numeric(0), y = numeric(0), U = numeric(0))
-  if (n_x >= 3 && n_y >= 3) {
-    U_center <- U_matrix[2:(n_x - 1), 2:(n_y - 1), drop = FALSE]
-    is_min <-
-      (U_center < U_matrix[1:(n_x - 2), 2:(n_y - 1), drop = FALSE]) &
-      (U_center < U_matrix[3:n_x, 2:(n_y - 1), drop = FALSE]) &
-      (U_center < U_matrix[2:(n_x - 1), 1:(n_y - 2), drop = FALSE]) &
-      (U_center < U_matrix[2:(n_x - 1), 3:n_y, drop = FALSE]) &
-      (U_center < U_matrix[1:(n_x - 2), 1:(n_y - 2), drop = FALSE]) &
-      (U_center < U_matrix[1:(n_x - 2), 3:n_y, drop = FALSE]) &
-      (U_center < U_matrix[3:n_x, 1:(n_y - 2), drop = FALSE]) &
-      (U_center < U_matrix[3:n_x, 3:n_y, drop = FALSE])
+  if (n_x >= 1 && n_y >= 1) {
+    is_min <- matrix(FALSE, nrow = n_x, ncol = n_y)
+
+    for (i in seq_len(n_x)) {
+      for (j in seq_len(n_y)) {
+        neighbor_i <- max(1L, i - 1L):min(n_x, i + 1L)
+        neighbor_j <- max(1L, j - 1L):min(n_y, j + 1L)
+        neighbor_coords <- expand.grid(ii = neighbor_i, jj = neighbor_j)
+        neighbor_coords <- neighbor_coords[!(neighbor_coords$ii == i & neighbor_coords$jj == j), , drop = FALSE]
+
+        if (nrow(neighbor_coords) == 0) {
+          next
+        }
+
+        neighbor_u <- U_matrix[cbind(neighbor_coords$ii, neighbor_coords$jj)]
+        is_min[i, j] <- all(U_matrix[i, j] < neighbor_u)
+      }
+    }
 
     idx <- which(is_min, arr.ind = TRUE)
     if (nrow(idx) > 0) {
@@ -517,9 +524,9 @@ find_loc_min <- function(ld,
       ux <- unique(dist$x)
       uy <- unique(dist$y)
       local_mins <- data.frame(
-        x = ux[idx[, 1] + 1],
-        y = uy[idx[, 2] + 1],
-        U = U_center[idx],
+        x = ux[idx[, 1]],
+        y = uy[idx[, 2]],
+        U = U_matrix[idx],
         row.names = NULL
       )
     }
@@ -628,7 +635,11 @@ find_loc_min <- function(ld,
     outside_idx <- which(!inside)
     if (length(outside_idx) > 0) {
       major_after_barrier <- setdiff(seq_len(n_mins), barrier_minor_mins)
-      if (length(major_after_barrier) == 1L && major_after_barrier %in% outside_idx) {
+      outside_major_after_barrier <- intersect(major_after_barrier, outside_idx)
+      if (length(outside_major_after_barrier) == length(major_after_barrier)) {
+        hull_outside_but_retained <- outside_major_after_barrier
+        hull_minor_mins <- integer(0)
+      } else if (length(major_after_barrier) == 1L && major_after_barrier %in% outside_idx) {
         hull_outside_but_retained <- major_after_barrier
         hull_minor_mins <- setdiff(outside_idx, major_after_barrier)
       } else {
