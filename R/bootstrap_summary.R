@@ -1,3 +1,26 @@
+#' Summarize bootstrap minima for 2D landscapes
+#'
+#' @param object A `bootstrap_2d_ld` object.
+#' @param exclude_minor Logical; exclude minor minima before clustering.
+#' @param min_barrier_fraction Minimum barrier threshold, relative to the
+#'   highest barrier, used in minor-minimum detection.
+#' @param min_convex_hull_range_fraction Additional lower bound for
+#'   barrier-based retention, defined as a fraction of the potential range
+#'   within the observed-data convex hull.
+#' @param clustering_method One of `"hungarian"` (default),
+#'   `"mean_potential"`, `"hdbscan"`, `"pairwise_hungarian_graph"`,
+#'   `"mean_potential_hessian"`, or `"gmm_bic"`.
+#' @param minPts Minimum cluster size used by clustering methods that require
+#'   it.
+#' @param pairwise_leiden_gamma Resolution parameter for
+#'   `"pairwise_hungarian_graph"`.
+#' @param level Coverage level for ellipses and intervals.
+#' @param one_per_run Logical; retain at most one point per run per cluster.
+#' @param ... Unused.
+#'
+#' @return A `summary_bootstrap_2d_ld` object.
+#' @method summary bootstrap_2d_ld
+#' @export
 summary.bootstrap_2d_ld <- function(object,
                                     exclude_minor = TRUE,
                                     min_barrier_fraction = 0.1,
