@@ -636,10 +636,7 @@ find_loc_min <- function(ld,
     if (length(outside_idx) > 0) {
       major_after_barrier <- setdiff(seq_len(n_mins), barrier_minor_mins)
       outside_major_after_barrier <- intersect(major_after_barrier, outside_idx)
-      if (length(outside_major_after_barrier) == length(major_after_barrier)) {
-        hull_outside_but_retained <- outside_major_after_barrier
-        hull_minor_mins <- integer(0)
-      } else if (length(major_after_barrier) == 1L && major_after_barrier %in% outside_idx) {
+      if (length(major_after_barrier) == 1L && major_after_barrier %in% outside_idx) {
         hull_outside_but_retained <- major_after_barrier
         hull_minor_mins <- setdiff(outside_idx, major_after_barrier)
       } else {
