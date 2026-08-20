@@ -21,13 +21,23 @@ insert_time_separators <- function(data, columns, dayvar = NULL, beepvar = NULL)
   }
 
   break_after <- rep(FALSE, nrow(out) - 1L)
+  state_missing <- !stats::complete.cases(out[, columns, drop = FALSE])
+  transition_has_state_missing <- state_missing[-nrow(out)] | state_missing[-1L]
+
+  add_time_breaks <- function(invalid_transition) {
+    # Existing state-NA rows already separate vectors. A missing time value on
+    # an otherwise observed pair is itself treated as an invalid transition.
+    invalid_transition[is.na(invalid_transition)] <-
+      !transition_has_state_missing[is.na(invalid_transition)]
+    break_after <<- break_after | invalid_transition
+  }
 
   if (!is.null(dayvar)) {
-    break_after <- break_after | (out[[dayvar]][-nrow(out)] != out[[dayvar]][-1L])
+    add_time_breaks(out[[dayvar]][-nrow(out)] != out[[dayvar]][-1L])
   }
 
   if (!is.null(beepvar)) {
-    break_after <- break_after | ((out[[beepvar]][-1L] - out[[beepvar]][-nrow(out)]) != 1)
+    add_time_breaks((out[[beepvar]][-1L] - out[[beepvar]][-nrow(out)]) != 1)
   }
 
   if (!any(break_after)) {

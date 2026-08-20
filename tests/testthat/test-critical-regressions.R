@@ -56,6 +56,145 @@ test_that("autoplot.2d_pf plots probability-flow vectors", {
   expect_warning(expect_s3_class(plot(pf), "ggplot"), "deprecated")
 })
 
+test_that("make_2d_stream recovers a linear stream function", {
+  grid <- expand.grid(
+    x = c(-1, -0.7, -0.1, 0.25, 1),
+    y = c(-2, -1.4, -0.2, 0.8, 2)
+  )
+  pf <- structure(
+    list(
+      vec_grid = transform(grid, vx = 3, vy = 2),
+      x = "state_x",
+      y = "state_y",
+      divided_by_rho = FALSE
+    ),
+    class = c("2d_pf", "probabilityflow", "vectorfield")
+  )
+
+  stream <- make_2d_stream(pf)
+  expected <- 2 * stream$grid$x - 3 * stream$grid$y
+  expected <- expected - expected[1L]
+
+  expect_s3_class(stream, "2d_stream")
+  expect_equal(stream$grid$A, expected, tolerance = 1e-10)
+  expect_lt(stream$rmse, 1e-10)
+  expect_lt(stream$relative_error, 1e-10)
+  expect_s3_class(autoplot(stream), "ggplot")
+})
+
+test_that("make_2d_stream validates its probability-flow grid", {
+  divided_pf <- structure(
+    list(
+      vec_grid = expand.grid(x = 1:2, y = 1:2) |>
+        transform(vx = 0, vy = 0),
+      divided_by_rho = TRUE
+    ),
+    class = "2d_pf"
+  )
+
+  expect_error(make_2d_stream(divided_pf), "divided by density")
+  divided_pf$divided_by_rho <- FALSE
+  divided_pf$vec_grid <- divided_pf$vec_grid[-1L, ]
+  expect_error(make_2d_stream(divided_pf), "complete rectangular grid")
+})
+
+make_test_landscape <- function(density, x = 1:2, y = 1:2) {
+  density <- matrix(density, nrow = length(x), ncol = length(y))
+  potential <- -log(density)
+  dist <- expand.grid(x = x, y = y)
+  dist$d <- as.numeric(density)
+  dist$U <- as.numeric(potential)
+  dist$U_plot <- as.numeric(potential)
+  structure(
+    list(ss = density, dist = dist, plot = NULL, plot_2 = NULL, vf = NULL),
+    class = c("2d_static_ld", "2d_ld", "landscape")
+  )
+}
+
+test_that("landscape K-means uses density values and returns landscape centers", {
+  landscapes <- list(
+    a1 = make_test_landscape(c(0.70, 0.10, 0.10, 0.10)),
+    a2 = make_test_landscape(c(0.65, 0.15, 0.10, 0.10)),
+    b1 = make_test_landscape(c(0.10, 0.10, 0.10, 0.70)),
+    b2 = make_test_landscape(c(0.10, 0.10, 0.15, 0.65))
+  )
+
+  result <- cluster_landscapes(landscapes, k = 2, seed = 1)
+
+  expect_s3_class(result, "landscape_clusters")
+  expect_equal(result$cluster[1], result$cluster[2])
+  expect_equal(result$cluster[3], result$cluster[4])
+  expect_false(result$cluster[1] == result$cluster[3])
+  expect_true(all(result$assignments$distance >= 0))
+  expect_length(result$centers, 2L)
+  expect_true(all(vapply(result$centers, inherits, logical(1), "landscape")))
+  expect_equal(
+    result$centers[[1]]$dist$U,
+    -log(result$centers[[1]]$dist$d)
+  )
+})
+
+test_that("landscape cluster evaluation returns elbow metrics and plot", {
+  landscapes <- list(
+    make_test_landscape(c(0.70, 0.10, 0.10, 0.10)),
+    make_test_landscape(c(0.65, 0.15, 0.10, 0.10)),
+    make_test_landscape(c(0.10, 0.10, 0.10, 0.70)),
+    make_test_landscape(c(0.10, 0.10, 0.15, 0.65))
+  )
+
+  evaluation <- evaluate_landscape_clusters(
+    landscapes,
+    k_values = 1:3,
+    seed = 1
+  )
+
+  expect_s3_class(evaluation, "landscape_cluster_evaluation")
+  expect_equal(evaluation$metrics$k, 1:3)
+  expect_true(all(diff(evaluation$metrics$within_variance) <= 0))
+  expect_s3_class(autoplot(evaluation), "ggplot")
+})
+
+test_that("landscape clustering requires a common grid", {
+  landscapes <- list(
+    make_test_landscape(c(0.70, 0.10, 0.10, 0.10)),
+    make_test_landscape(c(0.70, 0.10, 0.10, 0.10), x = c(1, 3))
+  )
+
+  expect_error(cluster_landscapes(landscapes, k = 2), "same dimension and grid")
+})
+
+test_that("landscape clustering supports 1D landscapes", {
+  make_1d_test_landscape <- function(density) {
+    potential <- -log(density)
+    structure(
+      list(
+        ss = density,
+        dist = data.frame(
+          x = seq_along(density),
+          d = density,
+          U = potential,
+          U_plot = potential
+        ),
+        plot = NULL,
+        plot_2 = NULL,
+        vf = NULL
+      ),
+      class = c("1d_static_ld", "1d_ld", "landscape")
+    )
+  }
+  landscapes <- list(
+    make_1d_test_landscape(c(0.7, 0.2, 0.1)),
+    make_1d_test_landscape(c(0.65, 0.25, 0.1)),
+    make_1d_test_landscape(c(0.1, 0.2, 0.7))
+  )
+
+  result <- cluster_landscapes(landscapes, k = 2, seed = 1)
+
+  expect_s3_class(result$centers[[1]], "1d_ld")
+  expect_equal(length(result$centers[[1]]$ss), 3L)
+  expect_s3_class(autoplot(result$centers[[1]]), "ggplot")
+})
+
 test_that("autoplot.summary_bootstrap_2d_ld minima mode consumes per_point field", {
   x_coords <- seq(0, 1, length.out = 5)
   y_coords <- seq(0, 1, length.out = 5)
@@ -204,6 +343,72 @@ test_that("fit_2d_vf warns when time-boundary arguments are ineffective", {
       n = 3
     ),
     "vectors can still connect observations across day boundaries or non-consecutive beeps"
+  )
+})
+
+test_that("time separators tolerate separator rows already present", {
+  d <- data.frame(
+    x = c(0, 1, NA, 10, 11),
+    y = c(0, 1, NA, 10, 11),
+    day = c(1, 1, NA, 2, 2),
+    beep = c(1, 2, NA, 1, 2)
+  )
+
+  separated <- insert_time_separators(
+    d,
+    columns = c("x", "y"),
+    dayvar = "day",
+    beepvar = "beep"
+  )
+
+  expect_equal(nrow(separated), nrow(d))
+  expect_equal(which(is.na(separated$x)), 3L)
+})
+
+test_that("blocked CV works with day and beep separators in interior folds", {
+  d <- data.frame(
+    x = seq_len(30),
+    y = seq_len(30) / 2,
+    day = rep(seq_len(6), each = 5),
+    beep = rep(seq_len(5), 6)
+  )
+
+  local_mocked_bindings(
+    MVKE = function(d, v, ...) {
+      force(d)
+      force(v)
+      function(pos) list(mu = c(0, 0), a = diag(2))
+    },
+    .package = "fitlandr"
+  )
+
+  cv <- cv_fit_2d_vf(
+    d,
+    x = "x",
+    y = "y",
+    dayvar = "day",
+    beepvar = "beep",
+    h_values = 0.2,
+    k = 3,
+    n = 3,
+    lims = c(0, 31, 0, 16)
+  )
+
+  expect_s3_class(cv, "cv_vectorfield")
+  expect_true(is.finite(cv$cv_results$cv_mse))
+})
+
+test_that("blocked CV reports complete candidate failure explicitly", {
+  d <- data.frame(x = seq_len(10), y = seq_len(10))
+
+  local_mocked_bindings(
+    fit_2d_vf = function(...) stop("synthetic fit failure"),
+    .package = "fitlandr"
+  )
+
+  expect_error(
+    cv_fit_2d_vf(d, x = "x", y = "y", h_values = 0.2, k = 2),
+    "failed for every candidate bandwidth"
   )
 })
 

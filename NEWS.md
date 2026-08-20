@@ -14,9 +14,23 @@
   - The dimension of the system is now defined solely by the input data (state variables).
   - This dimension is used consistently for both the vector field and the landscape.
   - The potential function \(U\) is no longer treated as an additional dimension.
+  
+- Added `make_2d_stream()` to estimate a stream function from a
+  two-dimensional probability flow using sparse finite-difference least
+  squares, together with an `autoplot()` method and residual diagnostics.
 
 ## Other changes
 
+- Added `fit_individual_dynamics()` for the complete single-dataset workflow
+  from a cross-validated vector field through its landscape, probability flow,
+  and stream function. `fit_group_dynamics()` reuses this workflow over
+  multiple datasets and evaluates candidate cluster counts; use
+  `add_group_clusters()` to attach a selected K-means solution without
+  refitting the dynamics.
+- Added a prototype landscape-clustering API. Use
+  `evaluate_landscape_clusters()` to compare candidate K-means solutions with
+  an elbow plot and `cluster_landscapes()` to obtain assignments and
+  density-space cluster centers transformed back to potential landscapes.
 - Standardized plotting APIs: use `autoplot()` for ggplot output and
   `plotly_ld()` for interactive 3D landscapes. Existing `plot()` methods remain
   available with soft-deprecation warnings.
@@ -24,8 +38,6 @@
 - Fixed `fit_2d_ld(..., vector_position = "middle")` so it works correctly.
 - Improved consistency and clarity of user-facing messages and error reporting across core workflows.
 - Updated examples to use the current recommended landscape workflow (`make_2d_ld()`).
-- Fixed a runtime error in `summary.bootstrap_2d_ld()` when filtering minor minima.
-- Fixed additional `summary.bootstrap_2d_ld()` runtime errors introduced by NSE handling changes.
 
 # fitlandr 0.1.1
 

@@ -9,6 +9,7 @@
 #'         - `vec_grid`: Data frame with columns x, y, vx, vy.
 #'         - `vf`: The input vector field object.
 #'         - `ld`: The input landscape object.
+#' @export
 make_2d_pf <- function(vf, ld, n = 20, divided_by_rho = FALSE) {
   if (inherits(vf, "cv_vectorfield")) {
     vf <- vf$final_model
@@ -39,8 +40,152 @@ make_2d_pf <- function(vf, ld, n = 20, divided_by_rho = FALSE) {
     x = vf$x,
     y = vf$y,
     vf = vf,
-    ld = ld
+    ld = ld,
+    divided_by_rho = divided_by_rho
   ), class = c("2d_pf", "probabilityflow", "vectorfield")))
+}
+
+
+#' Estimate a stream function from a two-dimensional probability flow
+#'
+#' Estimates a scalar stream function `A` whose perpendicular gradient
+#' `(-dA/dy, dA/dx)` is closest in least-squares distance to the estimated
+#' probability flow. Derivatives are represented by sparse finite-difference
+#' matrices, using centered differences in the grid interior and one-sided
+#' differences at its boundary.
+#'
+#' A stream function is identifiable only up to an additive constant. The
+#' returned solution is anchored by setting its value at the first grid point
+#' to zero. If the estimated probability flow is not exactly divergence-free,
+#' the fitted flow is its least-squares stream-function component and the
+#' remaining component is available in `residual_grid`.
+#'
+#' @param pf A `2d_pf` object returned by [make_2d_pf()].
+#'
+#' @return An object of class `2d_stream` containing:
+#'   - `grid`: grid coordinates and estimated stream-function values.
+#'   - `fitted_grid`: observed and fitted probability-flow vectors.
+#'   - `residual_grid`: residual probability-flow vectors.
+#'   - `rmse`: root mean squared residual across both flow components.
+#'   - `relative_error`: residual norm divided by the observed-flow norm.
+#'   - `pf`: the input probability-flow object.
+#'
+#' @export
+make_2d_stream <- function(pf) {
+  if (!inherits(pf, "2d_pf")) {
+    cli::cli_abort("Input {.arg pf} must be a {.cls 2d_pf} object.")
+  }
+  if (isTRUE(pf$divided_by_rho)) {
+    cli::cli_abort(c(
+      "Cannot estimate a probability-current stream function from flow divided by density.",
+      "i" = "Recreate {.arg pf} with {.code divided_by_rho = FALSE}."
+    ))
+  }
+
+  flow <- pf$vec_grid
+  required_columns <- c("x", "y", "vx", "vy")
+  if (!all(required_columns %in% names(flow))) {
+    cli::cli_abort("{.arg pf$vec_grid} must contain columns {.field x}, {.field y}, {.field vx}, and {.field vy}.")
+  }
+  if (any(!is.finite(as.matrix(flow[required_columns])))) {
+    cli::cli_abort("{.arg pf$vec_grid} must contain only finite coordinates and flow values.")
+  }
+
+  x_coords <- sort(unique(flow$x))
+  y_coords <- sort(unique(flow$y))
+  nx <- length(x_coords)
+  ny <- length(y_coords)
+  if (nx < 2L || ny < 2L) {
+    cli::cli_abort("The probability-flow grid must contain at least two points along each axis.")
+  }
+  if (nrow(flow) != nx * ny || anyDuplicated(flow[c("x", "y")])) {
+    cli::cli_abort("{.arg pf$vec_grid} must be a complete rectangular grid with one flow vector per point.")
+  }
+
+  derivative_matrix <- function(coords) {
+    n <- length(coords)
+    if (n == 2L) {
+      h <- coords[2L] - coords[1L]
+      return(Matrix::sparseMatrix(
+        i = c(1L, 1L, 2L, 2L),
+        j = c(1L, 2L, 1L, 2L),
+        x = c(-1, 1, -1, 1) / h,
+        dims = c(n, n)
+      ))
+    }
+
+    interior <- 2L:(n - 1L)
+    h_left <- coords[interior] - coords[interior - 1L]
+    h_right <- coords[interior + 1L] - coords[interior]
+    lower <- -h_right / (h_left * (h_left + h_right))
+    center <- (h_right - h_left) / (h_left * h_right)
+    upper <- h_left / (h_right * (h_left + h_right))
+
+    Matrix::sparseMatrix(
+      i = c(1L, 1L, rep(interior, each = 3L), n, n),
+      j = c(
+        1L,
+        2L,
+        as.vector(rbind(interior - 1L, interior, interior + 1L)),
+        n - 1L,
+        n
+      ),
+      x = c(
+        -1 / (coords[2L] - coords[1L]),
+        1 / (coords[2L] - coords[1L]),
+        as.vector(rbind(lower, center, upper)),
+        -1 / (coords[n] - coords[n - 1L]),
+        1 / (coords[n] - coords[n - 1L])
+      ),
+      dims = c(n, n)
+    )
+  }
+
+  dx_1d <- derivative_matrix(x_coords)
+  dy_1d <- derivative_matrix(y_coords)
+  dx_2d <- Matrix::kronecker(Matrix::Diagonal(ny), dx_1d)
+  dy_2d <- Matrix::kronecker(dy_1d, Matrix::Diagonal(nx))
+  perpendicular_gradient <- rbind(-dy_2d, dx_2d)
+
+  grid_index <- match(flow$x, x_coords) + (match(flow$y, y_coords) - 1L) * nx
+  u <- numeric(nx * ny)
+  v <- numeric(nx * ny)
+  u[grid_index] <- flow$vx
+  v[grid_index] <- flow$vy
+  observed <- c(u, v)
+
+  anchor <- Matrix::sparseMatrix(i = 1L, j = 1L, x = 1, dims = c(1L, nx * ny))
+  system_matrix <- rbind(perpendicular_gradient, anchor)
+  stream_values <- as.numeric(Matrix::solve(Matrix::qr(system_matrix), c(observed, 0)))
+  fitted <- as.numeric(perpendicular_gradient %*% stream_values)
+  residual <- observed - fitted
+
+  ordered_grid <- expand.grid(x = x_coords, y = y_coords)
+  fitted_grid <- transform(
+    ordered_grid,
+    vx = u,
+    vy = v,
+    fitted_vx = fitted[seq_len(nx * ny)],
+    fitted_vy = fitted[nx * ny + seq_len(nx * ny)]
+  )
+  residual_grid <- transform(
+    ordered_grid,
+    vx = residual[seq_len(nx * ny)],
+    vy = residual[nx * ny + seq_len(nx * ny)]
+  )
+  observed_norm <- sqrt(sum(observed^2))
+
+  structure(
+    list(
+      grid = transform(ordered_grid, A = stream_values),
+      fitted_grid = fitted_grid,
+      residual_grid = residual_grid,
+      rmse = sqrt(mean(residual^2)),
+      relative_error = if (observed_norm == 0) 0 else sqrt(sum(residual^2)) / observed_norm,
+      pf = pf
+    ),
+    class = "2d_stream"
+  )
 }
 
 

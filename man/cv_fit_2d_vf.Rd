@@ -2,7 +2,6 @@
 % Please edit documentation in R/cross_validation.R
 \name{cv_fit_2d_vf}
 \alias{cv_fit_2d_vf}
-\alias{autoplot.cv_vectorfield}
 \title{10-Fold Cross-Validation for fit_2d_vf Bandwidth Selection}
 \usage{
 cv_fit_2d_vf(
@@ -13,10 +12,10 @@ cv_fit_2d_vf(
   beepvar = NULL,
   h_values = exp(seq(log(0.01), log(2), length.out = 20)),
   k = 10,
+  n = 20,
+  na_action = "omit_vectors",
   ...
 )
-
-\method{autoplot}{cv_vectorfield}(object, ...)
 }
 \arguments{
 \item{data}{A matrix/data.frame with columns x and y representing the STATE coordinates (X_t, Y_t).}
@@ -37,9 +36,17 @@ training and validation.}
 
 \item{k}{The number of folds for cross-validation (default is 10).}
 
-\item{...}{Additional arguments (not used).}
+\item{n}{Number of vector-field grid points per axis, passed to every
+\code{\link[=fit_2d_vf]{fit_2d_vf()}} call.}
 
-\item{object}{An object of class 'cv_vectorfield' returned by cv_fit_2d_vf.}
+\item{na_action}{Missing-data handling for the final full-data fit. Fold
+fits always use \code{"omit_vectors"} so vectors cannot bridge across held-out
+blocks. Defaults to \code{"omit_vectors"}, which is also required for
+\code{dayvar} and \code{beepvar} separators to remain effective in the final fit.}
+
+\item{...}{Additional arguments passed to \code{\link[=fit_2d_vf]{fit_2d_vf()}} for every
+fold-specific fit and the final full-data fit. These include \code{lims},
+\code{vector_position}, and \code{method}.}
 }
 \value{
 A list containing:

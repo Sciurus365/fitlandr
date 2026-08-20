@@ -54,6 +54,68 @@ autoplot.2d_pf <- function(object, ...) {
     ggplot2::theme_bw()
 }
 
+#' Autoplot a two-dimensional stream function
+#'
+#' @param object A `2d_stream` object returned by [make_2d_stream()].
+#' @param contour Logical indicating whether to overlay contour lines.
+#' @param ... Additional arguments, currently unused.
+#'
+#' @return A ggplot object.
+#' @export
+autoplot.2d_stream <- function(object, contour = TRUE, ...) {
+  grid <- object$grid
+  cell_bounds <- function(coords) {
+    coords <- sort(unique(coords))
+    edges <- c(
+      coords[1L] - (coords[2L] - coords[1L]) / 2,
+      (coords[-1L] + coords[-length(coords)]) / 2,
+      coords[length(coords)] +
+        (coords[length(coords)] - coords[length(coords) - 1L]) / 2
+    )
+    data.frame(
+      coord = coords,
+      lower = edges[-length(edges)],
+      upper = edges[-1L]
+    )
+  }
+  x_bounds <- cell_bounds(grid$x)
+  y_bounds <- cell_bounds(grid$y)
+  x_match <- match(grid$x, x_bounds$coord)
+  y_match <- match(grid$y, y_bounds$coord)
+  grid$cell_xmin <- x_bounds$lower[x_match]
+  grid$cell_xmax <- x_bounds$upper[x_match]
+  grid$cell_ymin <- y_bounds$lower[y_match]
+  grid$cell_ymax <- y_bounds$upper[y_match]
+
+  p <- ggplot2::ggplot(grid, ggplot2::aes(x = x, y = y)) +
+    ggplot2::geom_rect(ggplot2::aes(
+      fill = A,
+      xmin = .data$cell_xmin,
+      xmax = .data$cell_xmax,
+      ymin = .data$cell_ymin,
+      ymax = .data$cell_ymax
+    ), inherit.aes = FALSE) +
+    ggplot2::scale_fill_viridis_c(name = "A") +
+    ggplot2::coord_equal() +
+    ggplot2::labs(
+      x = object$pf$x,
+      y = object$pf$y,
+      title = "Probability-flow stream function"
+    ) +
+    ggplot2::theme_bw()
+
+  if (isTRUE(contour)) {
+    p <- p + ggplot2::geom_contour(
+      ggplot2::aes(z = A),
+      color = "white",
+      alpha = 0.6,
+      show.legend = FALSE
+    )
+  }
+
+  p
+}
+
 #' @export
 plotly_ld.2d_static_ld <- function(object, ...) {
   object$plot

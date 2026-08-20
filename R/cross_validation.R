@@ -17,13 +17,21 @@
 #'   training and validation.
 #' @param h_values A numeric vector of candidate bandwidths to test.
 #' @param k The number of folds for cross-validation (default is 10).
-#' @param ... Additional arguments passed to fit_2d_vf (e.g., method, lims).
+#' @param n Number of vector-field grid points per axis, passed to every
+#'   [fit_2d_vf()] call.
+#' @param na_action Missing-data handling for the final full-data fit. Fold
+#'   fits always use `"omit_vectors"` so vectors cannot bridge across held-out
+#'   blocks. Defaults to `"omit_vectors"`, which is also required for
+#'   `dayvar` and `beepvar` separators to remain effective in the final fit.
+#' @param ... Additional arguments passed to [fit_2d_vf()] for every
+#'   fold-specific fit and the final full-data fit. These include `lims`,
+#'   `vector_position`, and `method`.
 #' @return A list containing:
 #'         - 'cv_results': A data frame of 'h' values and their corresponding 'cv_mse'.
 #'         - 'h_optimal': The bandwidth that yielded the minimum 'cv_mse'.
 #'
 #' @export
-cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = exp(seq(log(0.01), log(2), length.out = 20)), k = 10, ...) {
+cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = exp(seq(log(0.01), log(2), length.out = 20)), k = 10, n = 20, na_action = "omit_vectors", ...) {
   # 1. Setup and Initialization
   if (!all(c(x, y) %in% colnames(data))) {
     cli::cli_abort("Data must contain columns named '{x}' and '{y}'.")
@@ -52,6 +60,7 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
     if (!is.null(beepvar)) {
       valid <- valid & ((full_data[[beepvar]][idx + 1L] - full_data[[beepvar]][idx]) == 1)
     }
+    valid[is.na(valid)] <- FALSE
     valid
   }
 
@@ -136,7 +145,17 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
 
       # --- C. Train Model and Predict ---
       model_train <- tryCatch(
-        suppressMessages(fit_2d_vf(train_data, x = x, y = y, h = h_curr, dayvar = dayvar, beepvar = beepvar, ...)),
+        suppressMessages(fit_2d_vf(
+          train_data,
+          x = x,
+          y = y,
+          h = h_curr,
+          dayvar = dayvar,
+          beepvar = beepvar,
+          n = n,
+          na_action = "omit_vectors",
+          ...
+        )),
         error = function(e) {
           if (verbose) {
             cli::cli_alert("Error in fit_2d_vf for fold {i}, h = {h_curr}: {e$message}")
@@ -169,11 +188,22 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
     }
 
     # 4. Store Average MSE for the current bandwidth h
-    mse_by_h[j] <- mean(fold_mse, na.rm = TRUE)
+    finite_fold_mse <- fold_mse[is.finite(fold_mse)]
+    mse_by_h[j] <- if (length(finite_fold_mse)) {
+      mean(finite_fold_mse)
+    } else {
+      NA_real_
+    }
   }
 
   # 5. Determine Optimal Bandwidth
   cv_results <- data.frame(h = h_values, cv_mse = mse_by_h)
+  if (!any(is.finite(cv_results$cv_mse))) {
+    cli::cli_abort(c(
+      "Cross-validation failed for every candidate bandwidth.",
+      "i" = "Check missing values, time-order variables, and whether each fold contains enough valid transitions."
+    ))
+  }
   h_optimal <- cv_results$h[which.min(cv_results$cv_mse)]
 
   if (verbose) {
@@ -181,7 +211,17 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
     cli::cli_inform("Optimal Bandwidth (h) selected: {round(h_optimal, 4)}")
     cli::cli_inform("Fitting the optimal model on the full dataset...")
   }
-  final_model <- fit_2d_vf(data, x = x, y = y, h = h_optimal, dayvar = dayvar, beepvar = beepvar, ...)
+  final_model <- fit_2d_vf(
+    data,
+    x = x,
+    y = y,
+    h = h_optimal,
+    dayvar = dayvar,
+    beepvar = beepvar,
+    n = n,
+    na_action = na_action,
+    ...
+  )
   if (verbose) {
     cli::cli_inform("Final model fitted.")
   }
@@ -199,11 +239,16 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
   ), class = "cv_vectorfield"))
 }
 
-#' @rdname cv_fit_2d_vf
-#' @export
+#' Autoplot 2D vector-field cross-validation results
+#'
+#' Draw the cross-validation error over the candidate bandwidth values and
+#' mark the selected bandwidth.
 #'
 #' @param object An object of class 'cv_vectorfield' returned by cv_fit_2d_vf.
 #' @param ... Additional arguments (not used).
+#'
+#' @return A ggplot object.
+#' @export
 autoplot.cv_vectorfield <- function(object, ...) {
   cv_data <- object$cv_results
   ggplot2::ggplot(cv_data, ggplot2::aes(x = h, y = cv_mse)) +
