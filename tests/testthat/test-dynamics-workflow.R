@@ -69,9 +69,6 @@ test_that("fit_group_dynamics reuses individual workflow with pooled limits", {
         class = "individual_dynamics"
       )
     },
-    evaluate_landscape_clusters = function(landscapes, ...) {
-      structure(list(metrics = data.frame(k = 1:2)), class = "landscape_cluster_evaluation")
-    },
     .package = "fitlandr"
   )
 
@@ -90,34 +87,71 @@ test_that("fit_group_dynamics reuses individual workflow with pooled limits", {
   )
 
   expect_s3_class(result, "group_dynamics")
-  expect_equal(names(result$members), c("first", "second"))
-  expect_true(all(vapply(result$members, inherits, logical(1), "individual_dynamics")))
+  expect_equal(names(result$vectorfields), c("first", "second"))
+  expect_equal(names(result$landscapes), c("first", "second"))
+  expect_equal(names(result$streams), c("first", "second"))
+  expect_equal(
+    names(result),
+    c("vectorfields", "landscapes", "streams", "x", "y", "lims", "settings")
+  )
   expect_equal(result$lims, c(-1, 11, -2, 22))
   expect_equal(calls[[1]]$lims, result$lims)
   expect_equal(calls[[2]]$lims, result$lims)
-  expect_null(result$clustering)
 })
 
-test_that("add_group_clusters attaches a selected solution", {
-  object <- structure(
+test_that("group fitting suppresses routine messages but preserves warnings", {
+  expect_warning(
+    expect_message(
+      value <- fitlandr:::fit_group_member_quietly({
+        cli::cli_inform("routine internal output")
+        warning("important fitting warning")
+        42
+      }),
+      NA
+    ),
+    "important fitting warning"
+  )
+  expect_equal(value, 42)
+})
+
+test_that("group dynamics autoplot facets landscapes and streams", {
+  make_landscape <- function(offset) {
+    dist <- expand.grid(x = 1:3, y = 1:3)
+    dist$U <- seq(0, 1, length.out = 9) + offset
+    dist$U_plot <- dist$U
+    structure(
+      list(dist = dist, ss = matrix(exp(-dist$U), 3, 3)),
+      class = c("2d_static_ld", "2d_ld", "landscape")
+    )
+  }
+  make_stream <- function(offset) {
+    grid <- expand.grid(x = c(0, 1, 3), y = c(0, 2, 5))
+    grid$A <- seq(-1, 1, length.out = 9) + offset
+    structure(
+      list(grid = grid, pf = list(x = "x", y = "y")),
+      class = "2d_stream"
+    )
+  }
+  group <- structure(
     list(
-      landscapes = list(a = 1, b = 2),
-      settings = list(cluster_method = "kmeans", nstart = 25L, iter.max = 100L, seed = 4L),
-      clustering = NULL
+      landscapes = list(first = make_landscape(10), second = make_landscape(-4)),
+      streams = list(first = make_stream(20), second = make_stream(-7)),
+      x = "state_x",
+      y = "state_y"
     ),
     class = "group_dynamics"
   )
 
-  local_mocked_bindings(
-    cluster_landscapes = function(landscapes, k, method, nstart, iter.max, seed) {
-      structure(list(k = k, cluster = c(1L, 2L)), class = "landscape_clusters")
-    },
-    .package = "fitlandr"
-  )
+  landscape_plot <- autoplot(group, type = "landscape", ncol = 2)
+  stream_plot <- autoplot(group, type = "stream", ncol = 2)
 
-  result <- add_group_clusters(object, k = 2)
-  expect_s3_class(result$clustering, "landscape_clusters")
-  expect_equal(result$clustering$k, 2)
+  expect_s3_class(landscape_plot, "ggplot")
+  expect_s3_class(stream_plot, "ggplot")
+  expect_equal(levels(landscape_plot$data$individual), c("first", "second"))
+  expect_equal(levels(stream_plot$data$individual), c("first", "second"))
+  expect_s3_class(stream_plot$layers[[1L]]$geom, "GeomRect")
+  expect_warning(ggplot2::ggplot_build(landscape_plot), NA)
+  expect_warning(ggplot2::ggplot_build(stream_plot), NA)
 })
 
 test_that("landscape clustering defaults respect the number of distinct inputs", {
@@ -167,4 +201,148 @@ test_that("K-means cluster count must be smaller than the sample size", {
     cluster_landscapes(two_landscapes, k = 2),
     "2 total landscapes"
   )
+})
+
+test_that("landscape clustering accepts a group_dynamics object", {
+  make_landscape <- function(density) {
+    structure(
+      list(
+        ss = matrix(density, 2, 2),
+        dist = expand.grid(x = 1:2, y = 1:2)
+      ),
+      class = c("2d_ld", "landscape")
+    )
+  }
+  landscapes <- list(
+    a = make_landscape(c(0.4, 0.3, 0.2, 0.1)),
+    b = make_landscape(c(0.35, 0.35, 0.2, 0.1)),
+    c = make_landscape(c(0.1, 0.2, 0.3, 0.4)),
+    d = make_landscape(c(0.1, 0.2, 0.35, 0.35))
+  )
+  group <- structure(list(landscapes = landscapes), class = "group_dynamics")
+
+  evaluation <- evaluate_landscape_clusters(group, k_values = 1:2, seed = 1)
+  clusters <- cluster_landscapes(group, k = 2, seed = 1)
+
+  expect_s3_class(evaluation, "landscape_cluster_evaluation")
+  expect_s3_class(clusters, "landscape_clusters")
+  expect_equal(clusters$assignments$landscape_name, names(landscapes))
+  expect_s3_class(autoplot(clusters), "ggplot")
+})
+
+test_that("stream clustering centers A and accepts group dynamics", {
+  make_stream <- function(A, offset = 0) {
+    grid <- expand.grid(x = c(0, 1, 3), y = c(0, 2, 5))
+    grid$A <- A + offset
+    structure(
+      list(grid = grid, pf = list(x = "x", y = "y")),
+      class = "2d_stream"
+    )
+  }
+  streams <- list(
+    clockwise_1 = make_stream(seq(-1, 1, length.out = 9), offset = 20),
+    clockwise_2 = make_stream(seq(-0.9, 0.9, length.out = 9), offset = -7),
+    counter_1 = make_stream(seq(1, -1, length.out = 9), offset = 12),
+    counter_2 = make_stream(seq(0.9, -0.9, length.out = 9), offset = -3)
+  )
+  group <- structure(list(streams = streams), class = "group_dynamics")
+
+  evaluation <- evaluate_stream_clusters(group, k_values = 1:2, seed = 1)
+  clusters <- cluster_streams(group, k = 2, seed = 1)
+
+  expect_s3_class(evaluation, "stream_cluster_evaluation")
+  expect_s3_class(clusters, "stream_clusters")
+  expect_equal(clusters$assignments$stream_name, names(streams))
+  expect_equal(clusters$cluster[1], clusters$cluster[2])
+  expect_equal(clusters$cluster[3], clusters$cluster[4])
+  expect_false(clusters$cluster[1] == clusters$cluster[3])
+  expect_true(all(vapply(
+    clusters$centers,
+    function(center) abs(mean(center$grid$A)) < 1e-12,
+    logical(1)
+  )))
+  expect_s3_class(autoplot(evaluation), "ggplot")
+  center_plot <- autoplot(clusters)
+  expect_s3_class(center_plot, "ggplot")
+  expect_s3_class(center_plot$layers[[1L]]$geom, "GeomRect")
+  expect_warning(ggplot2::ggplot_build(center_plot), NA)
+})
+
+test_that("joint landscape-stream clustering balances both modalities", {
+  make_landscape <- function(density) {
+    structure(
+      list(
+        ss = matrix(density, 2, 2),
+        dist = expand.grid(x = 1:2, y = 1:2)
+      ),
+      class = c("2d_ld", "landscape")
+    )
+  }
+  make_stream <- function(A, multiplier = 1, offset = 0) {
+    grid <- expand.grid(x = 1:2, y = 1:2)
+    grid$A <- multiplier * A + offset
+    structure(
+      list(grid = grid, pf = list(x = "x", y = "y")),
+      class = "2d_stream"
+    )
+  }
+  landscapes <- list(
+    a = make_landscape(c(0.45, 0.25, 0.2, 0.1)),
+    b = make_landscape(c(0.4, 0.3, 0.2, 0.1)),
+    c = make_landscape(c(0.1, 0.2, 0.25, 0.45)),
+    d = make_landscape(c(0.1, 0.2, 0.3, 0.4))
+  )
+  stream_patterns <- list(
+    a = c(-1, 0, 0, 1),
+    b = c(-0.8, 0, 0, 0.8),
+    c = c(1, 0, 0, -1),
+    d = c(0.8, 0, 0, -0.8)
+  )
+  streams <- Map(make_stream, stream_patterns, offset = c(10, -5, 20, -8))
+  group <- structure(
+    list(landscapes = landscapes, streams = streams),
+    class = "group_dynamics"
+  )
+
+  evaluation <- evaluate_landscape_stream_clusters(
+    group,
+    k_values = 1:2,
+    seed = 1
+  )
+  clusters <- cluster_landscape_streams(group, k = 2, seed = 1)
+
+  expect_s3_class(evaluation, "landscape_stream_cluster_evaluation")
+  expect_s3_class(clusters, "landscape_stream_clusters")
+  expect_equal(
+    evaluation$normalization$normalized_landscape_mean_squared_distance,
+    1
+  )
+  expect_equal(
+    evaluation$normalization$normalized_stream_mean_squared_distance,
+    1
+  )
+  expect_equal(evaluation$object_names, names(landscapes))
+  expect_equal(clusters$assignments$object_name, names(landscapes))
+  expect_length(clusters$landscape_centers, 2)
+  expect_length(clusters$stream_centers, 2)
+  expect_s3_class(autoplot(evaluation), "ggplot")
+  expect_s3_class(autoplot(clusters, type = "landscape"), "ggplot")
+  stream_plot <- autoplot(clusters, type = "stream")
+  expect_s3_class(stream_plot, "ggplot")
+  expect_s3_class(stream_plot$layers[[1L]]$geom, "GeomRect")
+  expect_warning(ggplot2::ggplot_build(stream_plot), NA)
+
+  scaled_streams <- Map(
+    make_stream,
+    stream_patterns,
+    multiplier = rep(1000, 4),
+    offset = c(100, -50, 200, -80)
+  )
+  scaled_evaluation <- evaluate_landscape_stream_clusters(
+    landscapes,
+    scaled_streams,
+    k_values = 1:2,
+    seed = 1
+  )
+  expect_equal(scaled_evaluation$metrics, evaluation$metrics, tolerance = 1e-10)
 })

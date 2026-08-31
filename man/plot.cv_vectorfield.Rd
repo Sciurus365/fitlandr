@@ -9,11 +9,11 @@
 \arguments{
 \item{x}{An object of class \code{cv_vectorfield} returned by \code{\link[=cv_fit_2d_vf]{cv_fit_2d_vf()}}.}
 
-\item{...}{Arguments passed to \code{\link[=autoplot]{autoplot()}}.}
+\item{...}{Arguments passed to \code{\link[ggplot2:autoplot]{autoplot()}}.}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 }
 \details{
-\code{plot.cv_vectorfield()} is deprecated in favor of \code{\link[=autoplot]{autoplot()}}.
+\code{plot.cv_vectorfield()} is deprecated in favor of \code{\link[ggplot2:autoplot]{autoplot()}}.
 }

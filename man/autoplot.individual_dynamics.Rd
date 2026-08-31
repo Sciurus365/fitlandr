@@ -16,7 +16,7 @@
 \item{type}{The fitted component to draw: \code{"landscape"}, \code{"stream"},
 \code{"vectorfield"}, or \code{"probability_flow"}.}
 
-\item{...}{Additional arguments passed to the component's \code{\link[=autoplot]{autoplot()}}
+\item{...}{Additional arguments passed to the component's \code{\link[ggplot2:autoplot]{autoplot()}}
 method.}
 }
 \value{

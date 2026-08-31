@@ -2,22 +2,35 @@
 % Please edit documentation in R/group_dynamics.R
 \name{autoplot.group_dynamics}
 \alias{autoplot.group_dynamics}
-\title{Autoplot group dynamics}
+\title{Autoplot fitted group dynamics}
 \usage{
-\method{autoplot}{group_dynamics}(object, type = c("elbow", "centers"), ...)
+\method{autoplot}{group_dynamics}(
+  object,
+  type = c("landscape", "stream"),
+  ncol = NULL,
+  contour = TRUE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{group_dynamics} object.}
 
-\item{type}{Either \code{"elbow"} for the cluster-count evaluation or
-\code{"centers"} for selected cluster-mean landscapes.}
+\item{type}{The fitted component to draw, \code{"landscape"} or \code{"stream"}.}
 
-\item{...}{Additional arguments passed to the elbow autoplot. Currently
-unused for \code{type = "centers"}.}
+\item{ncol}{Optional number of facet columns.}
+
+\item{contour}{Logical indicating whether stream-function contour lines are
+overlaid.}
+
+\item{...}{Additional arguments, currently unused.}
 }
 \value{
-A ggplot object.
+A faceted ggplot object.
 }
 \description{
-Autoplot group dynamics
+Draws every fitted landscape or stream function in a separate individual
+facet. Landscapes are shifted to have minimum potential zero within each
+individual. Stream functions are mean-centered within each individual,
+reflecting that both quantities are identifiable only up to an additive
+constant.
 }

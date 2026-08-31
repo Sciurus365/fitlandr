@@ -396,6 +396,8 @@ test_that("blocked CV works with day and beep separators in interior folds", {
 
   expect_s3_class(cv, "cv_vectorfield")
   expect_true(is.finite(cv$cv_results$cv_mse))
+  expect_equal(cv$final_model$n, 3)
+  expect_equal(nrow(cv$final_model$vec_grid), 9L)
 })
 
 test_that("blocked CV reports complete candidate failure explicitly", {

@@ -90,6 +90,15 @@ validate_stage_args <- function(args, reserved, argument) {
   args
 }
 
+fit_group_member_quietly <- function(expr) {
+  old_options <- options(
+    fitlandr.verbose = FALSE,
+    cli.progress_show_after = Inf
+  )
+  on.exit(options(old_options), add = TRUE)
+  suppressMessages(force(expr))
+}
+
 #' Fit vector field, landscape, and stream dynamics for one dataset
 #'
 #' Runs the recommended two-dimensional fitlandr workflow for one intensive
@@ -231,14 +240,15 @@ fit_individual_dynamics <- function(
 #'
 #' Runs the complete two-dimensional fitlandr workflow for multiple datasets.
 #' Each group receives a cross-validated vector field, potential landscape,
-#' probability flow, and stream function. Landscapes are estimated on one
-#' pooled range and common grid before candidate K-means solutions are
-#' evaluated in steady-state-density space.
+#' probability flow, and stream function. Landscapes and streams are estimated
+#' on one pooled range and common grid so the returned object can subsequently
+#' be passed to the separate clustering APIs. Routine output from each
+#' individual fit is replaced by one group-level progress bar; warnings and
+#' errors are still signaled normally.
 #'
 #' Supply either a list of data frames/matrices or one data frame together with
-#' an `id` column. Use [autoplot()] on the returned object to inspect the elbow
-#' plot, then use [add_group_clusters()] to attach a selected solution without
-#' repeating the fitted dynamics.
+#' an `id` column. Use [evaluate_landscape_clusters()] or
+#' [evaluate_stream_clusters()] afterward to evaluate candidate cluster counts.
 #'
 #' @param data A non-empty list of group datasets, or one data frame or matrix.
 #' @param x,y Column names containing the two state variables.
@@ -250,9 +260,6 @@ fit_individual_dynamics <- function(
 #' @param n_grid Common number of grid points per axis for vector-field
 #'   interpolation and landscape estimation.
 #' @param flow_n Number of probability-flow vectors per axis.
-#' @param k_values Candidate cluster counts. `NULL` respects the limits imposed
-#'   by the number of distinct landscapes and the total sample size.
-#' @param seed Optional K-means seed.
 #' @param cv_args Named list of additional arguments passed to
 #'   [cv_fit_2d_vf()], such as `method`, `dayvar`, `beepvar`, or `na_action`.
 #'   The cross-validation default is `na_action = "omit_vectors"`.
@@ -260,15 +267,9 @@ fit_individual_dynamics <- function(
 #'   [make_2d_ld()].
 #' @param flow_args Named list of additional arguments passed to [make_2d_pf()].
 #'   `divided_by_rho` is fixed to `FALSE` because a stream function is fitted.
-#' @param cluster_method Clustering method passed to
-#'   [evaluate_landscape_clusters()]. Currently only `"kmeans"` is available.
-#' @param nstart Number of K-means random initializations.
-#' @param iter.max Maximum number of K-means iterations.
-#'
-#' @return A `group_dynamics` object containing member-level fits, convenient
-#'   lists of each fitted object, the cluster-count evaluation, and workflow
-#'   settings. Its `clustering` field is `NULL` until [add_group_clusters()] is
-#'   called.
+#' @return A `group_dynamics` object containing named lists of vector fields,
+#'   landscapes, and streams, together with the common variables, limits, and
+#'   fitting settings. No clustering is run or stored in this object.
 #'
 #' @export
 fit_group_dynamics <- function(data,
@@ -280,36 +281,38 @@ fit_group_dynamics <- function(data,
                                cv_folds = 10L,
                                n_grid = 50L,
                                flow_n = 20L,
-                               k_values = NULL,
-                               seed = NULL,
                                cv_args = list(),
                                landscape_args = list(),
-                               flow_args = list(),
-                               cluster_method = "kmeans",
-                               nstart = 25L,
-                               iter.max = 100L) {
+                               flow_args = list()) {
   groups <- normalize_group_data(data, id)
   validate_group_variables(groups, x, y)
   common_lims <- determine_group_lims(groups, x, y, lims)
 
   progress_id <- cli::cli_progress_bar(
-    "Fitting group dynamics",
-    total = length(groups)
+    name = "Fitting group dynamics",
+    total = length(groups),
+    format = paste0(
+      "{cli::pb_name} {cli::pb_bar} ",
+      "{cli::pb_current}/{cli::pb_total} ({cli::pb_percent}) | ",
+      "ETA: {cli::pb_eta}"
+    )
   )
   on.exit(cli::cli_progress_done(progress_id), add = TRUE)
   members <- lapply(seq_along(groups), function(i) {
-    member <- fit_individual_dynamics(
-      data = groups[[i]],
-      x = x,
-      y = y,
-      lims = common_lims,
-      h_values = h_values,
-      cv_folds = cv_folds,
-      n_grid = n_grid,
-      flow_n = flow_n,
-      cv_args = cv_args,
-      landscape_args = landscape_args,
-      flow_args = flow_args
+    member <- fit_group_member_quietly(
+      fit_individual_dynamics(
+        data = groups[[i]],
+        x = x,
+        y = y,
+        lims = common_lims,
+        h_values = h_values,
+        cv_folds = cv_folds,
+        n_grid = n_grid,
+        flow_n = flow_n,
+        cv_args = cv_args,
+        landscape_args = landscape_args,
+        flow_args = flow_args
+      )
     )
     cli::cli_progress_update(id = progress_id)
     member
@@ -318,26 +321,13 @@ fit_group_dynamics <- function(data,
 
   vectorfields <- lapply(members, `[[`, "vectorfield")
   landscapes <- lapply(members, `[[`, "landscape")
-  probability_flows <- lapply(members, `[[`, "probability_flow")
   streams <- lapply(members, `[[`, "stream")
-  evaluation <- evaluate_landscape_clusters(
-    landscapes,
-    k_values = k_values,
-    method = cluster_method,
-    nstart = nstart,
-    iter.max = iter.max,
-    seed = seed
-  )
 
   structure(
     list(
-      members = members,
       vectorfields = vectorfields,
       landscapes = landscapes,
-      probability_flows = probability_flows,
       streams = streams,
-      cluster_evaluation = evaluation,
-      clustering = NULL,
       x = x,
       y = y,
       lims = common_lims,
@@ -345,11 +335,7 @@ fit_group_dynamics <- function(data,
         h_values = h_values,
         cv_folds = cv_folds,
         n_grid = as.integer(n_grid),
-        flow_n = as.integer(flow_n),
-        cluster_method = cluster_method,
-        nstart = as.integer(nstart),
-        iter.max = as.integer(iter.max),
-        seed = seed
+        flow_n = as.integer(flow_n)
       )
     ),
     class = "group_dynamics"
@@ -374,76 +360,128 @@ autoplot.individual_dynamics <- function(
   autoplot(object[[type]], ...)
 }
 
-#' Add a selected clustering solution to group dynamics
+#' Autoplot fitted group dynamics
 #'
-#' @param object A `group_dynamics` object returned by
-#'   [fit_group_dynamics()].
-#' @param k Selected number of clusters.
-#' @param method,nstart,iter.max,seed Clustering settings. By default, these
-#'   reuse the settings from the cluster-count evaluation.
-#'
-#' @return The `group_dynamics` object with a `landscape_clusters` result in
-#'   its `clustering` field.
-#' @export
-add_group_clusters <- function(object,
-                               k,
-                               method = object$settings$cluster_method,
-                               nstart = object$settings$nstart,
-                               iter.max = object$settings$iter.max,
-                               seed = object$settings$seed) {
-  if (!inherits(object, "group_dynamics")) {
-    cli::cli_abort("{.arg object} must be a {.cls group_dynamics} object.")
-  }
-  object$clustering <- cluster_landscapes(
-    object$landscapes,
-    k = k,
-    method = method,
-    nstart = nstart,
-    iter.max = iter.max,
-    seed = seed
-  )
-  object
-}
-
-#' Autoplot group dynamics
+#' Draws every fitted landscape or stream function in a separate individual
+#' facet. Landscapes are shifted to have minimum potential zero within each
+#' individual. Stream functions are mean-centered within each individual,
+#' reflecting that both quantities are identifiable only up to an additive
+#' constant.
 #'
 #' @param object A `group_dynamics` object.
-#' @param type Either `"elbow"` for the cluster-count evaluation or
-#'   `"centers"` for selected cluster-mean landscapes.
-#' @param ... Additional arguments passed to the elbow autoplot. Currently
-#'   unused for `type = "centers"`.
+#' @param type The fitted component to draw, `"landscape"` or `"stream"`.
+#' @param ncol Optional number of facet columns.
+#' @param contour Logical indicating whether stream-function contour lines are
+#'   overlaid.
+#' @param ... Additional arguments, currently unused.
 #'
-#' @return A ggplot object.
+#' @return A faceted ggplot object.
 #' @export
-autoplot.group_dynamics <- function(object, type = c("elbow", "centers"), ...) {
+autoplot.group_dynamics <- function(
+    object,
+    type = c("landscape", "stream"),
+    ncol = NULL,
+    contour = TRUE,
+    ...) {
   type <- match.arg(type)
-  if (type == "elbow") {
-    return(autoplot(object$cluster_evaluation, ...))
+  components <- if (type == "landscape") object$landscapes else object$streams
+  if (!is.list(components) || !length(components)) {
+    cli::cli_abort("The {.cls group_dynamics} object does not contain any {type} results.")
   }
-  if (is.null(object$clustering)) {
-    cli::cli_abort(c(
-      "No selected clustering solution is attached to {.arg object}.",
-      "i" = "Call {.fn add_group_clusters} first."
-    ))
+  individual_names <- names(components)
+  if (is.null(individual_names)) {
+    individual_names <- paste("Individual", seq_along(components))
+  }
+  missing_names <- is.na(individual_names) | !nzchar(individual_names)
+  individual_names[missing_names] <- paste("Individual", which(missing_names))
+  individual_names <- make.unique(individual_names)
+
+  if (type == "landscape") {
+    valid <- vapply(
+      components,
+      function(x) inherits(x, "2d_ld") && !is.null(x$dist),
+      logical(1)
+    )
+    if (!all(valid)) {
+      cli::cli_abort("Every group landscape must be a two-dimensional landscape with plotting data.")
+    }
+    plot_data <- do.call(rbind, lapply(seq_along(components), function(i) {
+      data <- components[[i]]$dist
+      potential <- if ("U_plot" %in% names(data)) data$U_plot else data$U
+      finite_potential <- potential[is.finite(potential)]
+      if (!length(finite_potential)) {
+        cli::cli_abort("Landscape {individual_names[[i]]} has no finite potential values to plot.")
+      }
+      data$U_relative <- potential - min(finite_potential)
+      data$individual <- factor(
+        individual_names[[i]],
+        levels = individual_names
+      )
+      data
+    }))
+    return(
+      ggplot2::ggplot(
+        plot_data,
+        ggplot2::aes(x = .data$x, y = .data$y, fill = .data$U_relative)
+      ) +
+        ggplot2::geom_raster() +
+        ggplot2::facet_wrap(ggplot2::vars(individual), ncol = ncol) +
+        ggplot2::scale_fill_viridis_c(name = "Relative U") +
+        ggplot2::coord_equal(expand = FALSE) +
+        ggplot2::labs(
+          x = object$x,
+          y = object$y,
+          title = "Individual potential landscapes"
+        ) +
+        ggplot2::theme_bw()
+    )
   }
 
-  center_data <- do.call(rbind, lapply(
-    seq_along(object$clustering$centers),
-    function(i) {
-      data <- object$clustering$centers[[i]]$dist
-      data$U_relative <- data$U - min(data$U, na.rm = TRUE)
-      data$cluster <- factor(i, levels = seq_along(object$clustering$centers))
-      data
-    }
-  ))
-  ggplot2::ggplot(
-    center_data,
-    ggplot2::aes(x = .data$x, y = .data$y, fill = .data$U_relative)
-  ) +
-    ggplot2::geom_raster() +
-    ggplot2::facet_wrap(ggplot2::vars(cluster)) +
-    ggplot2::scale_fill_viridis_c(name = "Relative U") +
+  valid <- vapply(
+    components,
+    function(x) inherits(x, "2d_stream") && !is.null(x$grid),
+    logical(1)
+  )
+  if (!all(valid)) {
+    cli::cli_abort("Every group stream must be a two-dimensional stream function with plotting data.")
+  }
+  plot_data <- do.call(rbind, lapply(seq_along(components), function(i) {
+    data <- components[[i]]$grid
+    data$A <- data$A - mean(data$A)
+    data$individual <- factor(individual_names[[i]], levels = individual_names)
+    data
+  }))
+  plot_data <- add_stream_grid_cell_bounds(plot_data)
+  plot <- ggplot2::ggplot(plot_data) +
+    ggplot2::geom_rect(ggplot2::aes(
+      fill = .data$A,
+      xmin = .data$cell_xmin,
+      xmax = .data$cell_xmax,
+      ymin = .data$cell_ymin,
+      ymax = .data$cell_ymax
+    )) +
+    ggplot2::facet_wrap(ggplot2::vars(individual), ncol = ncol) +
+    ggplot2::scale_fill_viridis_c(name = "A") +
     ggplot2::coord_equal(expand = FALSE) +
-    ggplot2::labs(x = object$x, y = object$y, title = "Cluster-mean landscapes") +
+    ggplot2::labs(
+      x = object$x,
+      y = object$y,
+      title = "Individual stream functions"
+    ) +
     ggplot2::theme_bw()
+  if (isTRUE(contour)) {
+    plot <- plot + ggplot2::geom_contour(
+      ggplot2::aes(
+        x = .data$x,
+        y = .data$y,
+        z = .data$A,
+        group = .data$individual
+      ),
+      color = "white",
+      alpha = 0.6,
+      show.legend = FALSE,
+      inherit.aes = FALSE
+    )
+  }
+  plot
 }

@@ -43,11 +43,11 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
     cli::cli_abort("Data must contain the beep variable column named '{beepvar}'.")
   }
 
-  n <- nrow(data)
+  n_obs <- nrow(data)
   data <- as.data.frame(data)
-  fold_sizes <- rep.int(floor(n / k), k)
-  if (n %% k > 0) {
-    fold_sizes[seq_len(n %% k)] <- fold_sizes[seq_len(n %% k)] + 1L
+  fold_sizes <- rep.int(floor(n_obs / k), k)
+  if (n_obs %% k > 0) {
+    fold_sizes[seq_len(n_obs %% k)] <- fold_sizes[seq_len(n_obs %% k)] + 1L
   }
   folds <- rep.int(seq_len(k), times = fold_sizes)
   verbose <- isTRUE(getOption("fitlandr.verbose", TRUE))

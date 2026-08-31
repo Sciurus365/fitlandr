@@ -14,8 +14,9 @@ cluster_landscapes(
 )
 }
 \arguments{
-\item{landscapes}{A non-empty list of 1D or 2D landscape objects. All
-landscapes must have the same dimension and grid.}
+\item{landscapes}{A non-empty list of 1D or 2D landscape objects, or a
+\code{group_dynamics} object. All landscapes must have the same dimension and
+grid.}
 
 \item{k}{Number of clusters.}
 

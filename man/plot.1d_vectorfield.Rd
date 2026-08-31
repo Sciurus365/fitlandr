@@ -9,11 +9,11 @@
 \arguments{
 \item{x}{A \code{vectorfield} object estimated by \code{\link[=fit_2d_vf]{fit_2d_vf()}}.}
 
-\item{...}{Arguments passed to \code{\link[=autoplot]{autoplot()}}.}
+\item{...}{Arguments passed to \code{\link[ggplot2:autoplot]{autoplot()}}.}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 }
 \details{
-\code{plot.vectorfield()} is deprecated in favor of \code{\link[=autoplot]{autoplot()}}.
+\code{plot.vectorfield()} is deprecated in favor of \code{\link[ggplot2:autoplot]{autoplot()}}.
 }

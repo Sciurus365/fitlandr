@@ -32,6 +32,6 @@
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 }
 \details{
-Use \code{\link[=plotly_ld]{plotly_ld()}} for interactive three-dimensional landscapes and
-\code{\link[=autoplot]{autoplot()}} for ggplot output.
+Use \code{\link[simlandr:plotly_ld]{plotly_ld()}} for interactive three-dimensional landscapes and
+\code{\link[ggplot2:autoplot]{autoplot()}} for ggplot output.
 }

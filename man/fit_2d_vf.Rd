@@ -60,5 +60,5 @@ v2 <- fit_2d_vf(single_output_grad, x = "x", y = "y", method = "MVKE")
 autoplot(v2)
 }
 \seealso{
-\code{\link[=autoplot]{autoplot()}}
+\code{\link[ggplot2:autoplot]{autoplot()}}
 }

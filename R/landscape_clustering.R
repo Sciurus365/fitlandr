@@ -108,6 +108,9 @@ extract_landscape_clustering_values <- function(landscape) {
 }
 
 prepare_landscape_clustering_input <- function(landscapes) {
+  if (inherits(landscapes, "group_dynamics")) {
+    landscapes <- landscapes$landscapes
+  }
   prepared <- prepare_object_clustering_input(
     objects = landscapes,
     extractor = extract_landscape_clustering_values,
@@ -193,8 +196,9 @@ build_landscape_cluster_center <- function(template, density, cluster_id) {
 #' their negative-log potential values. Use [autoplot()] on the result to draw
 #' an elbow plot of within-cluster variance against `k`.
 #'
-#' @param landscapes A non-empty list of 1D or 2D landscape objects. All
-#'   landscapes must have the same dimension and grid.
+#' @param landscapes A non-empty list of 1D or 2D landscape objects, or a
+#'   `group_dynamics` object. All landscapes must have the same dimension and
+#'   grid.
 #' @param k_values Integer candidate numbers of clusters. `NULL` defaults to 1
 #'   through the smaller of 10, the number of distinct landscapes, and one less
 #'   than the number of landscapes. The one-landscape case evaluates only 1.
@@ -215,6 +219,7 @@ evaluate_landscape_clusters <- function(landscapes,
                                         seed = NULL) {
   method <- match.arg(method)
   prepared <- prepare_landscape_clustering_input(landscapes)
+  landscapes <- prepared$landscapes
   n_objects <- nrow(prepared$features)
   n_distinct <- nrow(unique(prepared$features))
   max_k <- if (n_objects == 1L) 1L else min(n_distinct, n_objects - 1L)
@@ -280,6 +285,7 @@ cluster_landscapes <- function(landscapes,
                                seed = NULL) {
   method <- match.arg(method)
   prepared <- prepare_landscape_clustering_input(landscapes)
+  landscapes <- prepared$landscapes
   n_objects <- nrow(prepared$features)
   n_distinct <- nrow(unique(prepared$features))
   max_k <- if (n_objects == 1L) 1L else min(n_distinct, n_objects - 1L)
@@ -356,4 +362,47 @@ autoplot.landscape_cluster_evaluation <- function(object, ...) {
       title = "Landscape clustering elbow plot"
     ) +
     ggplot2::theme_bw()
+}
+
+#' Autoplot landscape-clustering centers
+#'
+#' @param object A `landscape_clusters` object returned by
+#'   [cluster_landscapes()].
+#' @param ... Additional arguments, currently unused.
+#'
+#' @return A faceted ggplot of cluster-mean landscapes.
+#' @export
+autoplot.landscape_clusters <- function(object, ...) {
+  center_data <- do.call(rbind, lapply(
+    seq_along(object$centers),
+    function(i) {
+      data <- object$centers[[i]]$dist
+      data$U_relative <- data$U - min(data$U, na.rm = TRUE)
+      data$cluster <- factor(i, levels = seq_along(object$centers))
+      data
+    }
+  ))
+  if (inherits(object$centers[[1L]], "1d_ld")) {
+    return(
+      ggplot2::ggplot(
+        center_data,
+        ggplot2::aes(x = .data$x, y = .data$U_relative)
+      ) +
+        ggplot2::geom_line() +
+        ggplot2::facet_wrap(ggplot2::vars(cluster)) +
+        ggplot2::labs(x = "x", y = "Relative U", title = "Cluster-mean landscapes") +
+        ggplot2::theme_bw()
+    )
+  }
+
+  ggplot2::ggplot(
+      center_data,
+      ggplot2::aes(x = .data$x, y = .data$y, fill = .data$U_relative)
+    ) +
+      ggplot2::geom_raster() +
+      ggplot2::facet_wrap(ggplot2::vars(cluster)) +
+      ggplot2::scale_fill_viridis_c(name = "Relative U") +
+      ggplot2::coord_equal(expand = FALSE) +
+      ggplot2::labs(x = "x", y = "y", title = "Cluster-mean landscapes") +
+      ggplot2::theme_bw()
 }

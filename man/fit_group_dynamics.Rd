@@ -14,14 +14,9 @@ fit_group_dynamics(
   cv_folds = 10L,
   n_grid = 50L,
   flow_n = 20L,
-  k_values = NULL,
-  seed = NULL,
   cv_args = list(),
   landscape_args = list(),
-  flow_args = list(),
-  cluster_method = "kmeans",
-  nstart = 25L,
-  iter.max = 100L
+  flow_args = list()
 )
 }
 \arguments{
@@ -43,11 +38,6 @@ interpolation and landscape estimation.}
 
 \item{flow_n}{Number of probability-flow vectors per axis.}
 
-\item{k_values}{Candidate cluster counts. \code{NULL} respects the limits imposed
-by the number of distinct landscapes and the total sample size.}
-
-\item{seed}{Optional K-means seed.}
-
 \item{cv_args}{Named list of additional arguments passed to
 \code{\link[=cv_fit_2d_vf]{cv_fit_2d_vf()}}, such as \code{method}, \code{dayvar}, \code{beepvar}, or \code{na_action}.
 The cross-validation default is \code{na_action = "omit_vectors"}.}
@@ -57,30 +47,23 @@ The cross-validation default is \code{na_action = "omit_vectors"}.}
 
 \item{flow_args}{Named list of additional arguments passed to \code{\link[=make_2d_pf]{make_2d_pf()}}.
 \code{divided_by_rho} is fixed to \code{FALSE} because a stream function is fitted.}
-
-\item{cluster_method}{Clustering method passed to
-\code{\link[=evaluate_landscape_clusters]{evaluate_landscape_clusters()}}. Currently only \code{"kmeans"} is available.}
-
-\item{nstart}{Number of K-means random initializations.}
-
-\item{iter.max}{Maximum number of K-means iterations.}
 }
 \value{
-A \code{group_dynamics} object containing member-level fits, convenient
-lists of each fitted object, the cluster-count evaluation, and workflow
-settings. Its \code{clustering} field is \code{NULL} until \code{\link[=add_group_clusters]{add_group_clusters()}} is
-called.
+A \code{group_dynamics} object containing named lists of vector fields,
+landscapes, and streams, together with the common variables, limits, and
+fitting settings. No clustering is run or stored in this object.
 }
 \description{
 Runs the complete two-dimensional fitlandr workflow for multiple datasets.
 Each group receives a cross-validated vector field, potential landscape,
-probability flow, and stream function. Landscapes are estimated on one
-pooled range and common grid before candidate K-means solutions are
-evaluated in steady-state-density space.
+probability flow, and stream function. Landscapes and streams are estimated
+on one pooled range and common grid so the returned object can subsequently
+be passed to the separate clustering APIs. Routine output from each
+individual fit is replaced by one group-level progress bar; warnings and
+errors are still signaled normally.
 }
 \details{
 Supply either a list of data frames/matrices or one data frame together with
-an \code{id} column. Use \code{\link[=autoplot]{autoplot()}} on the returned object to inspect the elbow
-plot, then use \code{\link[=add_group_clusters]{add_group_clusters()}} to attach a selected solution without
-repeating the fitted dynamics.
+an \code{id} column. Use \code{\link[=evaluate_landscape_clusters]{evaluate_landscape_clusters()}} or
+\code{\link[=evaluate_stream_clusters]{evaluate_stream_clusters()}} afterward to evaluate candidate cluster counts.
 }

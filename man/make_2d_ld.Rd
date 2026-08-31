@@ -32,9 +32,9 @@ zero-normal-flux handling) or \code{"legacy_implicit"} (index-clamping behavior)
 An object of class \verb{2d_static_ld} containing:
 - \code{dist}: A data frame with columns x, y, d (steady-state distribution), U (potential).
 - \code{plot}: A plotly surface plot of the potential landscape U, retained
-for compatibility. Use \code{\link[=plotly_ld]{plotly_ld()}} to access it.
+for compatibility. Use \code{\link[simlandr:plotly_ld]{plotly_ld()}} to access it.
 - \code{plot_2}: A ggplot2 raster plot of the potential landscape U,
-retained for compatibility. Use \code{\link[=autoplot]{autoplot()}} to access it.
+retained for compatibility. Use \code{\link[ggplot2:autoplot]{autoplot()}} to access it.
 - \code{vf}: The input vector field object.
 - \code{ss}: The steady-state distribution matrix.
 }

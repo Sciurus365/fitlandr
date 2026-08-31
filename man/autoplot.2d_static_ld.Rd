@@ -22,7 +22,8 @@
 \method{autoplot}{`2d_pf`}(object, ...)
 }
 \arguments{
-\item{object}{A fitlandr object.}
+\item{object}{A one- or two-dimensional landscape, or a two-dimensional
+probability-flow object.}
 
 \item{...}{Additional arguments, currently unused.}
 }
@@ -30,6 +31,12 @@
 A ggplot object.
 }
 \description{
-These methods return the two-dimensional ggplot representation of a
-landscape or probability-flow object.
+These methods draw fitted potential landscapes and probability flows using
+ggplot2. One-dimensional landscapes are shown as potential curves,
+two-dimensional landscapes as potential surfaces viewed from above, and
+probability flows as arrow fields.
+}
+\seealso{
+\code{\link[ggplot2:autoplot]{autoplot()}} for the fitlandr autoplot overview and
+\code{\link[simlandr:plotly_ld]{plotly_ld()}} for interactive three-dimensional landscape plots.
 }

@@ -14,8 +14,9 @@ evaluate_landscape_clusters(
 )
 }
 \arguments{
-\item{landscapes}{A non-empty list of 1D or 2D landscape objects. All
-landscapes must have the same dimension and grid.}
+\item{landscapes}{A non-empty list of 1D or 2D landscape objects, or a
+\code{group_dynamics} object. All landscapes must have the same dimension and
+grid.}
 
 \item{k_values}{Integer candidate numbers of clusters. \code{NULL} defaults to 1
 through the smaller of 10, the number of distinct landscapes, and one less
@@ -37,6 +38,6 @@ metrics and fitted K-means models.
 \description{
 Runs K-means clustering over several candidate values of \code{k}. Landscapes
 are represented by their flattened steady-state distributions, rather than
-their negative-log potential values. Use \code{\link[=autoplot]{autoplot()}} on the result to draw
+their negative-log potential values. Use \code{\link[ggplot2:autoplot]{autoplot()}} on the result to draw
 an elbow plot of within-cluster variance against \code{k}.
 }
