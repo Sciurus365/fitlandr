@@ -44,6 +44,8 @@
 
 ## Other changes
 
+- Reduced mandatory dependencies: `SparseVFC` and `purrr` are now optional,
+  and `R.utils` is no longer required.
 - Fixed `fit_2d_ld(..., vector_position = "middle")` so it works correctly.
 - Improved consistency and clarity of user-facing messages and error reporting across core workflows.
 - Updated examples to use the current recommended landscape workflow (`make_2d_ld()`).

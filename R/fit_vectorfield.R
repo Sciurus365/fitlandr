@@ -107,6 +107,10 @@ fit_2d_vf <- function(data, x, y,
   VFCresult <- MVKEresult <- NULL
   method <- toupper(method[1])
   if (method == "VFC") {
+    rlang::check_installed(
+      "SparseVFC",
+      reason = "to use {.code method = \"VFC\"}."
+    )
     VFCresult <- SparseVFC::SparseVFC(original_vectors_normalized[, 1:2], original_vectors_normalized[, 3:4], ...)
   } else if (method == "MVKE") {
     MVKEresult <- MVKE(original_vectors_normalized[, 1:2], original_vectors_normalized[, 3:4], ...)

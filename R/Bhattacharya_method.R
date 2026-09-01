@@ -28,6 +28,10 @@ path_integral_B <- function(f, lims, n_path_int = 20, stepsize = 1e-2, tol = 1e-
     "furrr",
     reason = "for the Bhattacharya path-integration method. Install it with {.code install.packages(\"furrr\") }."
   )
+  rlang::check_installed(
+    "SparseVFC",
+    reason = "for the deprecated Bhattacharya path-integration workflow."
+  )
 
   ### Parallel simulation
   sim_df <- tidyr::expand_grid(
@@ -307,7 +311,19 @@ align_pot_B <- function(resultB,
       dplyr::filter(is.finite(z))
   }
 
-  return(R.utils::doCall(akima::interp, x = df_sparse$x, y = df_sparse$y, z = df_sparse$z, xo = xlin, yo = ylin, linear = linear, args = list(...)))
+  interp_args <- c(
+    list(
+      x = df_sparse$x,
+      y = df_sparse$y,
+      z = df_sparse$z,
+      xo = xlin,
+      yo = ylin,
+      linear = linear
+    ),
+    list(...)
+  )
+  accepted_args <- intersect(names(interp_args), names(formals(akima::interp)))
+  do.call(akima::interp, interp_args[accepted_args])
 }
 
 #' Options controlling the path-integral algorithm

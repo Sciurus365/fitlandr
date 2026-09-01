@@ -87,6 +87,10 @@ fit_2d_ld <- function(data, x, lims, n = 200L, vector_position = "start", na_act
     "fit_2d_ld()",
     I("fit_1d_vf() + make_1d_ld()")
   )
+  rlang::check_installed(
+    "purrr",
+    reason = "to use the deprecated {.fn fit_2d_ld}."
+  )
 
   if (!is.null(dayvar) && !dayvar %in% colnames(data)) {
     cli::cli_abort("{.arg dayvar} must name a column in {.arg data}.")
@@ -205,13 +209,21 @@ sim_vf <- function(vf, noise = 1, noise_warmup = noise, chains = 10, length = 1e
     "MASS",
     reason = "for deprecated simulation via {.fn sim_vf()}. Install it with {.code install.packages(\"MASS\") }."
   )
+  future_packages <- NULL
+  if (identical(vf$method, "VFC")) {
+    rlang::check_installed(
+      "SparseVFC",
+      reason = "to simulate a vector field fitted with {.code method = \"VFC\"}."
+    )
+    future_packages <- "SparseVFC"
+  }
 
   f <- function(x) {
     stats::predict(object = vf, pos = x, linear_interp = linear_interp, calculate_a = TRUE)
   }
 
   force(inits)
-  result <- future.apply::future_apply(inits, MARGIN = 1, FUN = sim_vf_single, f = f, length = length, noise = noise, noise_warmup = noise_warmup, lims = vf$lims, forbid_overflow = forbid_overflow, stepsize = stepsize, sparse = sparse, discard = discard, simplify = FALSE, future.seed = TRUE, future.packages = "SparseVFC")
+  result <- future.apply::future_apply(inits, MARGIN = 1, FUN = sim_vf_single, f = f, length = length, noise = noise, noise_warmup = noise_warmup, lims = vf$lims, forbid_overflow = forbid_overflow, stepsize = stepsize, sparse = sparse, discard = discard, simplify = FALSE, future.seed = TRUE, future.packages = future_packages)
   result <- do.call(rbind, result)
   colnames(result) <- colnames(vf$data)
   result

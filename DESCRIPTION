@@ -37,13 +37,10 @@ Imports:
     numDeriv,
     plotly,
     progressr,
-    purrr,
-    R.utils,
     Rfast,
     rlang,
     rootSolve,
     simlandr (>= 0.4.1),
-    SparseVFC,
     tibble,
     tidyr
 Suggests: 
@@ -56,6 +53,8 @@ Suggests:
     knitr,
     MASS,
     mclust,
+    purrr,
+    SparseVFC,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
