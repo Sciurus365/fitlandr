@@ -1,6 +1,5 @@
 # fitlandr 0.1.1.9000
 
-
 ## Important changes
 
 - The core algorithm has been substantially redesigned:
@@ -14,19 +13,27 @@
   - The dimension of the system is now defined solely by the input data (state variables).
   - This dimension is used consistently for both the vector field and the landscape.
   - The potential function \(U\) is no longer treated as an additional dimension.
-  
+
+## New functionality
+
+- Added one-dimensional vector-field, cross-validation, landscape, and
+  bootstrap-inference workflows corresponding to the new two-dimensional
+  APIs.
 - Added `make_2d_stream()` to estimate a stream function from a
   two-dimensional probability flow using sparse finite-difference least
   squares, together with an `autoplot()` method and residual diagnostics.
-
-## Other changes
-
 - Added `fit_individual_dynamics()` for the complete single-dataset workflow
   from a cross-validated vector field through its landscape, probability flow,
   and stream function. `fit_group_dynamics()` reuses this workflow over
-  multiple datasets and evaluates candidate cluster counts; use
-  `add_group_clusters()` to attach a selected K-means solution without
-  refitting the dynamics.
+  multiple datasets and provides faceted plots of individual landscapes and
+  stream functions. Group results can be passed separately to the landscape-
+  or stream-clustering APIs.
+- Added `evaluate_stream_clusters()` and `cluster_streams()` for K-means
+  clustering of mean-centered stream functions, with elbow and cluster-center
+  `autoplot()` methods. `evaluate_landscape_stream_clusters()` and
+  `cluster_landscape_streams()` jointly cluster density-space landscapes and
+  mean-centered streams after scaling each block to unit mean pairwise squared
+  distance, with optional modality weights.
 - Added a prototype landscape-clustering API. Use
   `evaluate_landscape_clusters()` to compare candidate K-means solutions with
   an elbow plot and `cluster_landscapes()` to obtain assignments and
@@ -34,7 +41,9 @@
 - Standardized plotting APIs: use `autoplot()` for ggplot output and
   `plotly_ld()` for interactive 3D landscapes. Existing `plot()` methods remain
   available with soft-deprecation warnings.
-- Fixed a plotting bug in `plot.cv_vectorfield()`.
+
+## Other changes
+
 - Fixed `fit_2d_ld(..., vector_position = "middle")` so it works correctly.
 - Improved consistency and clarity of user-facing messages and error reporting across core workflows.
 - Updated examples to use the current recommended landscape workflow (`make_2d_ld()`).

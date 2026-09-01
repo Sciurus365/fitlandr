@@ -17,7 +17,10 @@
 #' prior value: the prior drift magnitude is proportional to
 #' `distance_to_mean / median_distance_to_mean_data`.
 #'
-#' @return A function(x), which then returns the \eqn{\mu} and \eqn{a} estimators at the position \eqn{x}.
+#' @return A function(x), which then returns the drift estimator \eqn{\mu} and
+#'   the infinitesimal covariance estimator
+#'   \eqn{a = \sigma \sigma^{\mathsf{T}}} at position \eqn{x}. The estimator
+#'   assumes unit time intervals.
 #' @references Bandi, F. M., & Moloche, G. (2018). On the functional estimation of multivariate diffusion processes. Econometric Theory, 34(4), 896-946. https://doi.org/10.1017/S0266466617000305
 #' @export
 MVKE <- function(d, v, h = 0.2, kernel = c("Gaussian", "exp"),

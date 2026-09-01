@@ -5,16 +5,38 @@
 #' @param ld A `2d_ld` or `2d_static_ld` object representing the landscape.
 #' @param n Number of flow vectors to generate along each dimension (default 20).
 #' @param divided_by_rho Logical indicating whether to divide flow vectors by steady-state density.
+#' @param cross_diffusion_mode Cross-diffusion handling mode. By default, this
+#'   is inherited from `ld`. If supplied, it must match the mode used to
+#'   estimate the landscape.
 #' @return An object of class `2d_pf` containing:
 #'         - `vec_grid`: Data frame with columns x, y, vx, vy.
 #'         - `vf`: The input vector field object.
 #'         - `ld`: The input landscape object.
 #' @export
-make_2d_pf <- function(vf, ld, n = 20, divided_by_rho = FALSE) {
+make_2d_pf <- function(vf, ld, n = 20, divided_by_rho = FALSE,
+                       cross_diffusion_mode = NULL) {
   if (inherits(vf, "cv_vectorfield")) {
     vf <- vf$final_model
   } else if (!inherits(vf, "vectorfield")) {
     cli::cli_abort("Input {.arg vf} must be a {.cls vectorfield} or {.cls cv_vectorfield} object.")
+  }
+  if (!inherits(ld, "2d_static_ld")) {
+    cli::cli_abort("Input {.arg ld} must be a {.cls 2d_static_ld} object.")
+  }
+  if (is.null(ld$cross_diffusion_mode) && is.null(cross_diffusion_mode)) {
+    cli::cli_abort(c(
+      "The landscape does not record its cross-diffusion mode.",
+      "i" = "Recreate {.arg ld} with the current version of {.fn make_2d_ld}, or supply {.arg cross_diffusion_mode} explicitly."
+    ))
+  }
+  if (is.null(cross_diffusion_mode)) {
+    cross_diffusion_mode <- ld$cross_diffusion_mode
+  } else {
+    cross_diffusion_mode <- match.arg(cross_diffusion_mode, c("drop", "full"))
+    if (!is.null(ld$cross_diffusion_mode) &&
+        !identical(cross_diffusion_mode, ld$cross_diffusion_mode)) {
+      cli::cli_abort("{.arg cross_diffusion_mode} must match the mode used to estimate {.arg ld}.")
+    }
   }
 
   rho <- ld$ss
@@ -33,7 +55,8 @@ make_2d_pf <- function(vf, ld, n = 20, divided_by_rho = FALSE) {
     x_range = vf$lims[1:2],
     y_range = vf$lims[3:4],
     n_flow = n,
-    devided_by_rho = divided_by_rho
+    devided_by_rho = divided_by_rho,
+    cross_diffusion_mode = cross_diffusion_mode
   )
   return(structure(list(
     vec_grid = pf_data,
@@ -41,7 +64,8 @@ make_2d_pf <- function(vf, ld, n = 20, divided_by_rho = FALSE) {
     y = vf$y,
     vf = vf,
     ld = ld,
-    divided_by_rho = divided_by_rho
+    divided_by_rho = divided_by_rho,
+    cross_diffusion_mode = cross_diffusion_mode
   ), class = c("2d_pf", "probabilityflow", "vectorfield")))
 }
 
@@ -199,10 +223,14 @@ make_2d_stream <- function(pf) {
 #' @param n_flow Number of points along one dimension to sample (default 20).
 #' @param devided_by_rho Logical indicating whether to divide flow vectors by steady-state density.
 #' This may be useful when performing the force decomposition.
+#' @param cross_diffusion_mode Whether to omit (`"drop"`) or include
+#'   (`"full"`) the off-diagonal covariance contribution.
 #' @return Data frame with columns: x, y, Jx, Jy.
 calculate_probability_flow <- function(rho, drift_func, diffusion_func,
                                        x_range = c(0, 1), y_range = c(0, 1),
-                                       n_flow = 20, devided_by_rho = FALSE) {
+                                       n_flow = 20, devided_by_rho = FALSE,
+                                       cross_diffusion_mode = c("drop", "full")) {
+  cross_diffusion_mode <- match.arg(cross_diffusion_mode)
   # 1. Recover Grid Parameters from Input Rho
   n_grid <- nrow(rho) # Assuming square grid based on previous code
   Lx <- x_range[2] - x_range[1]
@@ -238,7 +266,12 @@ calculate_probability_flow <- function(rho, drift_func, diffusion_func,
     j_c <- if (j < 1) 1 else if (j > n_grid) n_grid else j
 
     val_rho <- rho[i_c, j_c]
-    val_diff <- diffusion_func(x_coords[i_c], y_coords[j_c])
+    # For a = sigma %*% t(sigma), the Fokker-Planck diffusivity is D = a / 2.
+    val_diff <- diffusion_func(x_coords[i_c], y_coords[j_c]) / 2
+    if (cross_diffusion_mode == "drop") {
+      val_diff[1, 2] <- 0
+      val_diff[2, 1] <- 0
+    }
 
     # Return list of D_ab * rho
     list(

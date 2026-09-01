@@ -37,6 +37,9 @@ for compatibility. Use \code{\link[simlandr:plotly_ld]{plotly_ld()}} to access i
 retained for compatibility. Use \code{\link[ggplot2:autoplot]{autoplot()}} to access it.
 - \code{vf}: The input vector field object.
 - \code{ss}: The steady-state distribution matrix.
+- \code{linear_interp}, \code{drift_scheme}, \code{cross_diffusion_mode}, and
+\code{boundary_mode}: Numerical settings retained for consistent
+downstream probability-flow calculations.
 }
 \description{
 Creates a 2D Potential Landscape object from a vector field.

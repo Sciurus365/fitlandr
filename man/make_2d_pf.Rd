@@ -5,7 +5,7 @@
 \title{Generates probability-flow vectors
 for a given vector field and landscape.}
 \usage{
-make_2d_pf(vf, ld, n = 20, divided_by_rho = FALSE)
+make_2d_pf(vf, ld, n = 20, divided_by_rho = FALSE, cross_diffusion_mode = NULL)
 }
 \arguments{
 \item{vf}{A \code{vectorfield} or \code{cv_vectorfield} object representing the vector field.}
@@ -15,6 +15,10 @@ make_2d_pf(vf, ld, n = 20, divided_by_rho = FALSE)
 \item{n}{Number of flow vectors to generate along each dimension (default 20).}
 
 \item{divided_by_rho}{Logical indicating whether to divide flow vectors by steady-state density.}
+
+\item{cross_diffusion_mode}{Cross-diffusion handling mode. By default, this
+is inherited from \code{ld}. If supplied, it must match the mode used to
+estimate the landscape.}
 }
 \value{
 An object of class \verb{2d_pf} containing:

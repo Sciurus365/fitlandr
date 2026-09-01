@@ -65,9 +65,10 @@ ss_fp_2d <- function(vf,
       diff <- pred$a
       Ax[i, j] <- drt[1]
       Ay[i, j] <- drt[2]
-      Dxx[i, j] <- diff[1, 1]
-      Dyy[i, j] <- diff[2, 2]
-      Dxy[i, j] <- diff[1, 2]
+      # For a = sigma %*% t(sigma), the Fokker-Planck diffusivity is D = a / 2.
+      Dxx[i, j] <- diff[1, 1] / 2
+      Dyy[i, j] <- diff[2, 2] / 2
+      Dxy[i, j] <- diff[1, 2] / 2
     }
   }
 
@@ -266,6 +267,9 @@ ss_fp_2d <- function(vf,
 #'          retained for compatibility. Use [autoplot()] to access it.
 #'        - `vf`: The input vector field object.
 #'        - `ss`: The steady-state distribution matrix.
+#'        - `linear_interp`, `drift_scheme`, `cross_diffusion_mode`, and
+#'          `boundary_mode`: Numerical settings retained for consistent
+#'          downstream probability-flow calculations.
 #'
 #' @export
 make_2d_ld <- function(vf,
@@ -419,7 +423,11 @@ make_2d_ld <- function(vf,
     plot = plot,
     plot_2 = plot_2,
     vf = vf,
-    ss = ss
+    ss = ss,
+    linear_interp = linear_interp,
+    drift_scheme = drift_scheme,
+    cross_diffusion_mode = cross_diffusion_mode,
+    boundary_mode = boundary_mode
   ), class = c("2d_static_ld", "2d_ld", "landscape")))
 }
 

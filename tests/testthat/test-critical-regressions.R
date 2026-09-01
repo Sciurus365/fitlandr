@@ -56,6 +56,53 @@ test_that("autoplot.2d_pf plots probability-flow vectors", {
   expect_warning(expect_s3_class(plot(pf), "ggplot"), "deprecated")
 })
 
+test_that("2D FVM uses half the infinitesimal covariance as diffusivity", {
+  vf <- structure(list(lims = c(0, 1, 0, 1)), class = "vectorfield")
+  local_mocked_bindings(
+    predict.vectorfield = function(object, pos, ...) {
+      list(v = c(0, 0), a = 2 * diag(2))
+    },
+    .package = "fitlandr"
+  )
+
+  rho <- ss_fp_2d(vf, n_grid = 2)
+  generator <- as.matrix(attr(rho, "M"))
+
+  expect_equal(generator[2, 1], 4, tolerance = 1e-12)
+  expect_equal(generator[1, 1], -8, tolerance = 1e-12)
+})
+
+test_that("probability flow uses a over two and respects cross diffusion mode", {
+  coords <- c(1 / 6, 1 / 2, 5 / 6)
+  zero_drift <- function(x, y) c(0, 0)
+  diagonal_diffusion <- function(x, y) 2 * diag(2)
+  rho_x <- matrix(rep(coords, 3), nrow = 3)
+
+  diagonal_flow <- calculate_probability_flow(
+    rho_x,
+    drift_func = zero_drift,
+    diffusion_func = diagonal_diffusion,
+    n_flow = 3,
+    cross_diffusion_mode = "drop"
+  )
+  center <- diagonal_flow$x == 1 / 2 & diagonal_flow$y == 1 / 2
+  expect_equal(diagonal_flow$vx[center], -1, tolerance = 1e-12)
+  expect_equal(diagonal_flow$vy[center], 0, tolerance = 1e-12)
+
+  cross_diffusion <- function(x, y) matrix(c(2, 2, 2, 2), 2, 2)
+  rho_y <- matrix(rep(coords, each = 3), nrow = 3)
+  dropped <- calculate_probability_flow(
+    rho_y, zero_drift, cross_diffusion,
+    n_flow = 3, cross_diffusion_mode = "drop"
+  )
+  included <- calculate_probability_flow(
+    rho_y, zero_drift, cross_diffusion,
+    n_flow = 3, cross_diffusion_mode = "full"
+  )
+  expect_equal(dropped$vx[center], 0, tolerance = 1e-12)
+  expect_equal(included$vx[center], -1, tolerance = 1e-12)
+})
+
 test_that("make_2d_stream recovers a linear stream function", {
   grid <- expand.grid(
     x = c(-1, -0.7, -0.1, 0.25, 1),

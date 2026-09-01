@@ -11,7 +11,8 @@ calculate_probability_flow(
   x_range = c(0, 1),
   y_range = c(0, 1),
   n_flow = 20,
-  devided_by_rho = FALSE
+  devided_by_rho = FALSE,
+  cross_diffusion_mode = c("drop", "full")
 )
 }
 \arguments{
@@ -29,6 +30,9 @@ calculate_probability_flow(
 
 \item{devided_by_rho}{Logical indicating whether to divide flow vectors by steady-state density.
 This may be useful when performing the force decomposition.}
+
+\item{cross_diffusion_mode}{Whether to omit (\code{"drop"}) or include
+(\code{"full"}) the off-diagonal covariance contribution.}
 }
 \value{
 Data frame with columns: x, y, Jx, Jy.

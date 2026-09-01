@@ -39,7 +39,10 @@ prior value: the prior drift magnitude is proportional to
 \code{distance_to_mean / median_distance_to_mean_data}.}
 }
 \value{
-A function(x), which then returns the \eqn{\mu} and \eqn{a} estimators at the position \eqn{x}.
+A function(x), which then returns the drift estimator \eqn{\mu} and
+the infinitesimal covariance estimator
+\eqn{a = \sigma \sigma^{\mathsf{T}}} at position \eqn{x}. The estimator
+assumes unit time intervals.
 }
 \description{
 See references for details.
