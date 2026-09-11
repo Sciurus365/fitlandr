@@ -23,6 +23,7 @@ estimate the landscape.}
 \value{
 An object of class \verb{2d_pf} containing:
 - \code{vec_grid}: Data frame with columns x, y, vx, vy.
+- \code{face_grid}: Staggered conservative face currents.
 - \code{vf}: The input vector field object.
 - \code{ld}: The input landscape object.
 }

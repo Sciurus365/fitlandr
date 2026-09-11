@@ -80,6 +80,17 @@ ss_fp_2d <- function(vf,
   x_vec <- numeric(N * 25)
   cnt <- 0
 
+  # The diagonal-diffusion discretization is also assembled as a map from
+  # cell densities to shared face currents. This makes the stationary solve
+  # and the downstream staggered-grid stream function exactly compatible.
+  n_x_faces <- (n_grid + 1L) * n_grid
+  n_y_faces <- n_grid * (n_grid + 1L)
+  n_faces <- n_x_faces + n_y_faces
+  face_i <- integer(4L * n_grid * max(1L, n_grid - 1L))
+  face_j <- integer(length(face_i))
+  face_x <- numeric(length(face_i))
+  face_cnt <- 0L
+
   add_entries <- function(rows, cols, vals) {
     keep <- vals != 0
     if (!any(keep)) {
@@ -107,6 +118,23 @@ ss_fp_2d <- function(vf,
   }
 
   k_idx <- function(i, j) i + (j - 1) * n_grid
+  x_face_idx <- function(i, j) i + (j - 1L) * (n_grid + 1L)
+  y_face_idx <- function(i, j) n_x_faces + i + (j - 1L) * n_grid
+
+  add_face_entries <- function(face, cols, vals) {
+    keep <- vals != 0
+    if (!any(keep)) {
+      return()
+    }
+    cols <- cols[keep]
+    vals <- vals[keep]
+    n_add <- length(vals)
+    idx <- (face_cnt + 1L):(face_cnt + n_add)
+    face_i[idx] <<- face
+    face_j[idx] <<- cols
+    face_x[idx] <<- vals
+    face_cnt <<- face_cnt + n_add
+  }
 
   # 1. X-Interfaces (Flow Jx between (i,j) and (i+1, j))
   for (j in 1:n_grid) {
@@ -125,6 +153,12 @@ ss_fp_2d <- function(vf,
         coeff_k1 <- (A_mid / 2) + (Dxx[i, j] / hx)
         coeff_k2 <- (A_mid / 2) - (Dxx[i + 1, j] / hx)
       }
+
+      add_face_entries(
+        face = x_face_idx(i + 1L, j),
+        cols = c(k1, k2),
+        vals = c(coeff_k1, coeff_k2)
+      )
 
       # Add to matrix (Rate of change = -div(J))
       # Normal Flow
@@ -183,6 +217,12 @@ ss_fp_2d <- function(vf,
         coeff_k2 <- (A_mid / 2) - (Dyy[i, j + 1] / hy)
       }
 
+      add_face_entries(
+        face = y_face_idx(i, j + 1L),
+        cols = c(k1, k2),
+        vals = c(coeff_k1, coeff_k2)
+      )
+
       add_entries(
         rows = c(k1, k1, k2, k2),
         cols = c(k1, k2, k1, k2),
@@ -222,6 +262,42 @@ ss_fp_2d <- function(vf,
 
   M <- Matrix::sparseMatrix(i = i_vec[1:cnt], j = j_vec[1:cnt], x = x_vec[1:cnt], dims = c(N, N))
 
+  face_operator <- NULL
+  divergence_operator <- NULL
+  if (cross_diffusion_mode == "drop") {
+    face_operator <- Matrix::sparseMatrix(
+      i = face_i[seq_len(face_cnt)],
+      j = face_j[seq_len(face_cnt)],
+      x = face_x[seq_len(face_cnt)],
+      dims = c(n_faces, N)
+    )
+
+    cell_indices <- rep(seq_len(N), each = 4L)
+    div_faces <- integer(4L * N)
+    div_values <- numeric(4L * N)
+    div_cnt <- 0L
+    for (j in seq_len(n_grid)) {
+      for (i in seq_len(n_grid)) {
+        idx <- div_cnt + seq_len(4L)
+        div_faces[idx] <- c(
+          x_face_idx(i, j),
+          x_face_idx(i + 1L, j),
+          y_face_idx(i, j),
+          y_face_idx(i, j + 1L)
+        )
+        div_values[idx] <- c(-1 / hx, 1 / hx, -1 / hy, 1 / hy)
+        div_cnt <- div_cnt + 4L
+      }
+    }
+    divergence_operator <- Matrix::sparseMatrix(
+      i = cell_indices,
+      j = div_faces,
+      x = div_values,
+      dims = c(N, n_faces)
+    )
+    M <- -divergence_operator %*% face_operator
+  }
+
   # 3. Final Solve
   cli::cli_progress_step("Solving for steady-state distribution...")
   # Constraint: Integral of rho = 1
@@ -246,6 +322,20 @@ ss_fp_2d <- function(vf,
   attr(rho_ss, "M") <- M
   attr(rho_ss, "x_coords") <- x_coords
   attr(rho_ss, "y_coords") <- y_coords
+  if (cross_diffusion_mode == "drop") {
+    face_current <- as.numeric(face_operator %*% sol[seq_len(N)])
+    attr(rho_ss, "fvm_faces") <- list(
+      Jx = matrix(face_current[seq_len(n_x_faces)], nrow = n_grid + 1L),
+      Jy = matrix(face_current[n_x_faces + seq_len(n_y_faces)], nrow = n_grid),
+      x_faces = seq(x_range[1], x_range[2], length.out = n_grid + 1L),
+      y_faces = seq(y_range[1], y_range[2], length.out = n_grid + 1L),
+      x_centers = x_coords,
+      y_centers = y_coords,
+      hx = hx,
+      hy = hy,
+      divergence = as.numeric(divergence_operator %*% face_current)
+    )
+  }
   cli::cli_progress_done()
   return(rho_ss)
 }
@@ -267,6 +357,10 @@ ss_fp_2d <- function(vf,
 #'          retained for compatibility. Use [autoplot()] to access it.
 #'        - `vf`: The input vector field object.
 #'        - `ss`: The steady-state distribution matrix.
+#'        - `fvm_faces`: Conservative face currents from the finite-volume
+#'          solve when `cross_diffusion_mode = "drop"`.
+#'        - `fvm_compatible`: Whether those face currents remain compatible
+#'          with the returned, post-processed density.
 #'        - `linear_interp`, `drift_scheme`, `cross_diffusion_mode`, and
 #'          `boundary_mode`: Numerical settings retained for consistent
 #'          downstream probability-flow calculations.
@@ -295,6 +389,7 @@ make_2d_ld <- function(vf,
   x_coords <- attr(ss_raw, "x_coords")
   y_coords <- attr(ss_raw, "y_coords")
   M <- attr(ss_raw, "M")
+  fvm_faces <- attr(ss_raw, "fvm_faces")
 
   nonfinite_mask <- !is.finite(ss_raw)
   nonpos_mask <- is.finite(ss_raw) & ss_raw <= 0
@@ -308,12 +403,14 @@ make_2d_ld <- function(vf,
     ss[nonfinite_mask] <- 0
     ss[is.finite(ss) & ss <= 0] <- 0
 
-    remaining_mass <- sum(ss, na.rm = TRUE)
+    cell_area <- (x_coords[2L] - x_coords[1L]) *
+      (y_coords[2L] - y_coords[1L])
+    remaining_mass <- sum(ss, na.rm = TRUE) * cell_area
     if (remaining_mass > 0) {
       ss <- ss / remaining_mass
     } else {
       # Degenerate safeguard: if everything is invalid, use a uniform fallback.
-      ss[] <- 1 / length(ss)
+      ss[] <- 1 / (length(ss) * cell_area)
     }
   }
 
@@ -424,6 +521,8 @@ make_2d_ld <- function(vf,
     plot_2 = plot_2,
     vf = vf,
     ss = ss,
+    fvm_faces = fvm_faces,
+    fvm_compatible = !any(correction_mask) && !is.null(fvm_faces),
     linear_interp = linear_interp,
     drift_scheme = drift_scheme,
     cross_diffusion_mode = cross_diffusion_mode,

@@ -19,9 +19,12 @@
 - Added one-dimensional vector-field, cross-validation, landscape, and
   bootstrap-inference workflows corresponding to the new two-dimensional
   APIs.
-- Added `make_2d_stream()` to estimate a stream function from a
-  two-dimensional probability flow using sparse finite-difference least
-  squares, together with an `autoplot()` method and residual diagnostics.
+- Added a compatible probability-flow and stream-function workflow.
+  `make_2d_pf()` retains the conservative face currents used by the
+  finite-volume stationary-density solver, and `make_2d_stream()` estimates
+  the corresponding stream function with a compatible staggered-grid operator
+  and sparse least squares. Stream-function plotting and residual diagnostics
+  are also provided.
 - Added `fit_individual_dynamics()` for the complete single-dataset workflow
   from a cross-validated vector field through its landscape, probability flow,
   and stream function. `fit_group_dynamics()` reuses this workflow over
@@ -38,6 +41,8 @@
   `evaluate_landscape_clusters()` to compare candidate K-means solutions with
   an elbow plot and `cluster_landscapes()` to obtain assignments and
   density-space cluster centers transformed back to potential landscapes.
+- Added `compare_minima_depths()` for paired bootstrap contrasts and intervals
+  of the potential difference between two selected minima.
 - Standardized plotting APIs: use `autoplot()` for ggplot output and
   `plotly_ld()` for interactive 3D landscapes. Existing `plot()` methods remain
   available with soft-deprecation warnings.

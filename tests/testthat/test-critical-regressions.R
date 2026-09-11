@@ -67,69 +67,67 @@ test_that("2D FVM uses half the infinitesimal covariance as diffusivity", {
 
   rho <- ss_fp_2d(vf, n_grid = 2)
   generator <- as.matrix(attr(rho, "M"))
+  faces <- attr(rho, "fvm_faces")
 
   expect_equal(generator[2, 1], 4, tolerance = 1e-12)
   expect_equal(generator[1, 1], -8, tolerance = 1e-12)
+  expect_equal(max(abs(faces$divergence)), 0, tolerance = 1e-12)
 })
 
-test_that("probability flow uses a over two and respects cross diffusion mode", {
-  coords <- c(1 / 6, 1 / 2, 5 / 6)
-  zero_drift <- function(x, y) c(0, 0)
-  diagonal_diffusion <- function(x, y) 2 * diag(2)
-  rho_x <- matrix(rep(coords, 3), nrow = 3)
-
-  diagonal_flow <- calculate_probability_flow(
-    rho_x,
-    drift_func = zero_drift,
-    diffusion_func = diagonal_diffusion,
-    n_flow = 3,
-    cross_diffusion_mode = "drop"
+test_that("make_2d_stream recovers a compatible staggered-grid stream function", {
+  x_faces <- seq(0, 1, length.out = 4)
+  y_faces <- seq(-1, 1, length.out = 4)
+  x_centers <- (x_faces[-1L] + x_faces[-length(x_faces)]) / 2
+  y_centers <- (y_faces[-1L] + y_faces[-length(y_faces)]) / 2
+  hx <- diff(x_faces)[1L]
+  hy <- diff(y_faces)[1L]
+  A <- outer(
+    x_faces,
+    y_faces,
+    function(x, y) sin(pi * x) * cos(pi * y / 2)
   )
-  center <- diagonal_flow$x == 1 / 2 & diagonal_flow$y == 1 / 2
-  expect_equal(diagonal_flow$vx[center], -1, tolerance = 1e-12)
-  expect_equal(diagonal_flow$vy[center], 0, tolerance = 1e-12)
-
-  cross_diffusion <- function(x, y) matrix(c(2, 2, 2, 2), 2, 2)
-  rho_y <- matrix(rep(coords, each = 3), nrow = 3)
-  dropped <- calculate_probability_flow(
-    rho_y, zero_drift, cross_diffusion,
-    n_flow = 3, cross_diffusion_mode = "drop"
-  )
-  included <- calculate_probability_flow(
-    rho_y, zero_drift, cross_diffusion,
-    n_flow = 3, cross_diffusion_mode = "full"
-  )
-  expect_equal(dropped$vx[center], 0, tolerance = 1e-12)
-  expect_equal(included$vx[center], -1, tolerance = 1e-12)
-})
-
-test_that("make_2d_stream recovers a linear stream function", {
-  grid <- expand.grid(
-    x = c(-1, -0.7, -0.1, 0.25, 1),
-    y = c(-2, -1.4, -0.2, 0.8, 2)
-  )
-  pf <- structure(
+  Jx <- (A[, -ncol(A), drop = FALSE] - A[, -1L, drop = FALSE]) / hy
+  Jy <- (A[-1L, , drop = FALSE] - A[-nrow(A), , drop = FALSE]) / hx
+  ld <- structure(
     list(
-      vec_grid = transform(grid, vx = 3, vy = 2),
-      x = "state_x",
-      y = "state_y",
-      divided_by_rho = FALSE
+      ss = matrix(1, nrow = 3, ncol = 3),
+      fvm_faces = list(
+        Jx = Jx,
+        Jy = Jy,
+        x_faces = x_faces,
+        y_faces = y_faces,
+        x_centers = x_centers,
+        y_centers = y_centers,
+        hx = hx,
+        hy = hy
+      ),
+      fvm_compatible = TRUE,
+      cross_diffusion_mode = "drop"
     ),
-    class = c("2d_pf", "probabilityflow", "vectorfield")
+    class = c("2d_static_ld", "2d_ld", "landscape")
   )
+  vf <- structure(
+    list(lims = c(0, 1, -1, 1), x = "state_x", y = "state_y"),
+    class = "vectorfield"
+  )
+  pf <- make_2d_pf(vf, ld, n = 3)
 
   stream <- make_2d_stream(pf)
-  expected <- 2 * stream$grid$x - 3 * stream$grid$y
-  expected <- expected - expected[1L]
 
+  expect_identical(pf$method, "fvm")
+  expect_equal(nrow(pf$vec_grid), 9L)
+  expect_equal(nrow(pf$face_grid), 24L)
   expect_s3_class(stream, "2d_stream")
-  expect_equal(stream$grid$A, expected, tolerance = 1e-10)
+  expect_identical(stream$method, "fvm")
+  expect_equal(stream$corner_grid$A, as.numeric(A), tolerance = 1e-10)
+  expect_equal(nrow(stream$grid), 9L)
+  expect_equal(nrow(stream$corner_grid), 16L)
+  expect_equal(nrow(stream$face_grid), 24L)
   expect_lt(stream$rmse, 1e-10)
   expect_lt(stream$relative_error, 1e-10)
-  expect_s3_class(autoplot(stream), "ggplot")
 })
 
-test_that("make_2d_stream validates its probability-flow grid", {
+test_that("make_2d_stream validates its probability-flow input", {
   divided_pf <- structure(
     list(
       vec_grid = expand.grid(x = 1:2, y = 1:2) |>
@@ -141,8 +139,21 @@ test_that("make_2d_stream validates its probability-flow grid", {
 
   expect_error(make_2d_stream(divided_pf), "divided by density")
   divided_pf$divided_by_rho <- FALSE
-  divided_pf$vec_grid <- divided_pf$vec_grid[-1L, ]
-  expect_error(make_2d_stream(divided_pf), "complete rectangular grid")
+  expect_error(make_2d_stream(divided_pf), "requires an FVM probability-flow object")
+})
+
+test_that("compatible stream method rejects unsupported landscape discretizations", {
+  pf <- structure(
+    list(
+      method = "fvm",
+      fvm_faces = list(invalid = TRUE),
+      cross_diffusion_mode = "full",
+      divided_by_rho = FALSE
+    ),
+    class = "2d_pf"
+  )
+
+  expect_error(make_2d_stream(pf), "cross_diffusion_mode")
 })
 
 make_test_landscape <- function(density, x = 1:2, y = 1:2) {

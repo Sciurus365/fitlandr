@@ -12,7 +12,11 @@ make_2d_stream(pf)
 \value{
 An object of class \verb{2d_stream} containing:
 \itemize{
-\item \code{grid}: grid coordinates and estimated stream-function values.
+\item \code{grid}: cell-center coordinates and estimated stream-function values.
+\item \code{corner_grid}: corner coordinates and staggered stream-function values
+on the finite-volume grid.
+\item \code{face_grid}: observed, fitted, and residual face currents for
+the finite-volume grid.
 \item \code{fitted_grid}: observed and fitted probability-flow vectors.
 \item \code{residual_grid}: residual probability-flow vectors.
 \item \code{rmse}: root mean squared residual across both flow components.
@@ -23,14 +27,14 @@ An object of class \verb{2d_stream} containing:
 \description{
 Estimates a scalar stream function \code{A} whose perpendicular gradient
 \verb{(-dA/dy, dA/dx)} is closest in least-squares distance to the estimated
-probability flow. Derivatives are represented by sparse finite-difference
-matrices, using centered differences in the grid interior and one-sided
-differences at its boundary.
+probability flow. By default, the function uses the conservative face
+currents retained by \code{\link[=make_2d_ld]{make_2d_ld()}} and a compatible staggered-grid
+perpendicular-gradient operator. This uses exactly the same faces and
+reflective boundary conditions as the finite-volume stationary-density
+solve.
 }
 \details{
 A stream function is identifiable only up to an additive constant. The
-returned solution is anchored by setting its value at the first grid point
-to zero. If the estimated probability flow is not exactly divergence-free,
-the fitted flow is its least-squares stream-function component and the
-remaining component is available in \code{residual_grid}.
+returned solution is anchored by setting its value at the first grid corner
+to zero.
 }
