@@ -69,3 +69,41 @@ test_that("exclude_minor = FALSE disables all minor-minimum marking", {
   expect_true(all(!mins$is_minor))
   expect_true(all(mins$exclusion_reason == "retained_major"))
 })
+
+test_that("sole outside-hull minimum is excluded by default", {
+  x_vals <- seq(1, 7)
+  y_vals <- seq(1, 7)
+  dist <- expand.grid(x = x_vals, y = y_vals)
+  dist$U <- 10
+  dist$d <- exp(-dist$U)
+  dist$U[dist$x == 2 & dist$y == 2] <- 0
+
+  ld <- structure(
+    list(
+      dist = dist,
+      vf = list(
+        data = data.frame(
+          x = c(3, 5, 5, 3),
+          y = c(3, 3, 5, 5)
+        ),
+        x = "x",
+        y = "y"
+      )
+    ),
+    class = c("2d_static_ld", "2d_ld", "landscape")
+  )
+
+  default_mins <- find_loc_min(ld)$mins
+  retained_mins <- find_loc_min(ld, retain_single_outside_hull = TRUE)$mins
+
+  expect_true(default_mins$is_minor[[1]])
+  expect_identical(
+    default_mins$exclusion_reason[[1]],
+    "outside_observed_data_convex_hull"
+  )
+  expect_false(retained_mins$is_minor[[1]])
+  expect_identical(
+    retained_mins$exclusion_reason[[1]],
+    "retained_major_outside_observed_data_convex_hull"
+  )
+})

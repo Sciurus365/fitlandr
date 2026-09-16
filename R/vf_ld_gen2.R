@@ -572,20 +572,25 @@ is_inside_convex_hull <- function(points, hull_vertices, tol = 1e-10) {
 #' based on the barrier height criterion, so that they can be easily excluded
 #' from subsequent calculations. Default is TRUE.
 #' @param use_convex_hull Logical indicating whether to mark minima outside
-#' the convex hull of observed data points as minor before barrier-based
+#' the convex hull of observed data points as minor after barrier-based
 #' minor-minimum detection. Default is TRUE.
+#' @param retain_single_outside_hull Logical indicating whether to retain the
+#' sole remaining minimum as major when it falls outside the observed-data
+#' convex hull. Default is FALSE.
 #' @return An object of class `ld_min`. Its `mins` component contains one row
 #'   per local minimum with coordinates, potential, `is_minor`, and
 #'   `exclusion_reason`. The exclusion reason is one of
 #'   `"retained_major"`, `"retained_major_outside_observed_data_convex_hull"`,
 #'   `"outside_observed_data_convex_hull"`, `"insufficient_barrier_separation"`,
-#'   or both minor criteria joined by `"; "`.
+#'   or both minor criteria joined by `"; "`. The retained-outside-hull reason
+#'   is only possible when `retain_single_outside_hull = TRUE`.
 #' @export
 find_loc_min <- function(ld,
                          exclude_minor = TRUE,
                          min_barrier_fraction = 0.1,
                          min_convex_hull_range_fraction = 0.01,
-                         use_convex_hull = TRUE) {
+                         use_convex_hull = TRUE,
+                         retain_single_outside_hull = FALSE) {
   if (inherits(ld, "1d_ld") || inherits(ld, "1d_static_ld")) {
     return(find_loc_min_1d(
       ld,
@@ -742,8 +747,9 @@ find_loc_min <- function(ld,
     outside_idx <- which(!inside)
     if (length(outside_idx) > 0) {
       major_after_barrier <- setdiff(seq_len(n_mins), barrier_minor_mins)
-      outside_major_after_barrier <- intersect(major_after_barrier, outside_idx)
-      if (length(major_after_barrier) == 1L && major_after_barrier %in% outside_idx) {
+      if (isTRUE(retain_single_outside_hull) &&
+          length(major_after_barrier) == 1L &&
+          major_after_barrier %in% outside_idx) {
         hull_outside_but_retained <- major_after_barrier
         hull_minor_mins <- setdiff(outside_idx, major_after_barrier)
       } else {
