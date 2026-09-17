@@ -246,6 +246,23 @@ cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_bar
   }
 
   if (clustering_method == "hdbscan") {
+    # HDBSCAN cannot define a minPts neighborhood when too few pooled minima
+    # survived filtering. This is a valid empty clustering result, not an error.
+    if (nrow(boot_min_df) < minPts) {
+      boot_min_df$cluster <- 0L
+      boot_min_df$is_noise <- TRUE
+      return(list(
+        boot_min_df = boot_min_df,
+        diagnostics = list(
+          clustering_method = "hdbscan",
+          clustering_status = "fewer_pooled_minima_than_minPts",
+          n_pooled_minima = nrow(boot_min_df),
+          distance_scale_dx = scaler$dx,
+          distance_scale_dy = scaler$dy
+        )
+      ))
+    }
+
     rlang::check_installed(
       "dbscan",
       reason = "for {.code clustering_method = \"hdbscan\"}. Install it with {.code install.packages(\"dbscan\") }."

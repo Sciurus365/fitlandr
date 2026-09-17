@@ -38,3 +38,34 @@ test_that("compare_minima_depths validates selected minima", {
   expect_error(compare_minima_depths(object, c(1, 2)), "Missing cluster")
   expect_error(compare_minima_depths(object, c(1, 1)), "two distinct")
 })
+
+test_that("HDBSCAN returns no clusters for fewer pooled minima than minPts", {
+  boot_min_df <- data.frame(
+    x = c(-1, 0, 1, 2),
+    y = c(0, 1, 0, 1),
+    U = c(0.1, 0.2, 0.3, 0.4),
+    boot_index = seq_len(4)
+  )
+  object <- list(
+    original_ld = list(
+      dist = expand.grid(x = 0:1, y = 0:1)
+    )
+  )
+
+  out <- fitlandr:::cluster_bootstrap_minima(
+    boot_min_df = boot_min_df,
+    object = object,
+    exclude_minor = TRUE,
+    min_barrier_fraction = 0.1,
+    min_convex_hull_range_fraction = 0.01,
+    clustering_method = "hdbscan",
+    minPts = 5
+  )
+
+  expect_true(all(out$boot_min_df$is_noise))
+  expect_equal(out$boot_min_df$cluster, rep(0L, 4))
+  expect_identical(
+    out$diagnostics$clustering_status,
+    "fewer_pooled_minima_than_minPts"
+  )
+})
