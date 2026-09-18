@@ -121,6 +121,29 @@ summary.bootstrap_2d_ld <- function(object,
   )
   boot_min_df <- cl_out$boot_min_df
 
+  # A cluster observed in only one bootstrap run has no empirical spread and
+  # therefore cannot support a bootstrap-based minimum summary.
+  cluster_support <- boot_min_df |>
+    dplyr::filter(!is_noise) |>
+    dplyr::group_by(cluster) |>
+    dplyr::summarise(
+      n_points = dplyr::n(),
+      n_runs = dplyr::n_distinct(boot_index),
+      .groups = "drop"
+    )
+  unsupported_clusters <- cluster_support |>
+    dplyr::filter(n_runs < 2L)
+
+  if (nrow(unsupported_clusters)) {
+    unsupported_ids <- unsupported_clusters$cluster
+    is_unsupported <- boot_min_df$cluster %in% unsupported_ids
+    boot_min_df$cluster[is_unsupported] <- 0L
+    boot_min_df$is_noise[is_unsupported] <- TRUE
+    cli::cli_warn(
+      "Discarded {nrow(unsupported_clusters)} bootstrap cluster(s) observed in only one resample; their location uncertainty cannot be estimated."
+    )
+  }
+
   # per-bootstrap counts
   per_boot <- boot_min_df |>
     dplyr::group_by(boot_index) |>
@@ -139,7 +162,14 @@ summary.bootstrap_2d_ld <- function(object,
       per_boot = per_boot,
       per_point = boot_min_df,
       per_cluster = NULL,
-      diagnostics = c(list(noise_frac = mean(boot_min_df$is_noise)), cl_out$diagnostics),
+      diagnostics = c(
+        list(
+          noise_frac = mean(boot_min_df$is_noise),
+          n_single_run_clusters_discarded = nrow(unsupported_clusters),
+          n_points_discarded_single_run_clusters = sum(unsupported_clusters$n_points)
+        ),
+        cl_out$diagnostics
+      ),
       original_ld = object$original_ld,
       n_boot = object$n_boot
     )
@@ -190,10 +220,22 @@ summary.bootstrap_2d_ld <- function(object,
 
   ellipse_df <- lapply(seq_len(nrow(per_cluster)), function(i) {
     sigma <- matrix(c(per_cluster$s_xx[[i]], per_cluster$s_xy[[i]], per_cluster$s_xy[[i]], per_cluster$s_yy[[i]]), 2, 2)
+    n_runs_i <- per_cluster$n_runs[[i]]
+
+    # A single bootstrap occurrence has no estimable empirical covariance.
+    if (n_runs_i < 2L) {
+      return(data.frame(
+        angle = NA_real_,
+        a_pred = NA_real_,
+        b_pred = NA_real_,
+        a_conf = NA_real_,
+        b_conf = NA_real_
+      ))
+    }
+
     eig <- eigen(sigma, symmetric = TRUE)
     lambda <- pmax(eig$values, 0)
     angle <- atan2(eig$vectors[2, 1], eig$vectors[1, 1])
-    n_runs_i <- per_cluster$n_runs[[i]]
     data.frame(
       angle = angle,
       a_pred = sqrt(lambda[1] * c2),
@@ -214,7 +256,14 @@ summary.bootstrap_2d_ld <- function(object,
     per_boot = per_boot,
     per_point = boot_min_df,
     per_cluster = per_cluster,
-    diagnostics = c(list(noise_frac = mean(boot_min_df$is_noise)), cl_out$diagnostics),
+    diagnostics = c(
+      list(
+        noise_frac = mean(boot_min_df$is_noise),
+        n_single_run_clusters_discarded = nrow(unsupported_clusters),
+        n_points_discarded_single_run_clusters = sum(unsupported_clusters$n_points)
+      ),
+      cl_out$diagnostics
+    ),
     original_ld = object$original_ld,
     n_boot = object$n_boot
   )

@@ -73,7 +73,11 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
       size = 1
     ) +
     ggplot2::coord_fixed(xlim = x_range, ylim = y_range) +
-    ggplot2::labs(color = "cluster")
+    ggplot2::labs(
+      x = object$original_ld$vf$x,
+      y = object$original_ld$vf$y,
+      color = "cluster"
+    )
 
   if (!is.null(df_cl) && nrow(df_cl)) {
     if (show_ellipses) {
