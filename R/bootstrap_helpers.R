@@ -176,17 +176,17 @@ summarize_mean_potential_hessian <- function(object,
         exclude_minor = exclude_minor,
         min_barrier_fraction = min_barrier_fraction,
         min_convex_hull_range_fraction = min_convex_hull_range_fraction,
-        clustering_method = "mean_potential_hessian",
+        minima_method = "mean_potential_hessian",
         minPts = NA_integer_,
         level = level,
         one_per_run = one_per_run
       ),
       per_boot = per_boot,
-      per_point = boot_min_df |>
-        dplyr::mutate(cluster = 0L, is_noise = TRUE),
-      per_cluster = NULL,
+      bootstrap_minima = boot_min_df |>
+        dplyr::mutate(minimum = 0L, is_noise = TRUE),
+      per_minimum = data.frame(),
       diagnostics = list(
-        clustering_method = "mean_potential_hessian",
+        minima_method = "mean_potential_hessian",
         n_reference = 0L,
         distance_scale_dx = scaler$dx,
         distance_scale_dy = scaler$dy,
@@ -299,16 +299,16 @@ summarize_mean_potential_hessian <- function(object,
       exclude_minor = exclude_minor,
       min_barrier_fraction = min_barrier_fraction,
       min_convex_hull_range_fraction = min_convex_hull_range_fraction,
-      clustering_method = "mean_potential_hessian",
+      minima_method = "mean_potential_hessian",
       minPts = NA_integer_,
       level = level,
       one_per_run = one_per_run
     ),
     per_boot = per_boot,
-    per_point = per_point,
-    per_cluster = per_cluster,
+    bootstrap_minima = dplyr::rename(per_point, minimum = cluster),
+    per_minimum = dplyr::rename(per_cluster, minimum = cluster),
     diagnostics = list(
-      clustering_method = "mean_potential_hessian",
+      minima_method = "mean_potential_hessian",
       n_reference = nrow(ref_mins),
       distance_scale_dx = scaler$dx,
       distance_scale_dy = scaler$dy,
@@ -359,17 +359,17 @@ summarize_mean_potential <- function(object,
         exclude_minor = exclude_minor,
         min_barrier_fraction = min_barrier_fraction,
         min_convex_hull_range_fraction = min_convex_hull_range_fraction,
-        clustering_method = "mean_potential",
+        minima_method = "mean_potential",
         minPts = NA_integer_,
         level = level,
         one_per_run = one_per_run
       ),
       per_boot = per_boot,
-      per_point = boot_min_df |>
-        dplyr::mutate(cluster = 0L, is_noise = TRUE),
-      per_cluster = NULL,
+      bootstrap_minima = boot_min_df |>
+        dplyr::mutate(minimum = 0L, is_noise = TRUE),
+      per_minimum = data.frame(),
       diagnostics = list(
-        clustering_method = "mean_potential",
+        minima_method = "mean_potential",
         n_reference = 0L,
         distance_scale_dx = scaler$dx,
         distance_scale_dy = scaler$dy,
@@ -457,16 +457,16 @@ summarize_mean_potential <- function(object,
       exclude_minor = exclude_minor,
       min_barrier_fraction = min_barrier_fraction,
       min_convex_hull_range_fraction = min_convex_hull_range_fraction,
-      clustering_method = "mean_potential",
+      minima_method = "mean_potential",
       minPts = NA_integer_,
       level = level,
       one_per_run = one_per_run
     ),
     per_boot = per_boot,
-    per_point = per_point,
-    per_cluster = per_cluster,
+    bootstrap_minima = dplyr::rename(per_point, minimum = cluster),
+    per_minimum = dplyr::rename(per_cluster, minimum = cluster),
     diagnostics = list(
-      clustering_method = "mean_potential",
+      minima_method = "mean_potential",
       n_reference = nrow(ref_mins),
       distance_scale_dx = scaler$dx,
       distance_scale_dy = scaler$dy,
@@ -493,24 +493,25 @@ summarize_mean_potential <- function(object,
 #' @param min_convex_hull_range_fraction Minimum barrier height fraction,
 #'   relative to the potential range inside the observed-data convex hull,
 #'   used by `find_loc_min()` to classify minor minima. Default 0.01.
-#' @param clustering_method Clustering backend for pooled minima. One of
+#' @param minima_method Method for summarizing bootstrap minima. One of
 #'   `"hungarian"` (default), `"mean_potential"`, `"hdbscan"`,
 #'   `"pairwise_hungarian_graph"`, `"mean_potential_hessian"`, or `"gmm_bic"`.
 #' @param minPts Integer; HDBSCAN minPts. Default 5.
 #' @param pairwise_leiden_gamma Numeric Leiden CPM resolution parameter used only
 #'   for `"pairwise_hungarian_graph"`. Default 0.01.
 #' @param level Confidence level for ellipses (e.g., 0.95). Default 0.95.
-#' @param one_per_run Logical; at most one point per run per cluster for summary stats. Default TRUE.
+#' @param one_per_run Logical; at most one bootstrap minimum per run per inferred
+#'   minimum for summary statistics. Default TRUE.
 #' @param ... Unused.
 #'
 #' @return An object of class `"summary_bootstrap_2d_ld"` with components:
-#'   - `params`, `per_boot`, `per_point`,
-#'   - `per_cluster`: now includes `a_pred`, `b_pred`, `a_conf`, `b_conf`, `angle`, `c2`,
+#'   - `params`, `per_boot`, `bootstrap_minima`,
+#'   - `per_minimum`: includes `a_pred`, `b_pred`, `a_conf`, `b_conf`, `angle`, `c2`,
 #'   - `diagnostics`, `original_ld`, `n_boot`.
 #'
 #' @details
-#' For clustering-based methods, ellipse parameters are derived from the eigen-decomposition
-#' of the 2×2 covariance matrix per cluster. For `"mean_potential"`, minima are first
+#' For methods that aggregate bootstrap minima, ellipse parameters are derived from the eigen-decomposition
+#' of the 2×2 covariance matrix per inferred minimum. For `"mean_potential"`, minima are first
 #' detected on the mean potential surface across bootstrap landscapes; each bootstrap minimum is
 #' then matched to the closest reference minimum, and ellipse parameters are derived from the
 #' covariance of matched minima locations. For `"mean_potential_hessian"`, minima are first

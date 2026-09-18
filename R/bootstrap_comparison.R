@@ -6,7 +6,7 @@
 #' additive constant of each bootstrap potential.
 #'
 #' @param object A `summary_bootstrap_2d_ld` object.
-#' @param minima Integer vector of length two giving cluster identifiers. The
+#' @param minima Integer vector of length two giving minimum identifiers. The
 #'   reported contrast is the first minimum minus the second, `U[1] - U[2]`.
 #' @param level Coverage level for the bootstrap interval. By default, uses the
 #'   level stored in `object$params`, or 0.95 if it is unavailable.
@@ -20,22 +20,22 @@ compare_minima_depths <- function(object, minima, level = NULL) {
     cli::cli_abort("{.arg object} must inherit from {.cls summary_bootstrap_2d_ld}.")
   }
   if (length(minima) != 2L || anyNA(minima) || length(unique(minima)) != 2L) {
-    cli::cli_abort("{.arg minima} must contain two distinct cluster identifiers.")
+    cli::cli_abort("{.arg minima} must contain two distinct minimum identifiers.")
   }
-  if (is.null(object$per_point) || !nrow(object$per_point)) {
-    cli::cli_abort("{.arg object} does not contain bootstrap minima in {.field per_point}.")
+  if (is.null(object$bootstrap_minima) || !nrow(object$bootstrap_minima)) {
+    cli::cli_abort("{.arg object} does not contain bootstrap minima in {.field bootstrap_minima}.")
   }
-  if (is.null(object$per_cluster) || !nrow(object$per_cluster)) {
-    cli::cli_abort("{.arg object} does not contain summarized minima in {.field per_cluster}.")
+  if (is.null(object$per_minimum) || !nrow(object$per_minimum)) {
+    cli::cli_abort("{.arg object} does not contain summarized minima in {.field per_minimum}.")
   }
 
   minima <- as.integer(minima)
-  available <- as.integer(object$per_cluster$cluster)
+  available <- as.integer(object$per_minimum$minimum)
   missing_minima <- setdiff(minima, available)
   if (length(missing_minima)) {
     cli::cli_abort(c(
-      "Selected minima are not present in {.field per_cluster}.",
-      "x" = "Missing cluster identifier{?s}: {paste(missing_minima, collapse = ', ')}."
+      "Selected minima are not present in {.field per_minimum}.",
+      "x" = "Missing minimum identifier{?s}: {paste(missing_minima, collapse = ', ')}."
     ))
   }
 
@@ -49,18 +49,18 @@ compare_minima_depths <- function(object, minima, level = NULL) {
     cli::cli_abort("{.arg level} must be one number strictly between 0 and 1.")
   }
 
-  points <- object$per_point
+  points <- object$bootstrap_minima
   if ("is_noise" %in% names(points)) {
     points <- points[!points$is_noise, , drop = FALSE]
   }
-  points <- points[points$cluster %in% minima, , drop = FALSE]
+  points <- points[points$minimum %in% minima, , drop = FALSE]
 
   per_minimum <- points |>
-    dplyr::group_by(.data$boot_index, .data$cluster) |>
+    dplyr::group_by(.data$boot_index, .data$minimum) |>
     dplyr::summarise(U = mean(.data$U), .groups = "drop")
 
-  first <- per_minimum[per_minimum$cluster == minima[[1]], c("boot_index", "U")]
-  second <- per_minimum[per_minimum$cluster == minima[[2]], c("boot_index", "U")]
+  first <- per_minimum[per_minimum$minimum == minima[[1]], c("boot_index", "U")]
+  second <- per_minimum[per_minimum$minimum == minima[[2]], c("boot_index", "U")]
   names(first)[[2]] <- "U_first"
   names(second)[[2]] <- "U_second"
 
@@ -80,15 +80,15 @@ compare_minima_depths <- function(object, minima, level = NULL) {
     na.rm = TRUE
   )
 
-  cluster_result <- object$per_cluster[
-    match(minima, object$per_cluster$cluster),
+  minimum_result <- object$per_minimum[
+    match(minima, object$per_minimum$minimum),
     ,
     drop = FALSE
   ]
   result <- data.frame(
     minimum_first = minima[[1]],
     minimum_second = minima[[2]],
-    delta_U = cluster_result$mean_U[[1]] - cluster_result$mean_U[[2]],
+    delta_U = minimum_result$mean_U[[1]] - minimum_result$mean_U[[2]],
     bootstrap_mean = mean(per_boot$delta_U),
     CI_lower = interval[[1]],
     CI_upper = interval[[2]],

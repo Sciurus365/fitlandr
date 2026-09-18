@@ -221,7 +221,7 @@ cluster_pairwise_hungarian_graph_1d <- function(boot_min_df, x_scale) {
   if (n_points < 2L) {
     boot_min_df$cluster <- 0L
     boot_min_df$is_noise <- TRUE
-    return(list(boot_min_df = boot_min_df, diagnostics = list(clustering_method = "pairwise_hungarian_graph", n_edges = 0L)))
+    return(list(boot_min_df = boot_min_df, diagnostics = list(minima_method = "pairwise_hungarian_graph", n_edges = 0L)))
   }
 
   by_run <- split(boot_min_df, boot_min_df$boot_index)
@@ -252,7 +252,7 @@ cluster_pairwise_hungarian_graph_1d <- function(boot_min_df, x_scale) {
   if (!length(edge_rows)) {
     boot_min_df$cluster <- 0L
     boot_min_df$is_noise <- TRUE
-    return(list(boot_min_df = boot_min_df, diagnostics = list(clustering_method = "pairwise_hungarian_graph", n_edges = 0L)))
+    return(list(boot_min_df = boot_min_df, diagnostics = list(minima_method = "pairwise_hungarian_graph", n_edges = 0L)))
   }
 
   edges <- dplyr::bind_rows(edge_rows)
@@ -286,7 +286,7 @@ cluster_pairwise_hungarian_graph_1d <- function(boot_min_df, x_scale) {
   list(
     boot_min_df = boot_min_df,
     diagnostics = list(
-      clustering_method = "pairwise_hungarian_graph",
+      minima_method = "pairwise_hungarian_graph",
       distance_scale_dx = x_scale,
       n_edges = nrow(edges),
       n_edges_kept = nrow(strong_edges)

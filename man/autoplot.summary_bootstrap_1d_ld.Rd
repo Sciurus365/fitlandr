@@ -6,7 +6,7 @@
 \usage{
 \method{autoplot}{summary_bootstrap_1d_ld}(
   object,
-  mode = c("clusters", "minima"),
+  mode = c("minima", "bootstrap_minima"),
   show_intervals = TRUE,
   show_original_major_minima = TRUE,
   point_alpha = 0.35,
@@ -16,7 +16,8 @@
 \arguments{
 \item{object}{A \code{summary_bootstrap_1d_ld} object.}
 
-\item{mode}{One of \code{"clusters"} or \code{"minima"}.}
+\item{mode}{Plot style. \code{"minima"} shows summarized minima; \code{"bootstrap_minima"}
+shows individual bootstrap minima.}
 
 \item{show_intervals}{Logical; draw prediction/confidence intervals.}
 

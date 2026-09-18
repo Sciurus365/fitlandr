@@ -9,7 +9,7 @@ compare_minima_depths(object, minima, level = NULL)
 \arguments{
 \item{object}{A \code{summary_bootstrap_2d_ld} object.}
 
-\item{minima}{Integer vector of length two giving cluster identifiers. The
+\item{minima}{Integer vector of length two giving minimum identifiers. The
 reported contrast is the first minimum minus the second, \code{U[1] - U[2]}.}
 
 \item{level}{Coverage level for the bootstrap interval. By default, uses the

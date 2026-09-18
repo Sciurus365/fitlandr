@@ -7,15 +7,16 @@
 #' @param min_convex_hull_range_fraction Additional lower bound for
 #'   barrier-based retention, defined as a fraction of the potential range
 #'   within the observed-data convex hull.
-#' @param clustering_method One of `"hungarian"` (default),
+#' @param minima_method Method for summarizing bootstrap minima. One of `"hungarian"` (default),
 #'   `"mean_potential"`, `"hdbscan"`, `"pairwise_hungarian_graph"`,
 #'   `"mean_potential_hessian"`, or `"gmm_bic"`.
-#' @param minPts Minimum cluster size used by clustering methods that require
-#'   it.
+#' @param minPts Minimum number of bootstrap minima used by methods that require
+#'   a density threshold.
 #' @param pairwise_leiden_gamma Resolution parameter for
 #'   `"pairwise_hungarian_graph"`.
 #' @param level Coverage level for ellipses and intervals.
-#' @param one_per_run Logical; retain at most one point per run per cluster.
+#' @param one_per_run Logical; retain at most one bootstrap minimum per run per
+#'   inferred minimum.
 #' @param ... Unused.
 #'
 #' @return A `summary_bootstrap_2d_ld` object.
@@ -25,7 +26,7 @@ summary.bootstrap_2d_ld <- function(object,
                                     exclude_minor = TRUE,
                                     min_barrier_fraction = 0.1,
                                     min_convex_hull_range_fraction = 0.01,
-                                    clustering_method = c("hungarian", "mean_potential", "hdbscan", "pairwise_hungarian_graph", "mean_potential_hessian", "gmm_bic"),
+                                    minima_method = c("hungarian", "mean_potential", "hdbscan", "pairwise_hungarian_graph", "mean_potential_hessian", "gmm_bic"),
                                     minPts = 5,
                                     pairwise_leiden_gamma = 0.01,
                                     level = 0.95,
@@ -35,7 +36,7 @@ summary.bootstrap_2d_ld <- function(object,
     cli::cli_abort("{.arg object} must be a {.cls bootstrap_2d_ld} object with {.field bootstrap_lds} and {.field n_boot}.")
   }
   clustering_method <- rlang::arg_match0(
-    clustering_method,
+    minima_method,
     c("hungarian", "mean_potential", "hdbscan", "pairwise_hungarian_graph", "mean_potential_hessian", "gmm_bic")
   )
 
@@ -69,15 +70,15 @@ summary.bootstrap_2d_ld <- function(object,
   if (is.null(boot_min_df) || !nrow(boot_min_df)) {
     out <- list(
       params = list(
-        exclude_minor = exclude_minor, clustering_method = clustering_method,
+        exclude_minor = exclude_minor, minima_method = clustering_method,
         min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction,
         minPts = minPts, pairwise_leiden_gamma = pairwise_leiden_gamma, level = level,
         one_per_run = one_per_run
       ),
       per_boot = data.frame(boot_index = seq_len(object$n_boot), n_mins = 0L),
-      per_point = NULL,
-      per_cluster = NULL,
-      diagnostics = list(message = "No minima found"),
+      bootstrap_minima = data.frame(),
+      per_minimum = data.frame(),
+      diagnostics = list(minima_method = clustering_method, message = "No minima found"),
       original_ld = object$original_ld,
       n_boot = object$n_boot
     )
@@ -140,7 +141,7 @@ summary.bootstrap_2d_ld <- function(object,
     boot_min_df$cluster[is_unsupported] <- 0L
     boot_min_df$is_noise[is_unsupported] <- TRUE
     cli::cli_warn(
-      "Discarded {nrow(unsupported_clusters)} bootstrap cluster(s) observed in only one resample; their location uncertainty cannot be estimated."
+      "Discarded {nrow(unsupported_clusters)} bootstrap minimum/minima observed in only one resample; their location uncertainty cannot be estimated."
     )
   }
 
@@ -154,19 +155,19 @@ summary.bootstrap_2d_ld <- function(object,
   if (!nrow(df_c)) {
     out <- list(
       params = list(
-        exclude_minor = exclude_minor, clustering_method = clustering_method,
+        exclude_minor = exclude_minor, minima_method = clustering_method,
         min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction,
         minPts = minPts, pairwise_leiden_gamma = pairwise_leiden_gamma, level = level,
         one_per_run = one_per_run
       ),
       per_boot = per_boot,
-      per_point = boot_min_df,
-      per_cluster = NULL,
+      bootstrap_minima = dplyr::rename(boot_min_df, minimum = cluster),
+      per_minimum = data.frame(),
       diagnostics = c(
         list(
           noise_frac = mean(boot_min_df$is_noise),
-          n_single_run_clusters_discarded = nrow(unsupported_clusters),
-          n_points_discarded_single_run_clusters = sum(unsupported_clusters$n_points)
+          n_single_run_minima_discarded = nrow(unsupported_clusters),
+          n_bootstrap_minima_discarded_single_run_minima = sum(unsupported_clusters$n_points)
         ),
         cl_out$diagnostics
       ),
@@ -248,19 +249,19 @@ summary.bootstrap_2d_ld <- function(object,
 
   out <- list(
     params = list(
-      exclude_minor = exclude_minor, clustering_method = clustering_method,
+      exclude_minor = exclude_minor, minima_method = clustering_method,
       min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction,
       minPts = minPts, pairwise_leiden_gamma = pairwise_leiden_gamma, level = level,
       one_per_run = one_per_run
     ),
     per_boot = per_boot,
-    per_point = boot_min_df,
-    per_cluster = per_cluster,
+    bootstrap_minima = dplyr::rename(boot_min_df, minimum = cluster),
+    per_minimum = dplyr::rename(per_cluster, minimum = cluster),
     diagnostics = c(
       list(
         noise_frac = mean(boot_min_df$is_noise),
-        n_single_run_clusters_discarded = nrow(unsupported_clusters),
-        n_points_discarded_single_run_clusters = sum(unsupported_clusters$n_points)
+        n_single_run_minima_discarded = nrow(unsupported_clusters),
+        n_bootstrap_minima_discarded_single_run_minima = sum(unsupported_clusters$n_points)
       ),
       cl_out$diagnostics
     ),

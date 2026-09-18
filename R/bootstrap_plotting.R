@@ -1,6 +1,6 @@
 #' @export
 autoplot.summary_bootstrap_2d_ld <- function(object,
-                                             mode = c("clusters", "minima"),
+                                             mode = c("minima", "bootstrap_minima"),
                                              show_ellipses = TRUE,
                                              show_original_major_minima = TRUE,
                                              point_alpha = 0.35,
@@ -9,14 +9,14 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
   if (!inherits(object, "summary_bootstrap_2d_ld")) {
     cli::cli_abort("{.arg object} must inherit from {.cls summary_bootstrap_2d_ld}.")
   }
-  if (is.null(object$per_point)) {
+  if (is.null(object$bootstrap_minima)) {
     return(ggplot2::ggplot())
   }
-  mode <- rlang::arg_match0(mode, c("clusters", "minima"))
-  df_points <- object$per_point
-  df_cl <- object$per_cluster
+  mode <- rlang::arg_match0(mode, c("minima", "bootstrap_minima"))
+  df_points <- object$bootstrap_minima
+  df_minimum <- object$per_minimum
 
-  if (mode == "minima") {
+  if (mode == "bootstrap_minima") {
     x_range <- range(attr(object$original_ld$ss, "x_coords"))
     y_range <- range(attr(object$original_ld$ss, "y_coords"))
     x_jitter_amount <- (x_range[2] - x_range[1]) * 0.02
@@ -68,7 +68,7 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
 
   p <- ggplot2::ggplot(df_points) +
     ggplot2::geom_point(
-      ggplot2::aes(x = x, y = y, color = factor(cluster)),
+      ggplot2::aes(x = x, y = y, color = factor(minimum)),
       alpha = point_alpha,
       size = 1
     ) +
@@ -76,13 +76,13 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
     ggplot2::labs(
       x = object$original_ld$vf$x,
       y = object$original_ld$vf$y,
-      color = "cluster"
+      color = "minimum"
     )
 
-  if (!is.null(df_cl) && nrow(df_cl)) {
+  if (!is.null(df_minimum) && nrow(df_minimum)) {
     if (show_ellipses) {
       p <- p + ggforce::geom_ellipse(
-        data = df_cl,
+        data = df_minimum,
         ggplot2::aes(
           x0 = mean_x, y0 = mean_y,
           a = a_pred, b = b_pred, angle = angle

@@ -9,8 +9,7 @@
   exclude_minor = TRUE,
   min_barrier_fraction = 0.1,
   min_convex_hull_range_fraction = 0.01,
-  clustering_method = c("hungarian", "mean_potential", "pairwise_hungarian_graph",
-    "gmm_bic"),
+  minima_method = c("hungarian", "mean_potential", "pairwise_hungarian_graph", "gmm_bic"),
   level = 0.95,
   one_per_run = TRUE,
   ...
@@ -28,12 +27,13 @@ highest barrier, used in minor-minimum detection.}
 retention. In 1D this is applied to the potential range over the observed
 data range.}
 
-\item{clustering_method}{One of \code{"hungarian"} (default),
+\item{minima_method}{Method for summarizing bootstrap minima. One of \code{"hungarian"} (default),
 \code{"mean_potential"}, \code{"pairwise_hungarian_graph"}, or \code{"gmm_bic"}.}
 
 \item{level}{Coverage level for intervals.}
 
-\item{one_per_run}{Logical; retain at most one point per run per cluster.}
+\item{one_per_run}{Logical; retain at most one bootstrap minimum per run per
+inferred minimum.}
 
 \item{...}{Unused.}
 }

@@ -253,13 +253,13 @@ test_that("landscape clustering supports 1D landscapes", {
   expect_s3_class(autoplot(result$centers[[1]]), "ggplot")
 })
 
-test_that("autoplot.summary_bootstrap_2d_ld minima mode consumes per_point field", {
+test_that("autoplot.summary_bootstrap_2d_ld bootstrap-minima mode consumes bootstrap_minima", {
   x_coords <- seq(0, 1, length.out = 5)
   y_coords <- seq(0, 1, length.out = 5)
 
   summary_obj <- structure(
     list(
-      per_point = data.frame(
+      bootstrap_minima = data.frame(
         boot_index = c(1L, 2L),
         x = c(0.2, 0.8),
         y = c(0.3, 0.7),
@@ -276,7 +276,7 @@ test_that("autoplot.summary_bootstrap_2d_ld minima mode consumes per_point field
     class = "summary_bootstrap_2d_ld"
   )
 
-  p <- autoplot(summary_obj, mode = "minima")
+  p <- autoplot(summary_obj, mode = "bootstrap_minima")
   expect_s3_class(p, "ggplot")
 })
 
@@ -295,14 +295,14 @@ test_that("autoplot.summary_bootstrap_2d_ld overlays only original major minima"
   )
   summary_obj <- structure(
     list(
-      per_point = data.frame(
+      bootstrap_minima = data.frame(
         boot_index = 1L,
         x = 0,
         y = 0,
         U = 0,
-        cluster = 1L
+        minimum = 1L
       ),
-      per_cluster = NULL,
+      per_minimum = NULL,
       original_ld = original_ld,
       params = list(min_barrier = 0.1)
     ),
@@ -321,7 +321,7 @@ test_that("autoplot.summary_bootstrap_2d_ld overlays only original major minima"
     .package = "fitlandr"
   )
 
-  p <- autoplot(summary_obj, mode = "clusters")
+  p <- autoplot(summary_obj, mode = "minima")
 
   expect_s3_class(p, "ggplot")
   expect_equal(nrow(p$layers[[2]]$data), 1L)
@@ -494,9 +494,12 @@ test_that("summary.bootstrap_1d_ld returns a structured summary", {
   boot_vf <- bootstrap_1d_vf(vf, n_boot = 5, block_length = 4)
   boot_vf$bootstrap_models <- lapply(boot_vf$bootstrap_models, add_interp_grid)
   boot_ld <- bootstrap_1d_ld(boot_vf, n_grid = 40)
-  smry <- summary(boot_ld, clustering_method = "mean_potential")
+  smry <- summary(boot_ld, minima_method = "mean_potential")
 
   expect_s3_class(smry, "summary_bootstrap_1d_ld")
+  expect_true(all(c("bootstrap_minima", "per_minimum") %in% names(smry)))
+  expect_false(any(c("per_point", "per_cluster") %in% names(smry)))
+  expect_identical(smry$params$minima_method, "mean_potential")
   expect_true(all(c("boot_index", "n_mins") %in% names(smry$per_boot)))
   expect_true(!is.null(smry$original_ld))
 })

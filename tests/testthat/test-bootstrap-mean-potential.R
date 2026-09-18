@@ -46,20 +46,20 @@ test_that("mean_potential_hessian summary returns compatible ellipse output", {
 
   out <- summary(
     boot_obj,
-    clustering_method = "mean_potential_hessian",
+    minima_method = "mean_potential_hessian",
     exclude_minor = TRUE,
     min_barrier = 0.05,
     level = 0.95
   )
 
   expect_s3_class(out, "summary_bootstrap_2d_ld")
-  expect_equal(out$params$clustering_method, "mean_potential_hessian")
+  expect_equal(out$params$minima_method, "mean_potential_hessian")
   expect_equal(nrow(out$per_boot), 3L)
   expect_equal(out$per_boot$n_mins, c(1L, 1L, 1L))
-  expect_true(nrow(out$per_cluster) >= 1L)
-  expect_true(all(c("a_pred", "b_pred", "a_conf", "b_conf", "h_xx", "h_xy", "h_yy") %in% names(out$per_cluster)))
-  expect_true(any(is.finite(out$per_cluster$a_pred)))
-  expect_true(any(out$per_cluster$hessian_ok))
+  expect_true(nrow(out$per_minimum) >= 1L)
+  expect_true(all(c("a_pred", "b_pred", "a_conf", "b_conf", "h_xx", "h_xy", "h_yy") %in% names(out$per_minimum)))
+  expect_true(any(is.finite(out$per_minimum$a_pred)))
+  expect_true(any(out$per_minimum$hessian_ok))
 })
 
 
@@ -84,14 +84,14 @@ test_that("mean_potential_hessian excludes bootstrap runs without matched minima
 
   out <- summary(
     boot_obj,
-    clustering_method = "mean_potential_hessian",
+    minima_method = "mean_potential_hessian",
     exclude_minor = TRUE,
     min_barrier = 0.05,
     level = 0.95
   )
 
   expect_equal(out$per_boot$n_mins, c(1L, 0L, 1L))
-  expect_equal(out$per_cluster$n_runs[[1]], 2L)
-  expect_equal(out$per_cluster$n_hessian[[1]], 2L)
-  expect_true(out$per_cluster$stability[[1]] < 1)
+  expect_equal(out$per_minimum$n_runs[[1]], 2L)
+  expect_equal(out$per_minimum$n_hessian[[1]], 2L)
+  expect_true(out$per_minimum$stability[[1]] < 1)
 })

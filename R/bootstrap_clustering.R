@@ -90,7 +90,7 @@ cluster_pairwise_hungarian_graph <- function(boot_min_df, pairwise_leiden_gamma 
     boot_min_df$is_noise <- TRUE
     return(list(
       boot_min_df = boot_min_df,
-      diagnostics = list(clustering_method = "pairwise_hungarian_graph", n_edges = 0L)
+      diagnostics = list(minima_method = "pairwise_hungarian_graph", n_edges = 0L)
     ))
   }
 
@@ -101,7 +101,7 @@ cluster_pairwise_hungarian_graph <- function(boot_min_df, pairwise_leiden_gamma 
     boot_min_df$is_noise <- TRUE
     return(list(
       boot_min_df = boot_min_df,
-      diagnostics = list(clustering_method = "pairwise_hungarian_graph", n_edges = 0L)
+      diagnostics = list(minima_method = "pairwise_hungarian_graph", n_edges = 0L)
     ))
   }
 
@@ -151,7 +151,7 @@ cluster_pairwise_hungarian_graph <- function(boot_min_df, pairwise_leiden_gamma 
     boot_min_df$is_noise <- TRUE
     return(list(
       boot_min_df = boot_min_df,
-      diagnostics = list(clustering_method = "pairwise_hungarian_graph", n_edges = 0L)
+      diagnostics = list(minima_method = "pairwise_hungarian_graph", n_edges = 0L)
     ))
   }
 
@@ -214,7 +214,7 @@ cluster_pairwise_hungarian_graph <- function(boot_min_df, pairwise_leiden_gamma 
   list(
     boot_min_df = boot_min_df,
     diagnostics = list(
-      clustering_method = "pairwise_hungarian_graph",
+      minima_method = "pairwise_hungarian_graph",
       graph_clustering = "leiden",
       n_run_pairs = choose(length(run_ids), 2),
       n_edges = nrow(edges),
@@ -254,7 +254,7 @@ cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_bar
       return(list(
         boot_min_df = boot_min_df,
         diagnostics = list(
-          clustering_method = "hdbscan",
+          minima_method = "hdbscan",
           clustering_status = "fewer_pooled_minima_than_minPts",
           n_pooled_minima = nrow(boot_min_df),
           distance_scale_dx = scaler$dx,
@@ -273,7 +273,7 @@ cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_bar
     return(list(
       boot_min_df = boot_min_df,
       diagnostics = list(
-        clustering_method = "hdbscan",
+        minima_method = "hdbscan",
         distance_scale_dx = scaler$dx,
         distance_scale_dy = scaler$dy
       )
@@ -296,7 +296,7 @@ cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_bar
       boot_min_df$is_noise <- TRUE
       return(list(
         boot_min_df = boot_min_df,
-        diagnostics = list(clustering_method = "hungarian", n_reference = 0L)
+        diagnostics = list(minima_method = "hungarian", n_reference = 0L)
       ))
     }
 
@@ -310,7 +310,7 @@ cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_bar
     return(list(
       boot_min_df = boot_min_df,
       diagnostics = list(
-        clustering_method = "hungarian",
+        minima_method = "hungarian",
         n_reference = nrow(ref_xy),
         distance_scale_dx = scaler$dx,
         distance_scale_dy = scaler$dy
@@ -345,7 +345,7 @@ cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_bar
     return(list(
       boot_min_df = boot_min_df,
       diagnostics = list(
-        clustering_method = "gmm_bic",
+        minima_method = "gmm_bic",
         distance_scale_dx = scaler$dx,
         distance_scale_dy = scaler$dy,
         gmm_fit_failed = TRUE,
@@ -359,7 +359,7 @@ cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_bar
   list(
     boot_min_df = boot_min_df,
     diagnostics = list(
-      clustering_method = "gmm_bic",
+      minima_method = "gmm_bic",
       distance_scale_dx = scaler$dx,
       distance_scale_dy = scaler$dy,
       gmm_G = fit$G,

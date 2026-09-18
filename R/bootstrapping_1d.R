@@ -123,10 +123,11 @@ bootstrap_1d_ld <- function(boot_vf, ...) {
 #' @param min_convex_hull_range_fraction Additional lower bound for barrier-based
 #'   retention. In 1D this is applied to the potential range over the observed
 #'   data range.
-#' @param clustering_method One of `"hungarian"` (default),
+#' @param minima_method Method for summarizing bootstrap minima. One of `"hungarian"` (default),
 #'   `"mean_potential"`, `"pairwise_hungarian_graph"`, or `"gmm_bic"`.
 #' @param level Coverage level for intervals.
-#' @param one_per_run Logical; retain at most one point per run per cluster.
+#' @param one_per_run Logical; retain at most one bootstrap minimum per run per
+#'   inferred minimum.
 #' @param ... Unused.
 #'
 #' @return A `summary_bootstrap_1d_ld` object.
@@ -136,7 +137,7 @@ summary.bootstrap_1d_ld <- function(object,
                                     exclude_minor = TRUE,
                                     min_barrier_fraction = 0.1,
                                     min_convex_hull_range_fraction = 0.01,
-                                    clustering_method = c("hungarian", "mean_potential", "pairwise_hungarian_graph", "gmm_bic"),
+                                    minima_method = c("hungarian", "mean_potential", "pairwise_hungarian_graph", "gmm_bic"),
                                     level = 0.95,
                                     one_per_run = TRUE,
                                     ...) {
@@ -144,7 +145,7 @@ summary.bootstrap_1d_ld <- function(object,
     cli::cli_abort("{.arg object} must be a {.cls bootstrap_1d_ld} object.")
   }
 
-  clustering_method <- match.arg(clustering_method)
+  clustering_method <- match.arg(minima_method)
 
   boot_min_list <- lapply(seq_along(object$bootstrap_lds), function(i) {
     mins <- find_loc_min(
@@ -170,11 +171,11 @@ summary.bootstrap_1d_ld <- function(object,
 
   if (!nrow(boot_min_df)) {
     out <- list(
-      params = list(exclude_minor = exclude_minor, min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction, clustering_method = clustering_method, level = level, one_per_run = one_per_run),
+      params = list(exclude_minor = exclude_minor, min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction, minima_method = clustering_method, level = level, one_per_run = one_per_run),
       per_boot = per_boot,
-      per_point = boot_min_df,
-      per_cluster = NULL,
-      diagnostics = list(clustering_method = clustering_method, n_reference = 0L),
+      bootstrap_minima = boot_min_df,
+      per_minimum = data.frame(),
+      diagnostics = list(minima_method = clustering_method, n_reference = 0L),
       original_ld = object$original_ld,
       n_boot = object$n_boot
     )
@@ -205,7 +206,7 @@ summary.bootstrap_1d_ld <- function(object,
     })
     boot_min_df$cluster <- as.integer(unlist(assignments, use.names = FALSE))
     boot_min_df$is_noise <- boot_min_df$cluster == 0L
-    diagnostics <- list(clustering_method = "hungarian", n_reference = nrow(ref_mins), distance_scale_dx = dx)
+    diagnostics <- list(minima_method = "hungarian", n_reference = nrow(ref_mins), distance_scale_dx = dx)
   } else if (clustering_method == "mean_potential") {
     mean_ld <- build_mean_potential_ld_1d(object)
     ref_mins <- find_loc_min(
@@ -223,7 +224,7 @@ summary.bootstrap_1d_ld <- function(object,
     })
     boot_min_df$cluster <- as.integer(unlist(assignments, use.names = FALSE))
     boot_min_df$is_noise <- boot_min_df$cluster == 0L
-    diagnostics <- list(clustering_method = "mean_potential", n_reference = nrow(ref_mins), distance_scale_dx = dx)
+    diagnostics <- list(minima_method = "mean_potential", n_reference = nrow(ref_mins), distance_scale_dx = dx)
   } else if (clustering_method == "gmm_bic") {
     rlang::check_installed(
       "mclust",
@@ -234,11 +235,11 @@ summary.bootstrap_1d_ld <- function(object,
     if (is.null(fit) || is.null(fit$classification)) {
       boot_min_df$cluster <- 0L
       boot_min_df$is_noise <- TRUE
-      diagnostics <- list(clustering_method = "gmm_bic", distance_scale_dx = dx, gmm_fit_failed = TRUE)
+      diagnostics <- list(minima_method = "gmm_bic", distance_scale_dx = dx, gmm_fit_failed = TRUE)
     } else {
       boot_min_df$cluster <- as.integer(fit$classification)
       boot_min_df$is_noise <- FALSE
-      diagnostics <- list(clustering_method = "gmm_bic", distance_scale_dx = dx, gmm_G = fit$G, gmm_model = fit$modelName)
+      diagnostics <- list(minima_method = "gmm_bic", distance_scale_dx = dx, gmm_G = fit$G, gmm_model = fit$modelName)
     }
   } else {
     out <- cluster_pairwise_hungarian_graph_1d(boot_min_df, x_scale = dx)
@@ -263,10 +264,10 @@ summary.bootstrap_1d_ld <- function(object,
 
   if (!nrow(df_c)) {
     out <- list(
-      params = list(exclude_minor = exclude_minor, min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction, clustering_method = clustering_method, level = level, one_per_run = one_per_run),
+      params = list(exclude_minor = exclude_minor, min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction, minima_method = clustering_method, level = level, one_per_run = one_per_run),
       per_boot = per_boot,
-      per_point = boot_min_df,
-      per_cluster = NULL,
+      bootstrap_minima = dplyr::rename(boot_min_df, minimum = cluster),
+      per_minimum = data.frame(),
       diagnostics = diagnostics,
       original_ld = object$original_ld,
       n_boot = object$n_boot
@@ -298,10 +299,10 @@ summary.bootstrap_1d_ld <- function(object,
     )
 
   out <- list(
-    params = list(exclude_minor = exclude_minor, min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction, clustering_method = clustering_method, level = level, one_per_run = one_per_run),
+    params = list(exclude_minor = exclude_minor, min_barrier_fraction = min_barrier_fraction, min_convex_hull_range_fraction = min_convex_hull_range_fraction, minima_method = clustering_method, level = level, one_per_run = one_per_run),
     per_boot = per_boot,
-    per_point = boot_min_df,
-    per_cluster = per_cluster,
+    bootstrap_minima = dplyr::rename(boot_min_df, minimum = cluster),
+    per_minimum = dplyr::rename(per_cluster, minimum = cluster),
     diagnostics = diagnostics,
     original_ld = object$original_ld,
     n_boot = object$n_boot
@@ -312,7 +313,8 @@ summary.bootstrap_1d_ld <- function(object,
 #' Autoplot a 1D bootstrap summary
 #'
 #' @param object A `summary_bootstrap_1d_ld` object.
-#' @param mode One of `"clusters"` or `"minima"`.
+#' @param mode Plot style. `"minima"` shows summarized minima; `"bootstrap_minima"`
+#'   shows individual bootstrap minima.
 #' @param show_intervals Logical; draw prediction/confidence intervals.
 #' @param show_original_major_minima Logical; overlay original major minima.
 #' @param point_alpha Numeric alpha for points.
@@ -321,7 +323,7 @@ summary.bootstrap_1d_ld <- function(object,
 #' @return A ggplot object.
 #' @export
 autoplot.summary_bootstrap_1d_ld <- function(object,
-                                             mode = c("clusters", "minima"),
+                                             mode = c("minima", "bootstrap_minima"),
                                              show_intervals = TRUE,
                                              show_original_major_minima = TRUE,
                                              point_alpha = 0.35,
@@ -329,11 +331,11 @@ autoplot.summary_bootstrap_1d_ld <- function(object,
   if (!inherits(object, "summary_bootstrap_1d_ld")) {
     cli::cli_abort("{.arg object} must inherit from {.cls summary_bootstrap_1d_ld}.")
   }
-  mode <- rlang::arg_match0(mode, c("clusters", "minima"))
-  df_points <- object$per_point
-  df_cl <- object$per_cluster
+  mode <- rlang::arg_match0(mode, c("minima", "bootstrap_minima"))
+  df_points <- object$bootstrap_minima
+  df_minimum <- object$per_minimum
 
-  if (mode == "minima") {
+  if (mode == "bootstrap_minima") {
     boot_counts <- table(df_points$boot_index)
     boot_count_df <- data.frame(boot_index = as.integer(names(boot_counts)), count = as.integer(boot_counts))
     plot_df <- df_points |>
@@ -350,17 +352,17 @@ autoplot.summary_bootstrap_1d_ld <- function(object,
 
   p <- ggplot2::ggplot(df_points) +
     ggplot2::geom_point(
-      ggplot2::aes(x = x, y = U, color = factor(cluster)),
+      ggplot2::aes(x = x, y = U, color = factor(minimum)),
       alpha = point_alpha,
       size = 1
     ) +
-    ggplot2::labs(x = object$original_ld$vf$x, y = "U", color = "cluster") +
+    ggplot2::labs(x = object$original_ld$vf$x, y = "U", color = "minimum") +
     ggplot2::theme_bw()
 
-  if (show_intervals && !is.null(df_cl) && nrow(df_cl)) {
+  if (show_intervals && !is.null(df_minimum) && nrow(df_minimum)) {
     p <- p +
       ggplot2::geom_segment(
-        data = df_cl,
+        data = df_minimum,
         ggplot2::aes(x = x_pred_lower, xend = x_pred_upper, y = mean_U, yend = mean_U),
         inherit.aes = FALSE,
         alpha = 0.2,
@@ -368,7 +370,7 @@ autoplot.summary_bootstrap_1d_ld <- function(object,
         color = "firebrick"
       ) +
       ggplot2::geom_segment(
-        data = df_cl,
+        data = df_minimum,
         ggplot2::aes(x = x_conf_lower, xend = x_conf_upper, y = mean_U, yend = mean_U),
         inherit.aes = FALSE,
         linewidth = 1,

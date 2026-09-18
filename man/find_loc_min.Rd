@@ -9,7 +9,8 @@ find_loc_min(
   exclude_minor = TRUE,
   min_barrier_fraction = 0.1,
   min_convex_hull_range_fraction = 0.01,
-  use_convex_hull = TRUE
+  use_convex_hull = TRUE,
+  retain_single_outside_hull = FALSE
 )
 }
 \arguments{
@@ -30,8 +31,12 @@ within the observed-data convex hull. In 1D, it is expressed as a fraction
 of the potential range over the observed data range. Default is 0.01.}
 
 \item{use_convex_hull}{Logical indicating whether to mark minima outside
-the convex hull of observed data points as minor before barrier-based
+the convex hull of observed data points as minor after barrier-based
 minor-minimum detection. Default is TRUE.}
+
+\item{retain_single_outside_hull}{Logical indicating whether to retain the
+sole remaining minimum as major when it falls outside the observed-data
+convex hull. Default is FALSE.}
 }
 \value{
 An object of class \code{ld_min}. Its \code{mins} component contains one row
@@ -39,7 +44,8 @@ per local minimum with coordinates, potential, \code{is_minor}, and
 \code{exclusion_reason}. The exclusion reason is one of
 \code{"retained_major"}, \code{"retained_major_outside_observed_data_convex_hull"},
 \code{"outside_observed_data_convex_hull"}, \code{"insufficient_barrier_separation"},
-or both minor criteria joined by \code{"; "}.
+or both minor criteria joined by \code{"; "}. The retained-outside-hull reason
+is only possible when \code{retain_single_outside_hull = TRUE}.
 }
 \description{
 Finds local minima in a 2D landscape object.

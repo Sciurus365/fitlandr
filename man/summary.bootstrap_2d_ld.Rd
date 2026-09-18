@@ -9,8 +9,8 @@
   exclude_minor = TRUE,
   min_barrier_fraction = 0.1,
   min_convex_hull_range_fraction = 0.01,
-  clustering_method = c("hungarian", "mean_potential", "hdbscan",
-    "pairwise_hungarian_graph", "mean_potential_hessian", "gmm_bic"),
+  minima_method = c("hungarian", "mean_potential", "hdbscan", "pairwise_hungarian_graph",
+    "mean_potential_hessian", "gmm_bic"),
   minPts = 5,
   pairwise_leiden_gamma = 0.01,
   level = 0.95,
@@ -30,19 +30,20 @@ highest barrier, used in minor-minimum detection.}
 barrier-based retention, defined as a fraction of the potential range
 within the observed-data convex hull.}
 
-\item{clustering_method}{One of \code{"hungarian"} (default),
+\item{minima_method}{Method for summarizing bootstrap minima. One of \code{"hungarian"} (default),
 \code{"mean_potential"}, \code{"hdbscan"}, \code{"pairwise_hungarian_graph"},
 \code{"mean_potential_hessian"}, or \code{"gmm_bic"}.}
 
-\item{minPts}{Minimum cluster size used by clustering methods that require
-it.}
+\item{minPts}{Minimum number of bootstrap minima used by methods that require
+a density threshold.}
 
 \item{pairwise_leiden_gamma}{Resolution parameter for
 \code{"pairwise_hungarian_graph"}.}
 
 \item{level}{Coverage level for ellipses and intervals.}
 
-\item{one_per_run}{Logical; retain at most one point per run per cluster.}
+\item{one_per_run}{Logical; retain at most one bootstrap minimum per run per
+inferred minimum.}
 
 \item{...}{Unused.}
 }
