@@ -107,3 +107,39 @@ test_that("sole outside-hull minimum is excluded by default", {
     "retained_major_outside_observed_data_convex_hull"
   )
 })
+
+test_that("outside-hull minima do not enter barrier comparisons", {
+  dist <- expand.grid(x = 1:9, y = 1:9)
+  dist$U <- 10
+  dist$U[dist$x == 3 & dist$y == 3] <- 0
+  dist$U[dist$x == 5 & dist$y == 5] <- 1
+  dist$U[dist$x == 8 & dist$y == 8] <- -10
+  dist$d <- exp(-dist$U)
+
+  ld <- structure(
+    list(
+      dist = dist,
+      vf = list(
+        data = data.frame(x = c(2, 6, 6, 2), y = c(2, 2, 6, 6)),
+        x = "x",
+        y = "y"
+      )
+    ),
+    class = c("2d_static_ld", "2d_ld", "landscape")
+  )
+
+  result <- find_loc_min(
+    ld,
+    min_barrier_fraction = 0.6,
+    min_convex_hull_range_fraction = 0
+  )
+
+  expect_equal(result$mins$x, c(3, 5, 8))
+  expect_equal(result$mins$is_minor, c(FALSE, FALSE, TRUE))
+  expect_equal(
+    result$mins$exclusion_reason,
+    c("retained_major", "retained_major", "outside_observed_data_convex_hull")
+  )
+  expect_true(all(is.na(result$barriers[3, ])))
+  expect_true(all(is.na(result$barriers[, 3])))
+})

@@ -572,17 +572,17 @@ is_inside_convex_hull <- function(points, hull_vertices, tol = 1e-10) {
 #' based on the barrier height criterion, so that they can be easily excluded
 #' from subsequent calculations. Default is TRUE.
 #' @param use_convex_hull Logical indicating whether to mark minima outside
-#' the convex hull of observed data points as minor after barrier-based
+#' the convex hull of observed data points as minor before barrier-based
 #' minor-minimum detection. Default is TRUE.
 #' @param retain_single_outside_hull Logical indicating whether to retain the
-#' sole remaining minimum as major when it falls outside the observed-data
+#' sole detected minimum as major when it falls outside the observed-data
 #' convex hull. Default is FALSE.
 #' @return An object of class `ld_min`. Its `mins` component contains one row
 #'   per local minimum with coordinates, potential, `is_minor`, and
 #'   `exclusion_reason`. The exclusion reason is one of
 #'   `"retained_major"`, `"retained_major_outside_observed_data_convex_hull"`,
-#'   `"outside_observed_data_convex_hull"`, `"insufficient_barrier_separation"`,
-#'   or both minor criteria joined by `"; "`. The retained-outside-hull reason
+#'   `"outside_observed_data_convex_hull"`, or `"insufficient_barrier_separation"`.
+#'   The retained-outside-hull reason
 #'   is only possible when `retain_single_outside_hull = TRUE`.
 #' @export
 find_loc_min <- function(ld,
@@ -661,33 +661,43 @@ find_loc_min <- function(ld,
 
   hull_vertices <- NULL
   hull_range_threshold <- 0
+  hull_minor_mins <- integer(0)
+  hull_outside_but_retained <- integer(0)
   if (exclude_minor && isTRUE(use_convex_hull) && n_mins > 0 && !is.null(ld$vf) && !is.null(ld$vf$data)) {
     data_xy <- as.matrix(ld$vf$data[, c(ld$vf$x, ld$vf$y), drop = FALSE])
     data_xy <- data_xy[stats::complete.cases(data_xy), , drop = FALSE]
-      if (nrow(data_xy) >= 3) {
-        hull_idx <- grDevices::chull(data_xy[, 1], data_xy[, 2])
-        hull_vertices <- data_xy[hull_idx, , drop = FALSE]
+    if (nrow(data_xy) >= 3) {
+      hull_idx <- grDevices::chull(data_xy[, 1], data_xy[, 2])
+      hull_vertices <- data_xy[hull_idx, , drop = FALSE]
 
-        grid_xy <- as.matrix(dist[, c("x", "y"), drop = FALSE])
-        grid_inside_hull <- is_inside_convex_hull(grid_xy, hull_vertices)
-        hull_u <- dist$U[grid_inside_hull]
-        hull_u <- hull_u[is.finite(hull_u)]
-        if (length(hull_u) > 0) {
-          hull_range_threshold <- min_convex_hull_range_fraction * (max(hull_u) - min(hull_u))
-        }
+      grid_xy <- as.matrix(dist[, c("x", "y"), drop = FALSE])
+      grid_inside_hull <- is_inside_convex_hull(grid_xy, hull_vertices)
+      hull_u <- dist$U[grid_inside_hull]
+      hull_u <- hull_u[is.finite(hull_u)]
+      if (length(hull_u) > 0) {
+        hull_range_threshold <- min_convex_hull_range_fraction * (max(hull_u) - min(hull_u))
       }
+
+      mins_xy <- as.matrix(local_mins[, c("x", "y"), drop = FALSE])
+      outside_idx <- which(!is_inside_convex_hull(mins_xy, hull_vertices))
+      if (isTRUE(retain_single_outside_hull) && n_mins == 1L && length(outside_idx) == 1L) {
+        hull_outside_but_retained <- outside_idx
+      } else {
+        hull_minor_mins <- outside_idx
+      }
+    }
   }
 
+  barrier_candidates <- setdiff(seq_len(n_mins), hull_minor_mins)
   barrier_minor_mins <- integer(0)
-  if (n_mins <= 1 || exclude_minor == FALSE) {
-    all_barriers <- matrix(NA, nrow = n_mins, ncol = n_mins)
-    minor_mins <- integer(0)
-  } else {
-    all_barriers <- matrix(NA, nrow = n_mins, ncol = n_mins)
+  all_barriers <- matrix(NA_real_, nrow = n_mins, ncol = n_mins)
+  if (exclude_minor && length(barrier_candidates) > 1L) {
     ld_reformated <- ld
     ld_reformated$dist <- transform_to_grid(ld$dist)
-    for (i in 1:(n_mins - 1)) {
-      for (j in (i + 1):n_mins) {
+    for (candidate_i in seq_len(length(barrier_candidates) - 1L)) {
+      i <- barrier_candidates[[candidate_i]]
+      for (candidate_j in (candidate_i + 1L):length(barrier_candidates)) {
+        j <- barrier_candidates[[candidate_j]]
         barrier_info <- calculate_barrier.2d_ld(
           l = ld_reformated,
           start_location_value = c(local_mins$x[i], local_mins$y[i]),
@@ -703,7 +713,6 @@ find_loc_min <- function(ld,
     }
 
     # find the highest barrier height
-    minor_mins <- integer(0)
     all_barriers_copy <- all_barriers
 
     finite_barriers <- all_barriers_copy[is.finite(all_barriers_copy)]
@@ -733,28 +742,8 @@ find_loc_min <- function(ld,
       locs <- which(all_barriers_copy == current_min_barrier, arr.ind = TRUE)
       min_to_remove <- locs[1, 1] # arbitrarily choose the first
       barrier_minor_mins <- unique(c(barrier_minor_mins, min_to_remove))
-      minor_mins <- unique(c(minor_mins, min_to_remove))
       all_barriers_copy[min_to_remove, ] <- NA
       all_barriers_copy[, min_to_remove] <- NA
-    }
-  }
-
-  hull_minor_mins <- integer(0)
-  hull_outside_but_retained <- integer(0)
-  if (exclude_minor && !is.null(hull_vertices)) {
-    mins_xy <- as.matrix(local_mins[, c("x", "y"), drop = FALSE])
-    inside <- is_inside_convex_hull(mins_xy, hull_vertices)
-    outside_idx <- which(!inside)
-    if (length(outside_idx) > 0) {
-      major_after_barrier <- setdiff(seq_len(n_mins), barrier_minor_mins)
-      if (isTRUE(retain_single_outside_hull) &&
-          length(major_after_barrier) == 1L &&
-          major_after_barrier %in% outside_idx) {
-        hull_outside_but_retained <- major_after_barrier
-        hull_minor_mins <- setdiff(outside_idx, major_after_barrier)
-      } else {
-        hull_minor_mins <- outside_idx
-      }
     }
   }
 
@@ -770,11 +759,7 @@ find_loc_min <- function(ld,
       reason_parts[hull_minor_mins] <- "outside_observed_data_convex_hull"
     }
     if (length(barrier_minor_mins) > 0) {
-      reason_parts[barrier_minor_mins] <- ifelse(
-        nzchar(reason_parts[barrier_minor_mins]),
-        paste(reason_parts[barrier_minor_mins], "insufficient_barrier_separation", sep = "; "),
-        "insufficient_barrier_separation"
-      )
+      reason_parts[barrier_minor_mins] <- "insufficient_barrier_separation"
     }
     exclusion_reason[nzchar(reason_parts)] <- reason_parts[nzchar(reason_parts)]
   }
