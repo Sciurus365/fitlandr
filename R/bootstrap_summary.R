@@ -216,7 +216,7 @@ summary.bootstrap_2d_ld <- function(object,
     ) |>
     dplyr::mutate(stability = n_runs / object$n_boot)
 
-  # ---------- 4) Add ellipse parameters (prediction & confidence) ----------
+  # ---------- 4) Add raw-bootstrap confidence-ellipse parameters ----------
   c2 <- stats::qchisq(level, df = 2) # e.g., 0.95 -> 5.991  [2](https://stackoverflow.com/questions/70010774/dbscan-choice-of-epsilon-through-elbow-method)
 
   ellipse_df <- lapply(seq_len(nrow(per_cluster)), function(i) {

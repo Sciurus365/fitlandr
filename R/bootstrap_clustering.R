@@ -401,7 +401,7 @@ assign_run_to_reference <- function(run_xy, ref_xy) {
 }
 
 
-#' Quick autoplot: points + 95% prediction & confidence ellipses
+#' Quick autoplot: points + 95% bootstrap confidence ellipses
 #' @export
 #' @rdname summary.bootstrap_2d_ld
 #' @param object A `"summary_bootstrap_2d_ld"` object produced by `summary()`.
@@ -411,6 +411,6 @@ assign_run_to_reference <- function(run_xy, ref_xy) {
 #' @param show_original_major_minima Logical; overlay major minima estimated
 #'   from the original (non-bootstrap) sample. Default TRUE.
 #' @param point_alpha Numeric; alpha for points. Default 0.35.
-#' @param ellipse_alpha Numeric; alpha for filled prediction ellipse. Default 0.15.
+#' @param ellipse_alpha Numeric; alpha for filled bootstrap confidence ellipse. Default 0.15.
 #' @param ... Unused.
 #' @export

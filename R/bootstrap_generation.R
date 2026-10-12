@@ -77,7 +77,7 @@ bootstrap_2d_vf <- function(vf,
       # Sample blocks with replacement
       sampled_block_indices <- sample(1:n_blocks, n_blocks_needed, replace = TRUE)
       sampled_indices <- unlist(blocks[sampled_block_indices])
-      sampled_indices <- sampled_indices[sampled_indices <= n_vec] # Trim to original size
+      sampled_indices <- sampled_indices[seq_len(n_vec)]
       sampled_vectors <- original_vectors[sampled_indices, ]
       sampled_vectors_normalized <- original_vectors_normalized[sampled_indices, ]
       # Fit vector field to the sampled vectors

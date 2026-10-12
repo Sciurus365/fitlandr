@@ -43,7 +43,7 @@ bootstrap_1d_vf <- function(vf, block_length = NULL, n_boot = 200, seed = 1614, 
   bootstrap_models <- lapply(seq_len(n_boot), function(b) {
     sampled_block_indices <- sample(seq_len(n_blocks), n_blocks_needed, replace = TRUE)
     sampled_indices <- unlist(blocks[sampled_block_indices])
-    sampled_indices <- sampled_indices[sampled_indices <= n_vec]
+    sampled_indices <- sampled_indices[seq_len(n_vec)]
     sampled_vectors <- original_vectors[sampled_indices, , drop = FALSE]
     sampled_vectors_normalized <- original_vectors_normalized[sampled_indices, , drop = FALSE]
 

@@ -519,10 +519,12 @@ summarize_mean_potential <- function(object,
 #' then matched to the closest reference minimum, and ellipse parameters are derived from the
 #' inverse of the mean matched Hessian.
 #'
-#' Semi-axes for the **prediction** ellipse are
-#' \eqn{\sqrt{\lambda_i\,\chi^2_{2,\alpha}}}; for the **confidence** ellipse they are
-#' \eqn{\sqrt{\lambda_i\,\chi^2_{2,\alpha}/n_{\text{runs}}}} where \eqn{n_{\text{runs}}}
-#' is the number of bootstrap runs contributing to that minimum.
+#' Semi-axes for the raw-bootstrap **confidence** ellipse are
+#' \eqn{\sqrt{\lambda_i\,\chi^2_{2,\alpha}}}. The internally retained
+#' `a_conf` and `b_conf` fields additionally divide these axes by
+#' \eqn{\sqrt{n_{\text{runs}}}}, where \eqn{n_{\text{runs}}} is the number of
+#' bootstrap runs contributing to that minimum; they are not used for the
+#' bootstrap confidence ellipses reported or plotted by default.
 #' Ellipses are drawn with `ggforce::geom_ellipse()` which expects aesthetics
 #' `x0`, `y0`, `a`, `b`, `angle`.  \[See ggforce docs.\]  # (geom_ellipse API)  [1](https://rstudio-pubs-static.s3.amazonaws.com/1236382_7016d680936d411e8fd45fc0b8b62b0c.html)
 #' The \eqn{\chi^2_{2,\alpha}} quantile comes from the chi-square distribution
