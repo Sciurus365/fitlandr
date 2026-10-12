@@ -57,7 +57,7 @@ bootstrap_2d_vf <- function(vf,
   bootstrap_models <- vector("list", n_boot)
 
   # retrieve the parameters from vf
-  h <- environment(vf[["MVKEresult"]])[["h"]]
+  h_normalized <- vf$h_normalized
   kernel <- environment(vf[["MVKEresult"]])[["kernel"]]
   dv <- vf$data_normalized
   lims <- vf$lims
@@ -83,7 +83,7 @@ bootstrap_2d_vf <- function(vf,
       # Fit vector field to the sampled vectors
       MVKEresult <- fitlandr::MVKE(
         d = sampled_vectors_normalized[, 1:2], v = sampled_vectors_normalized[, 3:4],
-        h = h,
+        h = h_normalized,
         kernel = kernel
       )
       v_mat <- matrix(NA_real_, nrow = n_grid, ncol = 2)
@@ -99,7 +99,8 @@ bootstrap_2d_vf <- function(vf,
         vec_grid = vec_temp, VFCresult = NULL, MVKEresult = MVKEresult,
         data = d_raw, data_normalized = dv, original_vectors = sampled_vectors,
         original_vectors_normalized = sampled_vectors_normalized,
-        x = x, y = y, lims = lims, n = n, method = method
+        x = x, y = y, lims = lims, n = n, method = method,
+        h = vf$h, h_normalized = h_normalized
       )
       class(result) <- "vectorfield"
 

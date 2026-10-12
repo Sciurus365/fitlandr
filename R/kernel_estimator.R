@@ -4,7 +4,8 @@
 #'
 #' @param d The dataset. Should be a matrix or a data frame, with each row representing a random vector.
 #' @param v The vectors corresponding to the dataset. Should be a matrix or a data frame with the same shape as `d`. If missing, then the vectors will be calculated from the dataset.
-#' @param h The bandwidth for the kernel estimator.
+#' @param h The bandwidth in the units of `d`. Unlike [fit_2d_vf()] and
+#'   [fit_1d_vf()], this low-level estimator does not normalize its input data.
 #' @param kernel The type of kernel estimator used. "Gaussian" by default.
 #' @param prior_mean_drift Logical. If `TRUE`, apply a weak prior drift that points
 #' toward the mean position of `d`. The prior is only active in very low-support

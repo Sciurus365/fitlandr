@@ -2,7 +2,7 @@
 autoplot.summary_bootstrap_2d_ld <- function(object,
                                              mode = c("minima", "bootstrap_minima"),
                                              show_ellipses = TRUE,
-                                             show_original_major_minima = TRUE,
+                                             show_point_estimates = TRUE,
                                              point_alpha = 0.35,
                                              ellipse_alpha = 0.15,
                                              ...) {
@@ -92,48 +92,16 @@ autoplot.summary_bootstrap_2d_ld <- function(object,
     }
   }
 
-  if (isTRUE(show_original_major_minima) && !is.null(object$original_ld)) {
-    min_barrier_fraction <- object$params$min_barrier_fraction
-    min_convex_hull_range_fraction <- object$params$min_convex_hull_range_fraction
-    if (is.null(min_barrier_fraction) || !is.finite(min_barrier_fraction)) {
-      min_barrier_fraction <- 0.1
-    }
-    if (is.null(min_convex_hull_range_fraction) || !is.finite(min_convex_hull_range_fraction)) {
-      min_convex_hull_range_fraction <- 0.01
-    }
-
-    orig_major <- tryCatch(
-      {
-        mins <- find_loc_min(
-          object$original_ld,
-          exclude_minor = TRUE,
-          min_barrier_fraction = min_barrier_fraction,
-          min_convex_hull_range_fraction = min_convex_hull_range_fraction
-        )$mins
-        if (!is.null(mins) && nrow(mins) && "is_minor" %in% names(mins)) {
-          mins <- mins[!mins$is_minor, , drop = FALSE]
-        }
-        if (is.null(mins) || !nrow(mins)) {
-          NULL
-        } else {
-          mins
-        }
-      },
-      error = function(e) NULL
+  if (isTRUE(show_point_estimates) && !is.null(df_minimum) && nrow(df_minimum)) {
+    p <- p + ggplot2::geom_point(
+      data = df_minimum,
+      ggplot2::aes(x = point_x, y = point_y),
+      inherit.aes = FALSE,
+      shape = 4,
+      stroke = 1.1,
+      size = 3,
+      color = "black"
     )
-
-    if (!is.null(orig_major)) {
-      p <- p +
-        ggplot2::geom_point(
-          data = orig_major,
-          ggplot2::aes(x = x, y = y),
-          inherit.aes = FALSE,
-          shape = 4,
-          stroke = 1.1,
-          size = 3,
-          color = "black"
-        )
-    }
   }
   p + ggplot2::theme_bw()
 }

@@ -47,20 +47,23 @@ test_that("moving-block bootstraps retain the original number of vectors", {
       for (model in boot$bootstrap_models) {
         expect_equal(nrow(model$original_vectors), n_vectors)
         expect_equal(nrow(model$original_vectors_normalized), n_vectors)
+        expect_equal(model$h, vf$h)
+        expect_equal(model$h_normalized, vf$h_normalized)
       }
     }
   }
 })
 
-test_that("Hungarian summaries use matched bootstrap means and covariance", {
+test_that("reference summaries distinguish point locations from ellipse centers", {
   x_coords <- y_coords <- seq(-1, 1, length.out = 9)
   original_U <- outer(x_coords, y_coords, function(x, y) (x^2 - 0.25)^2 + y^2)
   centers <- data.frame(x = c(0.5, 0.75, 0.75, 1), y = c(0, 0.25, 0, -0.25))
+  potential_scales <- c(9, 1, 1, 1)
   boot_obj <- structure(
     list(
       bootstrap_lds = lapply(seq_len(nrow(centers)), function(i) {
         make_test_ld(outer(x_coords, y_coords, function(x, y) {
-          (x - centers$x[i])^2 + (y - centers$y[i])^2
+          potential_scales[i] * ((x - centers$x[i])^2 + (y - centers$y[i])^2)
         }))
       }),
       original_ld = make_test_ld(original_U),
@@ -73,6 +76,8 @@ test_that("Hungarian summaries use matched bootstrap means and covariance", {
   minimum <- out$per_minimum
   expect_equal(nrow(minimum), 1L)
   expect_equal(minimum$minimum, 2L)
+  expect_equal(minimum$point_x, 0.5)
+  expect_equal(minimum$point_y, 0)
   expect_equal(minimum$mean_x, 0.75)
   expect_equal(minimum$mean_y, 0)
   expect_equal(mean(out$bootstrap_minima$x), 0.75)
@@ -83,13 +88,42 @@ test_that("Hungarian summaries use matched bootstrap means and covariance", {
   expect_equal(c(minimum$a_pred, minimum$b_pred),
                sqrt(eigenvalues * qchisq(0.95, df = 2)))
   expect_equal(minimum$n_runs, 4L)
+  plotted <- ggplot2::ggplot_build(autoplot(out))
+  expect_equal(plotted$data[[3]]$x, minimum$point_x)
+  expect_equal(plotted$data[[3]]$y, minimum$point_y)
+  expect_equal(plotted$data[[3]]$shape, 4)
 
   mean_potential <- summary(boot_obj, minima_method = "mean_potential", exclude_minor = FALSE)
   expect_equal(mean_potential$per_minimum$mean_x, 0.75)
   expect_equal(mean_potential$per_minimum$mean_y, 0)
+  expect_equal(mean_potential$per_minimum$point_x, 0.5)
+  expect_equal(mean_potential$per_minimum$point_y, 0)
   expect_equal(mean_potential$per_minimum$s_xx, minimum$s_xx)
   expect_equal(mean_potential$per_minimum$s_yy, minimum$s_yy)
   expect_equal(mean_potential$per_minimum$s_xy, minimum$s_xy)
+  plotted_mean <- ggplot2::ggplot_build(autoplot(mean_potential))
+  expect_equal(plotted_mean$data[[3]]$x, mean_potential$per_minimum$point_x)
+
+  unsupported_object <- structure(
+    list(
+      original_ld = make_test_ld(original_U),
+      bootstrap_lds = list(
+        make_test_ld(sweep(original_U, 1, 0.4 * x_coords, "+")),
+        make_test_ld(sweep(original_U, 1, 0.4 * x_coords, "-"))
+      ),
+      n_boot = 2L
+    ),
+    class = "bootstrap_2d_ld"
+  )
+  expect_warning(
+    unsupported <- summary(unsupported_object, minima_method = "mean_potential",
+                           exclude_minor = FALSE),
+    "fewer than two bootstrap resamples"
+  )
+  expect_equal(nrow(unsupported$per_minimum), 0L)
+  expect_true(all(unsupported$bootstrap_minima$is_noise))
+  expect_true(all(unsupported$bootstrap_minima$minimum == 0L))
+  expect_equal(unsupported$diagnostics$matched_runs_per_reference, c(1L, 1L))
 })
 
 test_that("compare_minima_depths uses paired bootstrap contrasts", {

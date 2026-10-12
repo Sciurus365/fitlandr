@@ -15,6 +15,8 @@ fit_2d_vf(
   dayvar = NULL,
   beepvar = NULL,
   method = c("MVKE", "VFC"),
+  h = 0.2,
+  h_scale = c("normalized", "original"),
   ...
 )
 }
@@ -44,10 +46,17 @@ non-consecutive beeps so only consecutive assessments are used if
 
 \item{method}{One of "MVKE" or "VFC".}
 
+\item{h}{Positive scalar MVKE bandwidth, in the units specified by \code{h_scale}.}
+
+\item{h_scale}{Units of the input bandwidth: \code{"normalized"} (default) or
+\code{"original"}. Normalization centers each state variable and divides all
+coordinates by one shared root-mean-square distance from the data center.}
+
 \item{...}{Other parameters to be passed to \code{\link[=MVKE]{MVKE()}} or \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}.}
 }
 \value{
-A \code{vectorfield} object.
+A \code{vectorfield} object. For MVKE fits, \code{h} is the bandwidth in
+original data units and \code{h_normalized} is its internal normalized value.
 }
 \description{
 Estimate a 2D vector field from intensive longitudinal data. Two methods can be used: Multivariate Vector Field Kernel Estimator (MVKE, using \code{\link[=MVKE]{MVKE()}}), or Sparse Vector Field Consensus (SparseVFC, using \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}). Note that the input data are automatically normalized before being sent to the estimation engines to make sure the default parameter settings are close to the optimal. Therefore, you do not need to scale up or down the parameters of \code{\link[=MVKE]{MVKE()}} or \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}. We suggest the MVKE method to be used for psychological data because it has more realistic assumptions and produces more reasonable output.

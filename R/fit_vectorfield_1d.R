@@ -15,10 +15,12 @@
 #' @param beepvar Optional character scalar naming the within-day assessment
 #'   order variable.
 #' @param method One of `"MVKE"` or `"VFC"`.
+#' @inheritParams fit_2d_vf
 #' @param ... Additional arguments passed to [MVKE()] or
 #'   [SparseVFC::SparseVFC()].
 #'
-#' @return A `1d_vectorfield` object.
+#' @return A `1d_vectorfield` object. For MVKE fits, `h` is the bandwidth in
+#'   original data units and `h_normalized` is its internal normalized value.
 #' @export
 fit_1d_vf <- function(data, x,
                       lims,
@@ -27,7 +29,9 @@ fit_1d_vf <- function(data, x,
                       na_action = "omit_data_points",
                       dayvar = NULL,
                       beepvar = NULL,
-                      method = c("MVKE", "VFC"), ...) {
+                      method = c("MVKE", "VFC"),
+                      h = 0.2,
+                      h_scale = c("normalized", "original"), ...) {
   d <- data
   if (!is.null(dayvar) && !dayvar %in% colnames(d)) {
     cli::cli_abort("{.arg dayvar} must name a column in {.arg data}.")
@@ -87,8 +91,10 @@ fit_1d_vf <- function(data, x,
   original_vectors[, "vx"] <- scale_up(original_vectors[, "vx"], dv)
 
   VFCresult <- MVKEresult <- NULL
+  h_original <- h_normalized <- NULL
   method <- toupper(method[1])
   if (method == "VFC") {
+    if (!missing(h)) cli::cli_abort("{.arg h} is only used with {.code method = \"MVKE\"}.")
     rlang::check_installed(
       "SparseVFC",
       reason = "to use {.code method = \"VFC\"}."
@@ -99,9 +105,13 @@ fit_1d_vf <- function(data, x,
       ...
     )
   } else if (method == "MVKE") {
+    if (length(h) != 1L) cli::cli_abort("{.arg h} must be a single bandwidth.")
+    h_original <- as_original_bandwidth(h, h_scale, attr(dv, "scale"))
+    h_normalized <- h_original / attr(dv, "scale")
     MVKEresult <- MVKE(
       as.matrix(original_vectors_normalized[, "x", drop = FALSE]),
       as.matrix(original_vectors_normalized[, "vx", drop = FALSE]),
+      h = h_normalized,
       ...
     )
   } else {
@@ -135,7 +145,9 @@ fit_1d_vf <- function(data, x,
     y = NULL,
     lims = lims,
     n = n,
-    method = method
+    method = method,
+    h = h_original,
+    h_normalized = h_normalized
   )
   class(result) <- c("1d_vectorfield", "vectorfield")
   result
@@ -144,14 +156,18 @@ fit_1d_vf <- function(data, x,
 #' 10-fold cross-validation for 1D vector fields
 #'
 #' @inheritParams fit_1d_vf
-#' @param h_values Numeric vector of candidate bandwidths.
+#' @param h_values Numeric vector of candidate bandwidths in the units
+#'   specified by `h_scale`.
 #' @param k Number of folds.
+#' @inherit cv_fit_2d_vf details
 #'
-#' @return A `cv_vectorfield` object.
+#' @return A `cv_vectorfield` object with `cv_results$h` and `h_optimal` in
+#'   original data units. The corresponding full-dataset normalized values
+#'   are `cv_results$h_normalized` and `h_optimal_normalized`.
 #' @export
 cv_fit_1d_vf <- function(data, x, dayvar = NULL, beepvar = NULL,
                          h_values = exp(seq(log(0.01), log(2), length.out = 20)),
-                         k = 10, ...) {
+                         k = 10, h_scale = c("normalized", "original"), ...) {
   if (!x %in% colnames(data)) {
     cli::cli_abort("Data must contain a column named '{x}'.")
   }
@@ -164,6 +180,9 @@ cv_fit_1d_vf <- function(data, x, dayvar = NULL, beepvar = NULL,
 
   n_obs <- nrow(data)
   data <- as.data.frame(data)
+  h_scale <- match.arg(h_scale)
+  data_scale <- attr(normalize_vecs(as.matrix(data[, x, drop = FALSE])), "scale")
+  h_values <- as_original_bandwidth(h_values, h_scale, data_scale)
   fold_sizes <- rep.int(floor(n_obs / k), k)
   if (n_obs %% k > 0) {
     fold_sizes[seq_len(n_obs %% k)] <- fold_sizes[seq_len(n_obs %% k)] + 1L
@@ -221,7 +240,8 @@ cv_fit_1d_vf <- function(data, x, dayvar = NULL, beepvar = NULL,
       true_empirical_drift <- X_t_plus_1 - X_t
 
       model_train <- tryCatch(
-        suppressMessages(fit_1d_vf(train_data, x = x, h = h_curr, dayvar = dayvar, beepvar = beepvar, ...)),
+        suppressMessages(fit_1d_vf(train_data, x = x, h = h_curr, h_scale = "original",
+                                  dayvar = dayvar, beepvar = beepvar, ...)),
         error = function(e) {
           if (verbose) {
             cli::cli_alert("Error in fit_1d_vf for fold {i}, h = {h_curr}: {e$message}")
@@ -243,14 +263,17 @@ cv_fit_1d_vf <- function(data, x, dayvar = NULL, beepvar = NULL,
     mse_by_h[j] <- mean(fold_mse, na.rm = TRUE)
   }
 
-  cv_results <- data.frame(h = h_values, cv_mse = mse_by_h)
+  cv_results <- data.frame(h = h_values, h_normalized = h_values / data_scale, cv_mse = mse_by_h)
   h_optimal <- cv_results$h[which.min(cv_results$cv_mse)]
-  final_model <- fit_1d_vf(data, x = x, h = h_optimal, dayvar = dayvar, beepvar = beepvar, ...)
+  final_model <- fit_1d_vf(data, x = x, h = h_optimal, h_scale = "original",
+                          dayvar = dayvar, beepvar = beepvar, ...)
 
   structure(list(
     final_model = final_model,
     cv_results = cv_results,
     h_optimal = h_optimal,
+    h_optimal_normalized = h_optimal / data_scale,
+    h_input_scale = h_scale,
     data = data,
     folds = folds,
     x = x,

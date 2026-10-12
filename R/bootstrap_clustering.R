@@ -309,6 +309,7 @@ cluster_bootstrap_minima <- function(boot_min_df, object, exclude_minor, min_bar
     boot_min_df$is_noise <- boot_min_df$cluster == 0L
     return(list(
       boot_min_df = boot_min_df,
+      reference_minima = ref_mins,
       diagnostics = list(
         minima_method = "hungarian",
         n_reference = nrow(ref_xy),
@@ -405,11 +406,12 @@ assign_run_to_reference <- function(run_xy, ref_xy) {
 #' @export
 #' @rdname summary.bootstrap_2d_ld
 #' @param object A `"summary_bootstrap_2d_ld"` object produced by `summary()`.
-#' @param mode Plot style. `"clusters"` shows cluster-colored points and ellipses;
-#'   `"minima"` reproduces the minima-U jitter plot.
+#' @param mode Plot style. `"minima"` shows matched bootstrap locations,
+#'   point estimates, and ellipses; `"bootstrap_minima"` shows jittered minima
+#'   colored by potential value.
 #' @param show_ellipses Logical; draw ellipses (spread of points). Default TRUE.
-#' @param show_original_major_minima Logical; overlay major minima estimated
-#'   from the original (non-bootstrap) sample. Default TRUE.
+#' @param show_point_estimates Logical; mark the reported point estimates
+#'   with crosses. Default TRUE.
 #' @param point_alpha Numeric; alpha for points. Default 0.35.
 #' @param ellipse_alpha Numeric; alpha for filled bootstrap confidence ellipse. Default 0.15.
 #' @param ... Unused.

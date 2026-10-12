@@ -111,6 +111,7 @@ fit_group_member_quietly <- function(expr) {
 #' @param lims Limits as `c(x_min, x_max, y_min, y_max)`. If omitted, limits
 #'   are calculated from the data and extended by 10 percent.
 #' @param h_values Candidate bandwidths passed to [cv_fit_2d_vf()].
+#' @inheritParams cv_fit_2d_vf
 #' @param cv_folds Number of contiguous cross-validation folds.
 #' @param n_grid Number of common grid points per axis for vector-field
 #'   interpolation and landscape estimation.
@@ -139,7 +140,9 @@ fit_individual_dynamics <- function(
     flow_n = 20L,
     cv_args = list(),
     landscape_args = list(),
-    flow_args = list()) {
+    flow_args = list(),
+    h_scale = c("normalized", "original")) {
+  h_scale <- match.arg(h_scale)
   if (!is.data.frame(data) && !is.matrix(data)) {
     cli::cli_abort("{.arg data} must be a data frame or matrix.")
   }
@@ -159,7 +162,7 @@ fit_individual_dynamics <- function(
   }
   cv_args <- validate_stage_args(
     cv_args,
-    c("data", "x", "y", "h_values", "k", "lims", "n"),
+    c("data", "x", "y", "h_values", "h_scale", "k", "lims", "n"),
     "cv_args"
   )
   landscape_args <- validate_stage_args(
@@ -181,6 +184,7 @@ fit_individual_dynamics <- function(
         x = x,
         y = y,
         h_values = h_values,
+        h_scale = h_scale,
         k = as.integer(cv_folds),
         lims = individual_lims,
         n = as.integer(n_grid)
@@ -223,7 +227,9 @@ fit_individual_dynamics <- function(
       y = y,
       lims = individual_lims,
       settings = list(
-        h_values = h_values,
+        h_values = cv$cv_results$h,
+        h_values_normalized = cv$cv_results$h_normalized,
+        h_input_scale = h_scale,
         cv_folds = as.integer(cv_folds),
         n_grid = as.integer(n_grid),
         flow_n = as.integer(flow_n),
@@ -256,6 +262,7 @@ fit_individual_dynamics <- function(
 #' @param lims Common limits as `c(x_min, x_max, y_min, y_max)`. If omitted,
 #'   limits are calculated from the pooled data and extended by 10 percent.
 #' @param h_values Candidate bandwidths passed to [cv_fit_2d_vf()].
+#' @inheritParams cv_fit_2d_vf
 #' @param cv_folds Number of contiguous cross-validation folds.
 #' @param n_grid Common number of grid points per axis for vector-field
 #'   interpolation and landscape estimation.
@@ -283,7 +290,9 @@ fit_group_dynamics <- function(data,
                                flow_n = 20L,
                                cv_args = list(),
                                landscape_args = list(),
-                               flow_args = list()) {
+                               flow_args = list(),
+                               h_scale = c("normalized", "original")) {
+  h_scale <- match.arg(h_scale)
   groups <- normalize_group_data(data, id)
   validate_group_variables(groups, x, y)
   common_lims <- determine_group_lims(groups, x, y, lims)
@@ -306,6 +315,7 @@ fit_group_dynamics <- function(data,
         y = y,
         lims = common_lims,
         h_values = h_values,
+        h_scale = h_scale,
         cv_folds = cv_folds,
         n_grid = n_grid,
         flow_n = flow_n,
@@ -332,7 +342,9 @@ fit_group_dynamics <- function(data,
       y = y,
       lims = common_lims,
       settings = list(
-        h_values = h_values,
+        h_values = lapply(members, function(member) member$cv$cv_results$h),
+        h_values_normalized = lapply(members, function(member) member$cv$cv_results$h_normalized),
+        h_input_scale = h_scale,
         cv_folds = cv_folds,
         n_grid = as.integer(n_grid),
         flow_n = as.integer(flow_n)

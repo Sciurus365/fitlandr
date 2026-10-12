@@ -14,6 +14,8 @@ fit_1d_vf(
   dayvar = NULL,
   beepvar = NULL,
   method = c("MVKE", "VFC"),
+  h = 0.2,
+  h_scale = c("normalized", "original"),
   ...
 )
 }
@@ -39,11 +41,18 @@ order variable.}
 
 \item{method}{One of \code{"MVKE"} or \code{"VFC"}.}
 
+\item{h}{Positive scalar MVKE bandwidth, in the units specified by \code{h_scale}.}
+
+\item{h_scale}{Units of the input bandwidth: \code{"normalized"} (default) or
+\code{"original"}. Normalization centers each state variable and divides all
+coordinates by one shared root-mean-square distance from the data center.}
+
 \item{...}{Additional arguments passed to \code{\link[=MVKE]{MVKE()}} or
 \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}.}
 }
 \value{
-A \verb{1d_vectorfield} object.
+A \verb{1d_vectorfield} object. For MVKE fits, \code{h} is the bandwidth in
+original data units and \code{h_normalized} is its internal normalized value.
 }
 \description{
 Estimate a one-dimensional vector field from intensive longitudinal data.

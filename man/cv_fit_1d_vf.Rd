@@ -11,6 +11,7 @@ cv_fit_1d_vf(
   beepvar = NULL,
   h_values = exp(seq(log(0.01), log(2), length.out = 20)),
   k = 10,
+  h_scale = c("normalized", "original"),
   ...
 )
 }
@@ -24,16 +25,29 @@ cv_fit_1d_vf(
 \item{beepvar}{Optional character scalar naming the within-day assessment
 order variable.}
 
-\item{h_values}{Numeric vector of candidate bandwidths.}
+\item{h_values}{Numeric vector of candidate bandwidths in the units
+specified by \code{h_scale}.}
 
 \item{k}{Number of folds.}
+
+\item{h_scale}{Units of the input bandwidth: \code{"normalized"} (default) or
+\code{"original"}. Normalization centers each state variable and divides all
+coordinates by one shared root-mean-square distance from the data center.}
 
 \item{...}{Additional arguments passed to \code{\link[=MVKE]{MVKE()}} or
 \code{\link[SparseVFC:SparseVFC]{SparseVFC::SparseVFC()}}.}
 }
 \value{
-A \code{cv_vectorfield} object.
+A \code{cv_vectorfield} object with \code{cv_results$h} and \code{h_optimal} in
+original data units. The corresponding full-dataset normalized values
+are \code{cv_results$h_normalized} and \code{h_optimal_normalized}.
 }
 \description{
 10-fold cross-validation for 1D vector fields
+}
+\details{
+Normalized candidates are converted to original data units once,
+using the full dataset's shared normalization scale. Each training fold
+and the final fit use these same original-unit bandwidths, even though
+their internal normalization scales may differ.
 }

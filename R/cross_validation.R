@@ -15,7 +15,13 @@
 #' @param beepvar Optional character scalar naming the within-day assessment
 #'   order variable. When supplied, only consecutive beeps are used in
 #'   training and validation.
-#' @param h_values A numeric vector of candidate bandwidths to test.
+#' @param h_values A numeric vector of candidate bandwidths to test, in the
+#'   units specified by `h_scale`.
+#' @inheritParams fit_2d_vf
+#' @details Normalized candidates are converted to original data units once,
+#'   using the full dataset's shared normalization scale. Each training fold
+#'   and the final fit use these same original-unit bandwidths, even though
+#'   their internal normalization scales may differ.
 #' @param k The number of folds for cross-validation (default is 10).
 #' @param n Number of vector-field grid points per axis, passed to every
 #'   [fit_2d_vf()] call.
@@ -27,11 +33,13 @@
 #'   fold-specific fit and the final full-data fit. These include `lims`,
 #'   `vector_position`, and `method`.
 #' @return A list containing:
-#'         - 'cv_results': A data frame of 'h' values and their corresponding 'cv_mse'.
-#'         - 'h_optimal': The bandwidth that yielded the minimum 'cv_mse'.
+#'         - 'cv_results': A data frame of original-unit 'h' values, explicitly
+#'           named 'h_normalized' values relative to the full dataset, and 'cv_mse'.
+#'         - 'h_optimal': The selected bandwidth in original data units.
+#'         - 'h_optimal_normalized': Its normalized value for the full dataset.
 #'
 #' @export
-cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = exp(seq(log(0.01), log(2), length.out = 20)), k = 10, n = 20, na_action = "omit_vectors", ...) {
+cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = exp(seq(log(0.01), log(2), length.out = 20)), k = 10, n = 20, na_action = "omit_vectors", h_scale = c("normalized", "original"), ...) {
   # 1. Setup and Initialization
   if (!all(c(x, y) %in% colnames(data))) {
     cli::cli_abort("Data must contain columns named '{x}' and '{y}'.")
@@ -45,6 +53,9 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
 
   n_obs <- nrow(data)
   data <- as.data.frame(data)
+  h_scale <- match.arg(h_scale)
+  data_scale <- attr(normalize_vecs(as.matrix(data[, c(x, y), drop = FALSE])), "scale")
+  h_values <- as_original_bandwidth(h_values, h_scale, data_scale)
   fold_sizes <- rep.int(floor(n_obs / k), k)
   if (n_obs %% k > 0) {
     fold_sizes[seq_len(n_obs %% k)] <- fold_sizes[seq_len(n_obs %% k)] + 1L
@@ -150,6 +161,7 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
           x = x,
           y = y,
           h = h_curr,
+          h_scale = "original",
           dayvar = dayvar,
           beepvar = beepvar,
           n = n,
@@ -197,7 +209,7 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
   }
 
   # 5. Determine Optimal Bandwidth
-  cv_results <- data.frame(h = h_values, cv_mse = mse_by_h)
+  cv_results <- data.frame(h = h_values, h_normalized = h_values / data_scale, cv_mse = mse_by_h)
   if (!any(is.finite(cv_results$cv_mse))) {
     cli::cli_abort(c(
       "Cross-validation failed for every candidate bandwidth.",
@@ -216,6 +228,7 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
     x = x,
     y = y,
     h = h_optimal,
+    h_scale = "original",
     dayvar = dayvar,
     beepvar = beepvar,
     n = n,
@@ -230,6 +243,8 @@ cv_fit_2d_vf <- function(data, x, y, dayvar = NULL, beepvar = NULL, h_values = e
     final_model = final_model,
     cv_results = cv_results,
     h_optimal = h_optimal,
+    h_optimal_normalized = h_optimal / data_scale,
+    h_input_scale = h_scale,
     data = data,
     folds = folds,
     x = x,
@@ -255,12 +270,12 @@ autoplot.cv_vectorfield <- function(object, ...) {
     ggplot2::geom_line() +
     ggplot2::geom_point() +
     ggplot2::annotate(
-      x = object$h_optimal, y = min(cv_data$cv_mse),
+      x = object$h_optimal, y = min(cv_data$cv_mse, na.rm = TRUE),
       geom = "point", color = "red"
     ) +
     ggplot2::scale_x_log10() +
     ggplot2::labs(
-      x = "Bandwidth (h, log scale)",
+      x = "Bandwidth (h, original units; log scale)",
       y = "Cross-Validation MSE"
     ) +
     ggplot2::theme_bw()

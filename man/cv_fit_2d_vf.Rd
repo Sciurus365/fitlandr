@@ -14,6 +14,7 @@ cv_fit_2d_vf(
   k = 10,
   n = 20,
   na_action = "omit_vectors",
+  h_scale = c("normalized", "original"),
   ...
 )
 }
@@ -32,7 +33,8 @@ validation.}
 order variable. When supplied, only consecutive beeps are used in
 training and validation.}
 
-\item{h_values}{A numeric vector of candidate bandwidths to test.}
+\item{h_values}{A numeric vector of candidate bandwidths to test, in the
+units specified by \code{h_scale}.}
 
 \item{k}{The number of folds for cross-validation (default is 10).}
 
@@ -44,14 +46,20 @@ fits always use \code{"omit_vectors"} so vectors cannot bridge across held-out
 blocks. Defaults to \code{"omit_vectors"}, which is also required for
 \code{dayvar} and \code{beepvar} separators to remain effective in the final fit.}
 
+\item{h_scale}{Units of the input bandwidth: \code{"normalized"} (default) or
+\code{"original"}. Normalization centers each state variable and divides all
+coordinates by one shared root-mean-square distance from the data center.}
+
 \item{...}{Additional arguments passed to \code{\link[=fit_2d_vf]{fit_2d_vf()}} for every
 fold-specific fit and the final full-data fit. These include \code{lims},
 \code{vector_position}, and \code{method}.}
 }
 \value{
 A list containing:
-- 'cv_results': A data frame of 'h' values and their corresponding 'cv_mse'.
-- 'h_optimal': The bandwidth that yielded the minimum 'cv_mse'.
+- 'cv_results': A data frame of original-unit 'h' values, explicitly
+named 'h_normalized' values relative to the full dataset, and 'cv_mse'.
+- 'h_optimal': The selected bandwidth in original data units.
+- 'h_optimal_normalized': Its normalized value for the full dataset.
 }
 \description{
 Performs 10-fold cross-validation to find the optimal bandwidth 'h'
@@ -59,4 +67,10 @@ by minimizing the MSE of the predicted drift (v) against the
 empirical drift of the test set (X_t+1 - X_t).
 Folds are assigned as contiguous blocks to respect temporal order.
 Handles single-input prediction and NA insertion.
+}
+\details{
+Normalized candidates are converted to original data units once,
+using the full dataset's shared normalization scale. Each training fold
+and the final fit use these same original-unit bandwidths, even though
+their internal normalization scales may differ.
 }

@@ -18,9 +18,14 @@
 #'   non-consecutive beeps so only consecutive assessments are used if
 #'   `na_action = "omit_vectors"`.
 #' @param method One of "MVKE" or "VFC".
+#' @param h Positive scalar MVKE bandwidth, in the units specified by `h_scale`.
+#' @param h_scale Units of the input bandwidth: `"normalized"` (default) or
+#'   `"original"`. Normalization centers each state variable and divides all
+#'   coordinates by one shared root-mean-square distance from the data center.
 #' @param ... Other parameters to be passed to [MVKE()] or [SparseVFC::SparseVFC()].
 #'
-#' @return A `vectorfield` object.
+#' @return A `vectorfield` object. For MVKE fits, `h` is the bandwidth in
+#'   original data units and `h_normalized` is its internal normalized value.
 #' @seealso [autoplot()]
 #'
 #' @examples
@@ -37,7 +42,9 @@ fit_2d_vf <- function(data, x, y,
                       na_action = "omit_data_points",
                       dayvar = NULL,
                       beepvar = NULL,
-                      method = c("MVKE", "VFC"), ...) {
+                      method = c("MVKE", "VFC"),
+                      h = 0.2,
+                      h_scale = c("normalized", "original"), ...) {
   d <- data
   if (!is.null(dayvar) && !dayvar %in% colnames(d)) {
     cli::cli_abort("{.arg dayvar} must name a column in {.arg data}.")
@@ -105,15 +112,21 @@ fit_2d_vf <- function(data, x, y,
   original_vectors[, "vy"] <- original_vectors[, "vy"] %>% scale_up(dv)
 
   VFCresult <- MVKEresult <- NULL
+  h_original <- h_normalized <- NULL
   method <- toupper(method[1])
   if (method == "VFC") {
+    if (!missing(h)) cli::cli_abort("{.arg h} is only used with {.code method = \"MVKE\"}.")
     rlang::check_installed(
       "SparseVFC",
       reason = "to use {.code method = \"VFC\"}."
     )
     VFCresult <- SparseVFC::SparseVFC(original_vectors_normalized[, 1:2], original_vectors_normalized[, 3:4], ...)
   } else if (method == "MVKE") {
-    MVKEresult <- MVKE(original_vectors_normalized[, 1:2], original_vectors_normalized[, 3:4], ...)
+    if (length(h) != 1L) cli::cli_abort("{.arg h} must be a single bandwidth.")
+    h_original <- as_original_bandwidth(h, h_scale, attr(dv, "scale"))
+    h_normalized <- h_original / attr(dv, "scale")
+    MVKEresult <- MVKE(original_vectors_normalized[, 1:2], original_vectors_normalized[, 3:4],
+                       h = h_normalized, ...)
   }
 
   lims <- simlandr::determine_lims(d_input_raw, c(x, y), lims)
@@ -148,7 +161,9 @@ fit_2d_vf <- function(data, x, y,
     y = y,
     lims = lims,
     n = n,
-    method = method
+    method = method,
+    h = h_original,
+    h_normalized = h_normalized
   )
 
   class(result) <- "vectorfield"

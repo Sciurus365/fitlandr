@@ -20,7 +20,8 @@ MVKE(
 
 \item{v}{The vectors corresponding to the dataset. Should be a matrix or a data frame with the same shape as \code{d}. If missing, then the vectors will be calculated from the dataset.}
 
-\item{h}{The bandwidth for the kernel estimator.}
+\item{h}{The bandwidth in the units of \code{d}. Unlike \code{\link[=fit_2d_vf]{fit_2d_vf()}} and
+\code{\link[=fit_1d_vf]{fit_1d_vf()}}, this low-level estimator does not normalize its input data.}
 
 \item{kernel}{The type of kernel estimator used. "Gaussian" by default.}
 

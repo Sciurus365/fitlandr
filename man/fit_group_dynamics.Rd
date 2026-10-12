@@ -16,7 +16,8 @@ fit_group_dynamics(
   flow_n = 20L,
   cv_args = list(),
   landscape_args = list(),
-  flow_args = list()
+  flow_args = list(),
+  h_scale = c("normalized", "original")
 )
 }
 \arguments{
@@ -47,6 +48,10 @@ The cross-validation default is \code{na_action = "omit_vectors"}.}
 
 \item{flow_args}{Named list of additional arguments passed to \code{\link[=make_2d_pf]{make_2d_pf()}}.
 \code{divided_by_rho} is fixed to \code{FALSE} because a stream function is fitted.}
+
+\item{h_scale}{Units of the input bandwidth: \code{"normalized"} (default) or
+\code{"original"}. Normalization centers each state variable and divides all
+coordinates by one shared root-mean-square distance from the data center.}
 }
 \value{
 A \code{group_dynamics} object containing named lists of vector fields,

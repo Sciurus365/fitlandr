@@ -18,6 +18,13 @@
 #' @param one_per_run Logical; retain at most one bootstrap minimum per run per
 #'   inferred minimum.
 #' @param ... Unused.
+#' @details In `per_minimum`, `point_x` and `point_y` are the reported point
+#'   locations. For Hungarian summaries these come from the original landscape;
+#'   for mean-potential summaries they come from the mean potential. Other methods
+#'   use the means of their grouped bootstrap locations. `mean_x` and `mean_y`
+#'   remain the ellipse centers, which can differ from the point locations.
+#'   Hungarian and mean-potential covariance ellipses are both centered at the
+#'   means of their matched bootstrap locations.
 #'
 #' @return A `summary_bootstrap_2d_ld` object.
 #' @method summary bootstrap_2d_ld
@@ -246,6 +253,15 @@ summary.bootstrap_2d_ld <- function(object,
     )
   })
   per_cluster <- dplyr::bind_cols(per_cluster, dplyr::bind_rows(ellipse_df))
+  per_cluster <- per_cluster |>
+    dplyr::mutate(point_x = mean_x, point_y = mean_y)
+  if (identical(clustering_method, "hungarian")) {
+    per_cluster <- per_cluster |>
+      dplyr::mutate(
+        point_x = cl_out$reference_minima$x[cluster],
+        point_y = cl_out$reference_minima$y[cluster]
+      )
+  }
 
   out <- list(
     params = list(

@@ -30,7 +30,7 @@ bootstrap_1d_vf <- function(vf, block_length = NULL, n_boot = 200, seed = 1614, 
   blocks <- lapply(seq_len(n_vec - block_length + 1L), function(start_idx) start_idx:(start_idx + block_length - 1L))
   n_blocks <- length(blocks)
   n_blocks_needed <- ceiling(n_vec / block_length)
-  h <- environment(vf[["MVKEresult"]])[["h"]]
+  h_normalized <- vf$h_normalized
   kernel <- environment(vf[["MVKEresult"]])[["kernel"]]
   dv <- vf$data_normalized
   lims <- vf$lims
@@ -50,7 +50,7 @@ bootstrap_1d_vf <- function(vf, block_length = NULL, n_boot = 200, seed = 1614, 
     MVKEresult <- fitlandr::MVKE(
       d = as.matrix(sampled_vectors_normalized[, "x", drop = FALSE]),
       v = as.matrix(sampled_vectors_normalized[, "vx", drop = FALSE]),
-      h = h,
+      h = h_normalized,
       kernel = kernel
     )
     vx_grid <- vapply(x_grid, function(xx) {
@@ -69,7 +69,9 @@ bootstrap_1d_vf <- function(vf, block_length = NULL, n_boot = 200, seed = 1614, 
       y = NULL,
       lims = lims,
       n = n,
-      method = "MVKE"
+      method = "MVKE",
+      h = vf$h,
+      h_normalized = h_normalized
     )
     class(result) <- c("1d_vectorfield", "vectorfield")
     result

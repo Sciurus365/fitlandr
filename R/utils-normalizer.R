@@ -27,6 +27,17 @@ normalize_vecs <- function(x) {
   )
 }
 
+as_original_bandwidth <- function(h, h_scale, data_scale) {
+  h_scale <- match.arg(h_scale, c("normalized", "original"))
+  if (!is.numeric(h) || !length(h) || any(!is.finite(h)) || any(h <= 0)) {
+    cli::cli_abort("Bandwidths must be positive finite numbers.")
+  }
+  if (!is.finite(data_scale) || data_scale <= 0) {
+    cli::cli_abort("Bandwidth normalization requires nonzero variation in the state variables.")
+  }
+  if (h_scale == "normalized") h * data_scale else h
+}
+
 # several helpers
 normalize_v <- function(v, ref) {
   (v - attr(ref, "mean")) / attr(ref, "scale")

@@ -53,3 +53,12 @@ A \code{summary_bootstrap_2d_ld} object.
 \description{
 Summarize bootstrap minima for 2D landscapes
 }
+\details{
+In \code{per_minimum}, \code{point_x} and \code{point_y} are the reported point
+locations. For Hungarian summaries these come from the original landscape;
+for mean-potential summaries they come from the mean potential. Other methods
+use the means of their grouped bootstrap locations. \code{mean_x} and \code{mean_y}
+remain the ellipse centers, which can differ from the point locations.
+Hungarian and mean-potential covariance ellipses are both centered at the
+means of their matched bootstrap locations.
+}

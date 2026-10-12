@@ -172,6 +172,53 @@ test_that("blocked CV reports complete candidate failure explicitly", {
   )
 })
 
+test_that("bandwidth units agree and every CV fold uses the same actual width", {
+  d <- data.frame(
+    x = c(seq_len(10), 30 + seq_len(10), 100 + seq_len(10)),
+    y = sin(seq_len(30)) * 4
+  )
+  original_fit_1d <- fit_1d_vf
+  original_fit_2d <- fit_2d_vf
+  widths <- numeric()
+  record_width <- function(model) {
+    widths <<- c(widths, environment(model$MVKEresult)$h *
+                   attr(model$data_normalized, "scale"))
+    model
+  }
+  local_mocked_bindings(
+    fit_1d_vf = function(...) record_width(original_fit_1d(...)),
+    fit_2d_vf = function(...) record_width(original_fit_2d(...)),
+    .package = "fitlandr"
+  )
+
+  for (dimension in 1:2) {
+    fit <- if (dimension == 1) fit_1d_vf else fit_2d_vf
+    cv_fit <- if (dimension == 1) cv_fit_1d_vf else cv_fit_2d_vf
+    args <- list(data = d, x = "x", n = 3)
+    if (dimension == 2) args$y <- "y"
+
+    normalized_fit <- do.call(fit, c(args, list(h = 0.2)))
+    original_fit <- do.call(fit, c(args, list(h = normalized_fit$h, h_scale = "original")))
+    expect_equal(normalized_fit$vec_grid, original_fit$vec_grid)
+    expect_equal(original_fit$h_normalized, 0.2)
+
+    candidates <- c(0.2, 0.6)
+    widths <- numeric()
+    normalized_cv <- do.call(cv_fit, c(args, list(h_values = candidates, k = 3)))
+    actual_candidates <- candidates * attr(normalized_fit$data_normalized, "scale")
+    expect_equal(widths, c(rep(actual_candidates, each = 3), normalized_cv$h_optimal))
+    expect_equal(normalized_cv$cv_results$h, actual_candidates)
+    expect_equal(normalized_cv$cv_results$h_normalized, candidates)
+    expect_equal(normalized_cv$final_model$h, normalized_cv$h_optimal)
+    expect_equal(autoplot(normalized_cv)$data$h, actual_candidates)
+
+    original_cv <- do.call(cv_fit, c(args, list(h_values = actual_candidates,
+                                               h_scale = "original", k = 3)))
+    expect_equal(normalized_cv$cv_results, original_cv$cv_results)
+    expect_equal(normalized_cv$final_model$vec_grid, original_cv$final_model$vec_grid)
+  }
+})
+
 test_that("summary.bootstrap_1d_ld returns a structured summary", {
   set.seed(1)
   d <- data.frame(x = cumsum(stats::rnorm(60)))

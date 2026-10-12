@@ -272,6 +272,8 @@ summarize_mean_potential_hessian <- function(object,
       n_hessian = nrow(matched_h),
       mean_x = ref_mins$x[[cluster_id]],
       mean_y = ref_mins$y[[cluster_id]],
+      point_x = ref_mins$x[[cluster_id]],
+      point_y = ref_mins$y[[cluster_id]],
       mean_U = ref_mins$U[[cluster_id]],
       sd_x = if (nrow(matched) > 1) stats::sd(matched$x) else NA_real_,
       sd_y = if (nrow(matched) > 1) stats::sd(matched$y) else NA_real_,
@@ -399,47 +401,53 @@ summarize_mean_potential <- function(object,
       dplyr::mutate(cluster = 0L, is_noise = TRUE)
   }
 
-  per_cluster <- dplyr::bind_rows(lapply(seq_len(nrow(ref_mins)), function(cluster_id) {
+  reference_n_runs <- vapply(seq_len(nrow(ref_mins)), function(cluster_id) {
+    dplyr::n_distinct(per_point$boot_index[per_point$cluster == cluster_id])
+  }, integer(1))
+  unsupported_ids <- which(reference_n_runs < 2L)
+  if (length(unsupported_ids)) {
+    is_unsupported <- per_point$cluster %in% unsupported_ids
+    per_point$cluster[is_unsupported] <- 0L
+    per_point$is_noise[is_unsupported] <- TRUE
+    cli::cli_warn(
+      "Discarded {length(unsupported_ids)} mean-potential minimum/minima matched in fewer than two bootstrap resamples; their location uncertainty cannot be estimated."
+    )
+  }
+
+  per_cluster <- dplyr::bind_rows(lapply(which(reference_n_runs >= 2L), function(cluster_id) {
     matched <- per_point |>
       dplyr::filter(cluster == cluster_id, !is_noise)
 
-    s_xx <- if (nrow(matched) > 1L) stats::var(matched$x) else NA_real_
-    s_yy <- if (nrow(matched) > 1L) stats::var(matched$y) else NA_real_
-    s_xy <- if (nrow(matched) > 1L) stats::cov(matched$x, matched$y) else NA_real_
+    s_xx <- stats::var(matched$x)
+    s_yy <- stats::var(matched$y)
+    s_xy <- stats::cov(matched$x, matched$y)
 
     sigma <- matrix(c(s_xx, s_xy, s_xy, s_yy), nrow = 2, byrow = TRUE)
-    eig <- tryCatch(eigen(sigma, symmetric = TRUE), error = function(e) NULL)
+    eig <- eigen(sigma, symmetric = TRUE)
 
     c2 <- stats::qchisq(level, df = 2)
-    n_runs_i <- dplyr::n_distinct(matched$boot_index)
-
-    if (is.null(eig)) {
-      angle <- NA_real_
-      a_pred <- NA_real_
-      b_pred <- NA_real_
-      a_conf <- NA_real_
-      b_conf <- NA_real_
-    } else {
-      lambda <- pmax(eig$values, 0)
-      angle <- atan2(eig$vectors[2, 1], eig$vectors[1, 1])
-      a_pred <- sqrt(lambda[1] * c2)
-      b_pred <- sqrt(lambda[2] * c2)
-      a_conf <- sqrt(lambda[1] * c2 / max(n_runs_i, 1L))
-      b_conf <- sqrt(lambda[2] * c2 / max(n_runs_i, 1L))
-    }
+    n_runs_i <- reference_n_runs[[cluster_id]]
+    lambda <- pmax(eig$values, 0)
+    angle <- atan2(eig$vectors[2, 1], eig$vectors[1, 1])
+    a_pred <- sqrt(lambda[1] * c2)
+    b_pred <- sqrt(lambda[2] * c2)
+    a_conf <- sqrt(lambda[1] * c2 / n_runs_i)
+    b_conf <- sqrt(lambda[2] * c2 / n_runs_i)
 
     tibble::tibble(
-      cluster = cluster_id,
+      minimum = cluster_id,
       n_points = nrow(matched),
       n_runs = n_runs_i,
-      mean_x = ref_mins$x[[cluster_id]],
-      mean_y = ref_mins$y[[cluster_id]],
+      mean_x = mean(matched$x),
+      mean_y = mean(matched$y),
+      point_x = ref_mins$x[[cluster_id]],
+      point_y = ref_mins$y[[cluster_id]],
       mean_U = ref_mins$U[[cluster_id]],
-      sd_x = if (nrow(matched) > 1) stats::sd(matched$x) else NA_real_,
-      sd_y = if (nrow(matched) > 1) stats::sd(matched$y) else NA_real_,
-      sd_U = if (nrow(matched) > 1) stats::sd(matched$U) else NA_real_,
-      CI_U_lower = if (nrow(matched)) as.numeric(stats::quantile(matched$U, probs = (1 - level) / 2)) else NA_real_,
-      CI_U_upper = if (nrow(matched)) as.numeric(stats::quantile(matched$U, probs = 1 - (1 - level) / 2)) else NA_real_,
+      sd_x = stats::sd(matched$x),
+      sd_y = stats::sd(matched$y),
+      sd_U = stats::sd(matched$U),
+      CI_U_lower = as.numeric(stats::quantile(matched$U, probs = (1 - level) / 2)),
+      CI_U_upper = as.numeric(stats::quantile(matched$U, probs = 1 - (1 - level) / 2)),
       s_xx = s_xx,
       s_yy = s_yy,
       s_xy = s_xy,
@@ -464,13 +472,14 @@ summarize_mean_potential <- function(object,
     ),
     per_boot = per_boot,
     bootstrap_minima = dplyr::rename(per_point, minimum = cluster),
-    per_minimum = dplyr::rename(per_cluster, minimum = cluster),
+    per_minimum = per_cluster,
     diagnostics = list(
       minima_method = "mean_potential",
       n_reference = nrow(ref_mins),
+      n_reference_discarded = length(unsupported_ids),
       distance_scale_dx = scaler$dx,
       distance_scale_dy = scaler$dy,
-      matched_runs_per_reference = per_cluster$n_runs
+      matched_runs_per_reference = reference_n_runs
     ),
     original_ld = object$original_ld,
     n_boot = object$n_boot
